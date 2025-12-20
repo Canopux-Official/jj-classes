@@ -10,6 +10,6 @@
     "skipLibCheck": true,                 // Skip type checking of declaration files for faster builds
     "forceConsistentCasingInFileNames": true  // Ensure that file names are consistently capitalized
   },
-  "include": ["src/**/*.ts"],              // Include all `.ts` files in the `src` folder
+  "include": ["src/**/*.ts", "server.ts"],              // Include all `.ts` files in the `src` folder
   "exclude": ["node_modules", "dist"]      // Exclude `node_modules` and `dist` from the compilation process
 }
