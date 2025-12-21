@@ -5,11 +5,16 @@ import theme from './theme/theme';
 // Import Pages
 import LandingPage from './pages/landing/LandingPage';
 import CoursesPage from './pages/courses/CoursesPage';
-import LoginPage from './pages/auth/LoginPage'; // IMPORT THE NEW PAGE
+import LoginPage from './pages/auth/LoginPage';
 
-// Placeholder Components (We will build these next)
-const AdminDashboard = () => <h1>Admin Dashboard</h1>;
-const StudentDashboard = () => <h1>Student Dashboard</h1>;
+// Import Dashboard Layouts
+import AdminDashboard from './pages/admin/AdminDashboard';
+
+// Placeholder for Student Dashboard (or import it if you have created the file)
+// If you haven't created the file yet, keep this placeholder:
+// const StudentDashboard = () => <h1>Student Dashboard</h1>;
+// Assuming the file exists based on your structure:
+import StudentDashboard from './pages/student/StudentDashboard'; 
 
 function App() {
   return (
@@ -20,11 +25,11 @@ function App() {
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/courses" element={<CoursesPage />} />
-          
-          {/* This now points to the real Login Page */}
           <Route path="/login" element={<LoginPage />} />
 
-          {/* Protected Routes */}
+          {/* Protected Routes 
+              The '/*' is crucial here because AdminDashboard has its own nested <Routes> 
+          */}
           <Route path="/admin/*" element={<AdminDashboard />} />
           <Route path="/student/*" element={<StudentDashboard />} />
 
