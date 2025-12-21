@@ -14,7 +14,7 @@ export const loginStyles: Record<string, SxProps<Theme>> = {
     justifyContent: 'center',
     alignItems: 'center', // Center text
     position: 'relative',
-    bgcolor: 'primary.main',
+    bgcolor: '#081a1bff',
     color: 'white',
     p: 6,
     zIndex: 1,
@@ -27,7 +27,6 @@ export const loginStyles: Record<string, SxProps<Theme>> = {
       left: 0, 
       right: 0, 
       bottom: 0,
-      background: 'radial-gradient(circle at top right, rgba(255, 215, 0, 0.1), transparent 60%)', // Gold glow
       zIndex: -1,
     }
   },
@@ -72,7 +71,7 @@ brandLogo: {
   fontWeight: 800,
   fontSize: { xs: '1.8rem', md: '2rem' }, // Responsive font size
   mb: 1,
-  color: 'primary.main',
+  color: '#0b2021',
   letterSpacing: '-1px',
   cursor: 'pointer',
 },

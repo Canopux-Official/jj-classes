@@ -29,14 +29,54 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen, handleDrawerTog
 
   // Common content for both drawers
   const drawerContent = (
-    <>
-      <LogoContainer><Box display="flex" alignItems="center" gap={1}>
-          <img src={LogoImg} alt="JJ Institute" style={{ height: 32, width: 'auto' }} />
-          <Typography variant="subtitle1" fontWeight={800} lineHeight={1.2}>
-            JJ INSTITUTE <br/>
-            <span style={{ fontSize: '0.75rem', fontWeight: 400, opacity: 0.8 }}>OF SCIENCE</span>
-          </Typography>
-        </Box></LogoContainer>
+    <><LogoContainer>
+      <Box display="flex" alignItems="center" gap={2}>
+        {/* Logo with Round White Background */}
+        <Box
+          sx={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: '50%',
+            padding: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(6, 100, 102, 0.15)',
+            width: '48px',
+            height: '48px',
+          }}
+        >
+          <img
+            src={LogoImg}
+            alt="JJ Institute"
+            style={{
+              height: '32px',
+              width: '32px',
+              objectFit: 'contain'
+            }}
+          />
+        </Box>
+
+        {/* Title with Good Colors */}
+        <Typography
+          variant="subtitle1"
+          fontWeight={800}
+          lineHeight={1.2}
+          sx={{
+            color: 'white', // Main teal color
+          }}
+        >
+          JJ INSTITUTE <br />
+          <span style={{
+            fontSize: '0.75rem',
+            fontWeight: 500,
+            color: '#b4acacff', // Subtle gray for subtitle
+            letterSpacing: '0.5px'
+          }}>
+            OF SCIENCE
+          </span>
+        </Typography>
+      </Box>
+    </LogoContainer>
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
       <List>
         {menuItems.map((item) => {
@@ -47,7 +87,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen, handleDrawerTog
                 onClick={() => {
                   navigate(item.path);
                   // Close drawer on mobile when a link is clicked
-                  if (mobileOpen) handleDrawerToggle(); 
+                  if (mobileOpen) handleDrawerToggle();
                 }}
                 sx={{
                   minHeight: 56,
@@ -71,7 +111,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen, handleDrawerTog
 
   return (
     <Box component="nav" sx={{ width: { sm: DRAWER_WIDTH }, flexShrink: { sm: 0 } }}>
-      
+
       {/* 1. MOBILE DRAWER (Temporary) */}
       <Drawer
         variant="temporary"
@@ -80,8 +120,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen, handleDrawerTog
         ModalProps={{ keepMounted: true }} // Better open performance on mobile
         sx={{
           display: { xs: 'block', sm: 'none' }, // Show on Mobile, Hide on Desktop
-          '& .MuiDrawer-paper': { 
-            boxSizing: 'border-box', 
+          '& .MuiDrawer-paper': {
+            boxSizing: 'border-box',
             width: DRAWER_WIDTH,
             ...drawerPaperStyles // Import styles
           },
@@ -95,8 +135,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen, handleDrawerTog
         variant="permanent"
         sx={{
           display: { xs: 'none', sm: 'block' }, // Hide on Mobile, Show on Desktop
-          '& .MuiDrawer-paper': { 
-            boxSizing: 'border-box', 
+          '& .MuiDrawer-paper': {
+            boxSizing: 'border-box',
             width: DRAWER_WIDTH,
             ...drawerPaperStyles // Import styles
           },

@@ -27,10 +27,10 @@ export const heroStyles: Record<string, SxProps<Theme>> = {
   title: {
     lineHeight: 1.2,
     mb: 2,
-    color: 'primary.main',
+    color: '#064849',
   },
   highlight: {
-    color: 'secondary.dark', // Uses the Gold/Dark Yellow from your theme
+    color: '#064849', // Uses the Gold/Dark Yellow from your theme
     display: 'inline-block',
   },
   subtitle: {

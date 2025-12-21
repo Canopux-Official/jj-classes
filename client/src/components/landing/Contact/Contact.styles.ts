@@ -3,7 +3,7 @@ import type { SxProps, Theme } from '@mui/material';
 export const contactStyles: Record<string, SxProps<Theme>> = {
   section: {
    py: { xs: 6, md: 10 },
-    bgcolor: 'primary.main', // Dark Blue background for contrast
+    bgcolor: '#0b2021', // Dark Blue background for contrast
     position: 'relative',
     overflow: 'hidden',
   },
