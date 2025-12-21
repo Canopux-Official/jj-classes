@@ -27,7 +27,7 @@ const About = () => {
           
           <Typography variant="body1" sx={aboutStyles.paragraph}>
             Looking for high-quality CBSE Class 9 to 12, JEE, and NEET coaching in Koraput? 
-            **JJ Classes** provides personalized coaching programs with experienced faculty. 
+            JJ Institute Of Science provides personalized coaching programs with experienced faculty. 
             Our modern facilities and updated study material ensure that our students receive 
             the best education possible.
           </Typography>

@@ -6,7 +6,7 @@ export const heroStyles: Record<string, SxProps<Theme>> = {
    py: { xs: 8, md: 0 }, // Keeps the section tall and grand
     display: 'flex',
     alignItems: 'center',
-    background: 'linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)',
+    background: 'linear-gradient(135deg, #fbfdfcff 0%, #ebedee 100%)',
     position: 'relative',
     overflow: 'hidden',
   },
