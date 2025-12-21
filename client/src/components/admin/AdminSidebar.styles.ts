@@ -2,7 +2,7 @@ import { styled } from '@mui/material/styles';
 
 // Common Styles for the Drawer Paper (Background, Text Color)
 export const drawerPaperStyles = {
-  backgroundColor: '#0F2027', // Deep Dark Blue
+  backgroundColor: '#19333fff', // Deep Dark Blue
   color: '#ffffff',
   borderRight: 'none',
 };
