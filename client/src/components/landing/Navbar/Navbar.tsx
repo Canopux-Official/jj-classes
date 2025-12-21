@@ -111,7 +111,7 @@ const Navbar = () => {
               src={LogoImg} 
               alt="JJ Institute" 
               style={{ 
-                height: 90, // Increased to 65px for better visibility
+                height: 65, // Increased to 65px for better visibility
                 width: 'auto',
                 display: 'block',
                 objectFit: 'contain'

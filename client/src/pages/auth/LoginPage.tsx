@@ -4,9 +4,9 @@ import { loginStyles } from './LoginPage.styles';
 import PhoneIphoneIcon from '@mui/icons-material/PhoneIphone';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import SchoolIcon from '@mui/icons-material/School';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import JIS from '../../assets/logo/JIS Logo.png';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -29,7 +29,7 @@ const LoginPage = () => {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      const isAdmin = phone === '9999999999'; 
+      const isAdmin = phone === '9999999999';
       if (isAdmin) navigate('/admin/dashboard');
       else navigate('/student/dashboard');
     }, 1000);
@@ -40,12 +40,35 @@ const LoginPage = () => {
       <Box sx={loginStyles.leftSection}>
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Box sx={{ mb: 4 }}>
-               <SchoolIcon sx={{ fontSize: 80, color: 'secondary.main', opacity: 0.8 }} />
+            {/* Logo Above Text with White Background Circle */}
+            <Box sx={{ 
+              mb: 4,
+              backgroundColor: '#FFFFFF',
+              borderRadius: '50%',
+              padding: '30px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <Box
+                component="img"
+                src={JIS}
+                alt="JJ Institute Logo"
+                sx={{
+                  height: { xs: '100px', md: '140px' },
+                  width: { xs: '100px', md: '140px' },
+                  objectFit: 'contain',
+                }}
+              />
             </Box>
-            <Typography variant="h1" sx={loginStyles.welcomeText}>JJ Institue Of Science</Typography>
+            
+            <Typography variant="h1" sx={loginStyles.welcomeText}>
+              JJ Institute Of Science
+            </Typography>
+            
             <Typography variant="h6" sx={loginStyles.subText}>
-              The path to excellence in <br /> 
+              The path to excellence in <br />
               <span style={{ color: '#FFD700', fontWeight: 'bold' }}>JEE, NEET & Boards.</span>
             </Typography>
           </Box>
@@ -55,7 +78,7 @@ const LoginPage = () => {
       <Box sx={loginStyles.rightSection}>
         <Box sx={loginStyles.formBox}>
           <Typography variant="h4" sx={loginStyles.brandLogo} onClick={() => navigate('/')}>
-           JJ Institue Of Science
+            JJ Institute Of Science
           </Typography>
           <Typography variant="h5" fontWeight={700} gutterBottom>Student Portal</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 5 }}>
@@ -72,7 +95,6 @@ const LoginPage = () => {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   sx={loginStyles.inputField}
-                  // FIXED: Merged duplicate keys here
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -98,7 +120,7 @@ const LoginPage = () => {
                   type="password"
                   inputProps={{ style: { letterSpacing: 8, textAlign: 'center', fontWeight: 'bold' } }}
                   InputProps={{
-                    startAdornment: <InputAdornment position="start"><VpnKeyIcon color="primary"/></InputAdornment>,
+                    startAdornment: <InputAdornment position="start"><VpnKeyIcon color="primary" /></InputAdornment>,
                   }}
                 />
                 <Button fullWidth variant="contained" size="large" color="secondary" onClick={handleVerifyOtp} disabled={loading} sx={loginStyles.actionBtn}>

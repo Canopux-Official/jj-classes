@@ -58,7 +58,7 @@ const Hero = () => {
                   maxWidth: '800px', // Allow subtitle to be wider
                   fontSize: '1.25rem'
                 }}>
-                  Join JJ Institue Of Science for a personalized learning experience. 
+                  Join JJ Institute Of Science for a personalized learning experience. 
                   We provide expert faculty, modern facilities, and a rigorous academic 
                   environment to help you secure your future.
                 </Typography>

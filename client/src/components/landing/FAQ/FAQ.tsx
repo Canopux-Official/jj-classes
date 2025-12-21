@@ -5,12 +5,12 @@ import { faqStyles } from './FAQ.styles';
 
 const faqList = [
   {
-    q: "What is JJ Institue Of Science known for?",
+    q: "What is JJ Institute Of Science known for?",
     a: "We are renowned for exceptional coaching services specializing in CBSE Class 9 to 12, and NEET/JEE preparation. Our track record of producing successful students speaks for our commitment to academic excellence."
   },
   {
-    q: "Why should I choose JJ Institue Of Science for competitive exams?",
-    a: "JJ Institue Of Science is your gateway to success. Our experienced faculty, well-researched study material, and personalized attention set us apart. We have a proven track record of top ranks in NEET and JEE."
+    q: "Why should I choose JJ Institute Of Science for competitive exams?",
+    a: "JJ Institute Of Science is your gateway to success. Our experienced faculty, well-researched study material, and personalized attention set us apart. We have a proven track record of top ranks in NEET and JEE."
   },
   {
     q: "Do you provide online classes?",
