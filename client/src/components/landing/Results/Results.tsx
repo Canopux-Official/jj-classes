@@ -33,7 +33,7 @@ const Results = () => {
           {/* TOP LEFT: Result 2 */}
           <motion.div initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
             <Paper elevation={4} sx={{ borderRadius: 4, overflow: 'hidden' }}>
-              <Box component="img" src={result2} alt="Result 2" 
+              <Box component="img" src={result3} alt="Result 2" 
                 sx={{ width: '100%', height: 'auto', maxHeight: '400px', objectFit: 'contain', display: 'block' }} 
               />
             </Paper>
@@ -42,7 +42,7 @@ const Results = () => {
           {/* TOP RIGHT: Result 3 */}
           <motion.div initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.2 }}>
             <Paper elevation={4} sx={{ borderRadius: 4, overflow: 'hidden' }}>
-              <Box component="img" src={result3} alt="Result 3" 
+              <Box component="img" src={result2} alt="Result 3" 
                 sx={{ width: '100%', height: 'auto', maxHeight: '400px', objectFit: 'contain', display: 'block' }} 
               />
             </Paper>
