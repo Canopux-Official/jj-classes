@@ -1,78 +1,40 @@
-import { Box, Container, Typography, Grid } from '@mui/material';
+import { Box, Container, Typography, Paper } from '@mui/material';
 import { featureStyles } from './Features.styles';
 import SchoolIcon from '@mui/icons-material/School';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
-import QuizIcon from '@mui/icons-material/Quiz';
-import SupportAgentIcon from '@mui/icons-material/SupportAgent';
+import GroupsIcon from '@mui/icons-material/Groups';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import DevicesIcon from '@mui/icons-material/Devices';
 
 const featuresList = [
-  {
-    title: "Personalized Coaching",
-    desc: "Tailored study plans matching every student's unique learning curve.",
-    icon: <SchoolIcon fontSize="medium" />,
-  },
-  {
-    title: "Hybrid Learning",
-    desc: "A perfect blend of offline rigorous teaching and online flexibility.",
-    icon: <DevicesIcon fontSize="medium" />,
-  },
-  {
-    title: "Regular Evaluations",
-    desc: "Mock tests simulating real exam conditions for JEE, NEET & Boards.",
-    icon: <QuizIcon fontSize="medium" />,
-  },
-  {
-    title: "Comprehensive Syllabus",
-    desc: "Deep coverage of every topic with updated study materials.",
-    icon: <MenuBookIcon fontSize="medium" />,
-  },
-  {
-    title: "Doubt Clearing",
-    desc: "Daily doubt sessions to ensure no concept remains unclear.",
-    icon: <SupportAgentIcon fontSize="medium" />,
-  },
-  {
-    title: "Consistent Growth",
-    desc: "Continuous feedback loops to identify and fix weak areas.",
-    icon: <TrendingUpIcon fontSize="medium" />,
-  },
+  { icon: <SchoolIcon fontSize="large" />, title: 'Expert Faculty', desc: 'Learn from the best educators with proven track records in JEE/NEET.' },
+  { icon: <MenuBookIcon fontSize="large" />, title: 'Comprehensive Material', desc: 'Updated study materials designed to cover every aspect of the syllabus.' },
+  { icon: <GroupsIcon fontSize="large" />, title: 'Small Batches', desc: 'Personalized attention with limited batch sizes for better interaction.' },
+  { icon: <TrendingUpIcon fontSize="large" />, title: 'Performance Tracking', desc: 'Regular tests and analysis to monitor and improve your progress.' },
 ];
 
 const Features = () => {
   return (
     <Box sx={featureStyles.section} id="features">
       <Container maxWidth="lg">
-        {/* Header */}
         <Box sx={featureStyles.header}>
-          <Typography variant="h4" fontWeight={800} gutterBottom>
-            Why JJ Classes?
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Expert guidance for your academic success.
-          </Typography>
+          <Typography variant="overline" color="secondary.main" fontWeight={700}>WHY CHOOSE US</Typography>
+          <Typography variant="h3" fontWeight={700} sx={{ mt: 1 }}>Our Key Features</Typography>
         </Box>
 
-        {/* Matrix Grid - Centered */}
-        <Grid container spacing={4} justifyContent="center"> 
-          {featuresList.map((feature, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index} display="flex">
-              {/* display="flex" on Grid item ensures the child Box stretches to fill height */}
-              <Box sx={featureStyles.card}>
-                <Box sx={featureStyles.iconBox}>
-                  {feature.icon}
-                </Box>
-                <Typography sx={featureStyles.cardTitle}>
-                  {feature.title}
-                </Typography>
-                <Typography sx={featureStyles.cardDesc}>
-                  {feature.desc}
-                </Typography>
-              </Box>
-            </Grid>
+        {/* CSS GRID LAYOUT - NO MUI GRID NEEDED */}
+        <Box sx={{ 
+          display: 'grid', 
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, // 1 col on mobile, 4 on desktop
+          gap: 4 
+        }}>
+          {featuresList.map((item, index) => (
+            <Paper key={index} sx={featureStyles.card} elevation={0}>
+              <Box sx={featureStyles.iconBox}>{item.icon}</Box>
+              <Typography variant="h6" fontWeight={700} gutterBottom>{item.title}</Typography>
+              <Typography variant="body2" color="text.secondary">{item.desc}</Typography>
+            </Paper>
           ))}
-        </Grid>
+        </Box>
       </Container>
     </Box>
   );

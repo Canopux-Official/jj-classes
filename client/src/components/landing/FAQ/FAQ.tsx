@@ -43,9 +43,9 @@ const FAQ = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Detect Mobile
 
-  const handleChange = (panel: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
-    setExpanded(isExpanded ? panel : false);
-  };
+ const handleChange = (panel: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
+  setExpanded(isExpanded ? panel : false);
+};
 
   return (
     <Box sx={faqStyles.section} id="faq">
