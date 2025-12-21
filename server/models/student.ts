@@ -53,7 +53,7 @@ const StudentSchema: Schema = new Schema({
   // *** CRITICAL ACCESS CONTROL ***
   targetExams: {
     type: [String],
-    enum: ['JEE', 'NEET', 'Boards'],
+    enum: ['JEE', 'NEET', 'Boards', 'Other'],
     default: [],
     // Comment: The specific goals of the student. 
     // If a student has ['JEE'], they will see content tagged 'JEE'.
