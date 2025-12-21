@@ -27,7 +27,7 @@ const DashboardHome: React.FC = () => {
           Overview
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Welcome back to the JJ Classes Admin Panel.
+          Welcome back to the JJ Institue Of Science Admin Panel.
         </Typography>
       </Box>
 

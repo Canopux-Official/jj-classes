@@ -39,7 +39,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ handleDrawerToggle }) => {
             {/* Hide text on mobile to save space */}
             <Box textAlign="right" sx={{ display: { xs: 'none', sm: 'block' } }}>
               <Typography variant="subtitle2" fontWeight="700">Admin User</Typography>
-              <Typography variant="caption" color="text.secondary">JJ Classes</Typography>
+              <Typography variant="caption" color="text.secondary">JJ Institue Of Science</Typography>
             </Box>
             <Avatar 
               sx={{ 

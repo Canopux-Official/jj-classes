@@ -3,7 +3,7 @@ import { createTheme, responsiveFontSizes } from '@mui/material/styles';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#0F2027', // Deep Dark Blue (almost black)
+      main: '#066466', // Deep Dark Blue (almost black)
       light: '#203A43', // Gradient Step
       contrastText: '#ffffff',
     },

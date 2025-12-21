@@ -40,7 +40,7 @@ const Footer = () => {
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 4, justifyContent: 'space-between' }}>
           
           <Box sx={{ width: { xs: '100%', md: '35%' } }}>
-            <Typography variant="h5" color="white" fontWeight={700} gutterBottom>JJ CLASSES</Typography>
+            <Typography variant="h5" color="white" fontWeight={700} gutterBottom>JJ Institue Of Science</Typography>
             <Typography variant="body2" sx={{ lineHeight: 1.8 }}>Empowering students in Koraput to achieve their dreams.</Typography>
           </Box>
 
@@ -64,7 +64,7 @@ const Footer = () => {
 
         </Box>
         <Box sx={{ textAlign: 'center', mt: 6, pt: 3, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <Typography variant="body2">&copy; {new Date().getFullYear()} JJ Classes. All Rights Reserved.</Typography>
+          <Typography variant="body2">&copy; {new Date().getFullYear()} JJ Institue Of Science. All Rights Reserved.</Typography>
         </Box>
       </Container>
     </Box>

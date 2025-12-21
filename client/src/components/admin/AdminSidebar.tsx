@@ -1,13 +1,13 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { List, ListItem, ListItemButton, ListItemIcon, ListItemText, Divider, Drawer, Box } from '@mui/material';
+import { List, ListItem, ListItemButton, ListItemIcon, ListItemText, Divider, Drawer, Box, Typography } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import PaymentIcon from '@mui/icons-material/Payment';
 import { LogoContainer, drawerPaperStyles } from './AdminSidebar.styles';
-
+import LogoImg from '../../assets/logo.jpeg';
 interface AdminSidebarProps {
   mobileOpen: boolean;
   handleDrawerToggle: () => void;
@@ -30,7 +30,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen, handleDrawerTog
   // Common content for both drawers
   const drawerContent = (
     <>
-      <LogoContainer>JJ CLASSES</LogoContainer>
+      <LogoContainer><Box display="flex" alignItems="center" gap={1}>
+          <img src={LogoImg} alt="JJ Institute" style={{ height: 32, width: 'auto' }} />
+          <Typography variant="subtitle1" fontWeight={800} lineHeight={1.2}>
+            JJ INSTITUTE <br/>
+            <span style={{ fontSize: '0.75rem', fontWeight: 400, opacity: 0.8 }}>OF SCIENCE</span>
+          </Typography>
+        </Box></LogoContainer>
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
       <List>
         {menuItems.map((item) => {

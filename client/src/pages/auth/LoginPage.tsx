@@ -43,7 +43,7 @@ const LoginPage = () => {
             <Box sx={{ mb: 4 }}>
                <SchoolIcon sx={{ fontSize: 80, color: 'secondary.main', opacity: 0.8 }} />
             </Box>
-            <Typography variant="h1" sx={loginStyles.welcomeText}>JJ CLASSES</Typography>
+            <Typography variant="h1" sx={loginStyles.welcomeText}>JJ Institue Of Science</Typography>
             <Typography variant="h6" sx={loginStyles.subText}>
               The path to excellence in <br /> 
               <span style={{ color: '#FFD700', fontWeight: 'bold' }}>JEE, NEET & Boards.</span>
@@ -55,7 +55,7 @@ const LoginPage = () => {
       <Box sx={loginStyles.rightSection}>
         <Box sx={loginStyles.formBox}>
           <Typography variant="h4" sx={loginStyles.brandLogo} onClick={() => navigate('/')}>
-            JJ CLASSES
+           JJ Institue Of Science
           </Typography>
           <Typography variant="h5" fontWeight={700} gutterBottom>Student Portal</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 5 }}>

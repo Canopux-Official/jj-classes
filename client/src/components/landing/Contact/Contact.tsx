@@ -42,7 +42,7 @@ const Contact = () => {
           <Box sx={{ flex: 1, width: '100%' }}>
             <Box sx={contactStyles.infoBox}>
               <Typography variant="overline" color="secondary.main" fontWeight={700} letterSpacing={2}>GET IN TOUCH</Typography>
-              <Typography variant="h3" sx={contactStyles.title}>Start Your Journey <br /> With JJ Classes</Typography>
+              <Typography variant="h3" sx={contactStyles.title}>Start Your Journey <br /> With JJ Institue Of Science</Typography>
               <Typography variant="body1" sx={{ mb: 5, maxWidth: '90%', lineHeight: 1.8 }}>
                 Visit our center in Koraput for a free counseling session. We are here to answer all your queries.
               </Typography>
