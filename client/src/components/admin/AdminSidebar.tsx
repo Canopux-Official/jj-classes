@@ -8,6 +8,7 @@ import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import PaymentIcon from '@mui/icons-material/Payment';
 import { LogoContainer, drawerPaperStyles } from './AdminSidebar.styles';
 import LogoImg from '../../assets/logo.jpeg';
+import { UploadFile } from '@mui/icons-material';
 interface AdminSidebarProps {
   mobileOpen: boolean;
   handleDrawerToggle: () => void;
@@ -25,6 +26,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen, handleDrawerTog
     { text: 'Subjects', icon: <LibraryBooksIcon />, path: '/admin/subjects' },
     { text: 'Session Manager', icon: <SettingsSuggestIcon />, path: '/admin/session' },
     { text: 'Fees & Payments', icon: <PaymentIcon />, path: '/admin/fees' },
+    { text: 'Upload Material', icon: <UploadFile />, path: '/admin/upload' },
   ];
 
   // Common content for both drawers
