@@ -12,6 +12,7 @@ import DashboardHome from './DashboardHome';
 import StudentsPage from '../../components/admin/StudentPage';
 import SubjectsPage from './../../components/admin/SubjectPage';
 import SessionPage from '../../components/admin/SessionPage';
+import FileUpload from '../../components/admin/material upload/FileUpload';
 
 const DRAWER_WIDTH = 260; 
 
@@ -49,6 +50,7 @@ const AdminDashboard: React.FC = () => {
             <Route path="students" element={<StudentsPage />} />
             <Route path="subjects" element={<SubjectsPage />} />
             <Route path="session" element={<SessionPage />} />
+            <Route path="upload" element={<FileUpload />} />
             <Route path="*" element={<Navigate to="/admin" replace />} />
           </Routes>
         </ContentWrapper>
