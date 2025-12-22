@@ -47,7 +47,7 @@ export const StyledDivider = styled(Box)(({ theme }) => ({
 }));
 
 // Upload Button
-export const UploadButton = styled(Button)(({ theme }) => ({
+export const UploadButton = styled(Button)(() => ({
   height: '48px',
   fontSize: '15px',
   fontWeight: 600,
@@ -94,12 +94,12 @@ export const TagContainer = styled(Box)(({ theme }) => ({
 }));
 
 // Tag Input
-export const TagInput = styled(TextField)(({ theme }) => ({
+export const TagInput = styled(TextField)(() => ({
   flex: 1,
 }));
 
 // Add Tag Button
-export const AddTagButton = styled(IconButton)(({ theme }) => ({
+export const AddTagButton = styled(IconButton)(() => ({
   backgroundColor: '#f5f5f5',
   '&:hover': {
     backgroundColor: '#e0e0e0',
@@ -132,7 +132,7 @@ export const SubmitButton = styled(Button)(({ theme }) => ({
 }));
 
 // Styled Tabs
-export const StyledTabs = styled(Tabs)(({ theme }) => ({
+export const StyledTabs = styled(Tabs)(() => ({
   '& .MuiTabs-indicator': {
     backgroundColor: '#066466',
     height: '3px',

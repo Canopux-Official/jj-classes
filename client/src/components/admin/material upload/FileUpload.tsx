@@ -250,7 +250,7 @@ const FileUpload: React.FC = () => {
         <StyledPaper elevation={2} sx={{ mb: 3 }}>
           <StyledTabs
             value={selectedClass}
-            onChange={(e, newValue) => setSelectedClass(newValue)}
+            onChange={(_, newValue) => setSelectedClass(newValue)}
             variant="scrollable"
             scrollButtons="auto"
             allowScrollButtonsMobile
