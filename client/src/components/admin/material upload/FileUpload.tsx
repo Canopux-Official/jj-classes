@@ -4,17 +4,17 @@ import {
   Typography,
   TextField,
   Button,
+  Chip,
+  IconButton,
+  Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   Select,
   MenuItem,
   FormControl,
   InputLabel,
-  Chip,
-  IconButton,
-  ListItemText,
-  Divider,
-  Alert,
-  CardContent,
-  CardActions,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -22,24 +22,16 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import DescriptionIcon from '@mui/icons-material/Description';
 import FolderIcon from '@mui/icons-material/Folder';
-import DownloadIcon from '@mui/icons-material/Download';
-import EditIcon from '@mui/icons-material/Edit';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import FolderOpenIcon from '@mui/icons-material/FolderOpen';
+import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import {
   StyledContainer,
   StyledPaper,
   HeaderBox,
   SectionTitle,
   UploadButton,
-  FileList,
-  FileItem,
-  TagContainer,
-  TagInput,
-  AddTagButton,
-  TagsDisplay,
-  SubmitButton,
-  MaterialCard,
-  StyledTabs,
-  StyledTab,
   UploadSection,
   MaterialsSection,
 } from './FileUpload.styles';
@@ -50,113 +42,68 @@ interface FileItem {
   size: number;
 }
 
-interface Material {
+interface Node {
   id: string;
   name: string;
-  class: string;
-  subject: string;
-  topic: string;
-  type: string;
-  description: string;
-  tags: string[];
-  uploadDate: string;
-  size: string;
+  type: 'folder' | 'file';
+  parentId: string | null;
+  heading?: string;
+  description?: string;
+  tags?: string[];
+  uploadDate?: string;
+  size?: string;
+  classLevel?: string;
 }
 
 const FileUpload: React.FC = () => {
-  const [selectedClass, setSelectedClass] = useState<string>('Class 9');
-  const [selectedSubject, setSelectedSubject] = useState<string>('');
-  const [selectedTopic, setSelectedTopic] = useState<string>('');
-  const [selectedType, setSelectedType] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
-  const [tagInput, setTagInput] = useState<string>('');
-  const [tags, setTags] = useState<string[]>([]);
+  const [selectedClassLevel, setSelectedClassLevel] = useState<string>('');
   const [uploadedFiles, setUploadedFiles] = useState<FileItem[]>([]);
-  const [stream, setStream] = useState<string>('');
   const [successMessage, setSuccessMessage] = useState<string>('');
 
-  // Mock materials data
-  const [materials, setMaterials] = useState<Material[]>([
-    {
-      id: '1',
-      name: 'Physics Chapter 1 - Motion.pdf',
-      class: 'Class 9',
-      subject: 'Science',
-      topic: 'Physics',
-      type: 'Notes',
-      description: 'Introduction to motion and speed concepts',
-      tags: ['Physics', 'Motion', 'Chapter 1'],
-      uploadDate: '2024-01-15',
-      size: '2.5 MB',
-    },
-    {
-      id: '2',
-      name: 'Physics Chapter 1 - Motion.pdf',
-      class: 'Class 9',
-      subject: 'Science',
-      topic: 'Physics',
-      type: 'Notes',
-      description: 'Introduction to motion and speed concepts',
-      tags: ['Physics', 'Motion', 'Chapter 1'],
-      uploadDate: '2024-01-15',
-      size: '2.5 MB',
-    },
-    {
-      id: '3',
-      name: 'Physics Chapter 1 - Motion.pdf',
-      class: 'Class 9',
-      subject: 'Science',
-      topic: 'Physics',
-      type: 'Notes',
-      description: 'Introduction to motion and speed concepts',
-      tags: ['Physics', 'Motion', 'Chapter 1'],
-      uploadDate: '2024-01-15',
-      size: '2.5 MB',
-    },
-    {
-      id: '4',
-      name: 'Chemistry Assignment 1.pdf',
-      class: 'Class 9',
-      subject: 'Science',
-      topic: 'Chemistry',
-      type: 'Assignment',
-      description: 'Atomic structure assignment',
-      tags: ['Chemistry', 'Atoms'],
-      uploadDate: '2024-01-14',
-      size: '1.2 MB',
-    },
-    {
-      id: '5',
-      name: 'Algebra Question Paper.pdf',
-      class: 'Class 10',
-      subject: 'Mathematics',
-      topic: 'Algebra',
-      type: 'Question Paper',
-      description: 'Mid-term algebra question paper',
-      tags: ['Algebra', 'Mid-term'],
-      uploadDate: '2024-01-10',
-      size: '850 KB',
-    },
-  ]);
+  // Hierarchical structure
+  const [nodes, setNodes] = useState<Node[]>([]);
 
-  const classOptions = ['Class 9', 'Class 10', 'Class 11', 'Class 12'];
-  const subjects: Record<string, string[]> = {
-    'Class 9': ['Science', 'Mathematics', 'English', 'Social Studies'],
-    'Class 10': ['Science', 'Mathematics', 'English', 'Social Studies'],
-    'Class 11': ['Physics', 'Chemistry', 'Mathematics', 'Biology', 'Computer Science'],
-    'Class 12': ['Physics', 'Chemistry', 'Mathematics', 'Biology', 'Computer Science'],
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
+
+  // Dialog states
+  const [showFolderDialog, setShowFolderDialog] = useState(false);
+  const [folderName, setFolderName] = useState('');
+  const [folderHeading, setFolderHeading] = useState('');
+  const [folderDescription, setFolderDescription] = useState('');
+  const [folderTags, setFolderTags] = useState<string[]>([]);
+  const [folderTagInput, setFolderTagInput] = useState('');
+
+  const classOptions = [
+    'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6',
+    'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'JEE'
+  ];
+
+  const handleClassChange = (event: SelectChangeEvent) => {
+    const newClass = event.target.value;
+    setSelectedClassLevel(newClass);
+    
+    // Check if root folder exists for this class
+    const existingRoot = nodes.find(n => n.name === newClass && n.parentId === null);
+    
+    if (existingRoot) {
+      setSelectedNode(existingRoot.id);
+      setExpandedNodes(new Set([existingRoot.id]));
+    } else {
+      // Create root folder for this class
+      const rootId = `root-${Date.now()}`;
+      const newRoot: Node = {
+        id: rootId,
+        name: newClass,
+        type: 'folder',
+        parentId: null,
+        classLevel: newClass,
+      };
+      setNodes([...nodes, newRoot]);
+      setSelectedNode(rootId);
+      setExpandedNodes(new Set([rootId]));
+    }
   };
-
-  const topics: Record<string, string[]> = {
-    'Science': ['Physics', 'Chemistry', 'Biology'],
-    'Physics': ['Mechanics', 'Thermodynamics', 'Optics', 'Electromagnetism'],
-    'Chemistry': ['Organic Chemistry', 'Inorganic Chemistry', 'Physical Chemistry'],
-    'Biology': ['Cell Biology', 'Genetics', 'Ecology'],
-    'Mathematics': ['Algebra', 'Geometry', 'Calculus', 'Statistics'],
-  };
-
-  const fileTypes = ['Assignment', 'Notes', 'Question Paper', 'Solution', 'Reference Material'];
-  const streams = ['Science', 'Commerce', 'Arts'];
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -170,58 +117,93 @@ const FileUpload: React.FC = () => {
     }
   };
 
-  const handleDeleteFile = (id: string) => {
-    setUploadedFiles(uploadedFiles.filter(file => file.id !== id));
-  };
-
-  const handleAddTag = () => {
-    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
-      setTags([...tags, tagInput.trim()]);
-      setTagInput('');
+  const handleAddFolderTag = () => {
+    if (folderTagInput.trim() && !folderTags.includes(folderTagInput.trim())) {
+      setFolderTags([...folderTags, folderTagInput.trim()]);
+      setFolderTagInput('');
     }
   };
 
-  const handleDeleteTag = (tagToDelete: string) => {
-    setTags(tags.filter(tag => tag !== tagToDelete));
+  const handleDeleteFolderTag = (tagToDelete: string) => {
+    setFolderTags(folderTags.filter(tag => tag !== tagToDelete));
   };
 
-  const handleUpload = () => {
-    if (!selectedClass || !selectedSubject || !selectedType || uploadedFiles.length === 0) {
+  const handleCreateFolder = () => {
+    if (!selectedNode || !folderName.trim()) {
       return;
     }
 
-    // Add new materials
-    const newMaterials = uploadedFiles.map(file => ({
-      id: `${Date.now()}_${file.id}`,
-      name: file.name,
-      class: selectedClass,
-      subject: selectedSubject,
-      topic: selectedTopic || 'General',
-      type: selectedType,
-      description: description,
-      tags: tags,
-      uploadDate: new Date().toISOString().split('T')[0],
-      size: formatFileSize(file.size),
-    }));
+    const newFolder: Node = {
+      id: `folder-${Date.now()}`,
+      name: folderName,
+      type: 'folder',
+      parentId: selectedNode,
+      heading: folderHeading,
+      description: folderDescription,
+      tags: folderTags,
+      classLevel: selectedClassLevel,
+    };
 
-    setMaterials([...newMaterials, ...materials]);
+    setNodes([...nodes, newFolder]);
+    setExpandedNodes(new Set([...expandedNodes, selectedNode]));
 
-    setSuccessMessage(`Successfully uploaded ${uploadedFiles.length} file(s)`);
-
-    setTimeout(() => {
+    // Handle file uploads if any
+    if (uploadedFiles.length > 0) {
+      const newFileNodes: Node[] = uploadedFiles.map((file, idx) => ({
+        id: `file-${Date.now()}-${idx}`,
+        name: file.name,
+        type: 'file' as const,
+        parentId: newFolder.id,
+        uploadDate: new Date().toISOString().split('T')[0],
+        size: formatFileSize(file.size),
+        classLevel: selectedClassLevel,
+      }));
+      
+      setNodes(prev => [...prev, ...newFileNodes]);
+      setSuccessMessage(`Folder created with ${uploadedFiles.length} file(s)`);
       setUploadedFiles([]);
-      setDescription('');
-      setTags([]);
-      setSelectedSubject('');
-      setSelectedTopic('');
-      setSelectedType('');
-      setStream('');
-      setSuccessMessage('');
-    }, 2000);
+      
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 2000);
+    }
+
+    // Reset dialog
+    setShowFolderDialog(false);
+    setFolderName('');
+    setFolderHeading('');
+    setFolderDescription('');
+    setFolderTags([]);
+    setFolderTagInput('');
   };
 
-  const handleDeleteMaterial = (id: string) => {
-    setMaterials(materials.filter(material => material.id !== id));
+  const handleDeleteNode = (nodeId: string) => {
+    const getDescendants = (id: string): string[] => {
+      const children = nodes.filter(n => n.parentId === id);
+      return [id, ...children.flatMap(child => getDescendants(child.id))];
+    };
+
+    const toDelete = getDescendants(nodeId);
+    setNodes(nodes.filter(n => !toDelete.includes(n.id)));
+    
+    // If deleted node was selected, clear selection
+    if (selectedNode && toDelete.includes(selectedNode)) {
+      setSelectedNode(null);
+    }
+  };
+
+  const toggleExpand = (nodeId: string) => {
+    const newExpanded = new Set(expandedNodes);
+    if (newExpanded.has(nodeId)) {
+      newExpanded.delete(nodeId);
+    } else {
+      newExpanded.add(nodeId);
+    }
+    setExpandedNodes(newExpanded);
+  };
+
+  const getChildren = (parentId: string | null) => {
+    return nodes.filter(node => node.parentId === parentId);
   };
 
   const formatFileSize = (bytes: number): string => {
@@ -232,9 +214,117 @@ const FileUpload: React.FC = () => {
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
   };
 
-  const isUploadDisabled = !selectedClass || !selectedSubject || !selectedType || uploadedFiles.length === 0;
+  const renderNode = (node: Node, level: number = 0): React.ReactNode => {
+    const children = getChildren(node.id);
+    const hasChildren = children.length > 0;
+    const isExpanded = expandedNodes.has(node.id);
+    const isSelected = selectedNode === node.id;
 
-  const filteredMaterials = materials.filter(material => material.class === selectedClass);
+    return (
+      <Box key={node.id}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            py: 1,
+            px: 1.5,
+            ml: level * 3,
+            borderRadius: '8px',
+            cursor: 'pointer',
+            backgroundColor: isSelected ? 'rgba(6, 100, 102, 0.08)' : 'transparent',
+            border: isSelected ? '1px solid #066466' : '1px solid transparent',
+            '&:hover': {
+              backgroundColor: isSelected ? 'rgba(6, 100, 102, 0.08)' : '#f5f5f5',
+            },
+          }}
+          onClick={() => {
+            setSelectedNode(node.id);
+            if (node.type === 'folder' && !isExpanded) {
+              toggleExpand(node.id);
+            }
+          }}
+        >
+          {node.type === 'folder' && (
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleExpand(node.id);
+              }}
+              sx={{ p: 0.5 }}
+            >
+              {isExpanded ? (
+                <ExpandMoreIcon sx={{ fontSize: 20 }} />
+              ) : (
+                <ChevronRightIcon sx={{ fontSize: 20 }} />
+              )}
+            </IconButton>
+          )}
+
+          {node.type === 'folder' ? (
+            isExpanded ? (
+              <FolderOpenIcon sx={{ fontSize: 20, color: '#066466' }} />
+            ) : (
+              <FolderIcon sx={{ fontSize: 20, color: '#066466' }} />
+            )
+          ) : (
+            <DescriptionIcon sx={{ fontSize: 20, color: '#1976d2' }} />
+          )}
+
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="body2" sx={{ fontWeight: isSelected ? 600 : 500, color: '#0c1c24ff' }}>
+              {node.name}
+            </Typography>
+            {node.heading && (
+              <Typography variant="caption" sx={{ color: '#666' }}>
+                {node.heading}
+              </Typography>
+            )}
+            {node.tags && node.tags.length > 0 && (
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                {node.tags.map(tag => (
+                  <Chip 
+                    key={tag} 
+                    label={tag} 
+                    size="small" 
+                    sx={{ height: '16px', fontSize: '0.65rem' }}
+                  />
+                ))}
+              </Box>
+            )}
+          </Box>
+
+          {node.parentId !== null && (
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteNode(node.id);
+              }}
+              sx={{ color: '#d32f2f' }}
+            >
+              <DeleteIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          )}
+        </Box>
+
+        {isExpanded && hasChildren && (
+          <Box>
+            {children.map(child => renderNode(child, level + 1))}
+          </Box>
+        )}
+      </Box>
+    );
+  };
+
+  const getClassNodes = (className: string) => {
+    const classNode = nodes.find(n => n.classLevel === className && n.parentId === null);
+    return classNode ? [classNode] : [];
+  };
+
+  const selectedNodeData = nodes.find(n => n.id === selectedNode);
+  const canCreateFolder = selectedNodeData?.type === 'folder';
 
   return (
     <StyledContainer>
@@ -242,23 +332,26 @@ const FileUpload: React.FC = () => {
         <HeaderBox>
           <FolderIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: '#066466' }} />
           <Typography variant="h4" sx={{ fontWeight: 700, color: '#0c1c24ff', fontSize: { xs: '1.2rem', sm: '1.8rem', md: '2.01rem' } }}>
-            Study Materials Manager
+            Upload Materials
           </Typography>
         </HeaderBox>
 
-        {/* Class Tabs */}
+        {/* Class Selection Dropdown */}
         <StyledPaper elevation={2} sx={{ mb: 3 }}>
-          <StyledTabs
-            value={selectedClass}
-            onChange={(_, newValue) => setSelectedClass(newValue)}
-            variant="scrollable"
-            scrollButtons="auto"
-            allowScrollButtonsMobile
-          >
-            {classOptions.map((cls) => (
-              <StyledTab key={cls} label={cls} value={cls} />
-            ))}
-          </StyledTabs>
+          <FormControl fullWidth size="small">
+            <InputLabel>Select Class/Level *</InputLabel>
+            <Select
+              value={selectedClassLevel}
+              onChange={handleClassChange}
+              label="Select Class/Level *"
+            >
+              {classOptions.map((cls) => (
+                <MenuItem key={cls} value={cls}>
+                  {cls}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </StyledPaper>
 
         {successMessage && (
@@ -267,87 +360,128 @@ const FileUpload: React.FC = () => {
           </Alert>
         )}
 
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 3 }}>
-          {/* Upload Section */}
-          <Box sx={{ flex: { xs: '1', lg: '0 0 420px' } }}>
-            <UploadSection elevation={2}>
-              <SectionTitle variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-                <CloudUploadIcon sx={{ mr: 1, verticalAlign: 'middle', fontSize: { xs: 20, sm: 24 } }} />
-                Upload New Material
-              </SectionTitle>
+        {selectedClassLevel && (
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 3 }}>
+            {/* Upload Section */}
+            <Box sx={{ flex: { xs: '1', lg: '0 0 420px' } }}>
+              <UploadSection elevation={2}>
+                <SectionTitle variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+                  <CloudUploadIcon sx={{ mr: 1, verticalAlign: 'middle', fontSize: { xs: 20, sm: 24 } }} />
+                  Manage Structure
+                </SectionTitle>
 
-              {/* Horizontal Form */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 2 }}>
-                <Box sx={{ display: 'flex', gap: 1.5, flexDirection: { xs: 'column', sm: 'row' } }}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Subject *</InputLabel>
-                    <Select
-                      value={selectedSubject}
-                      onChange={(e: SelectChangeEvent) => {
-                        setSelectedSubject(e.target.value);
-                        setSelectedTopic('');
-                      }}
-                      label="Subject *"
-                    >
-                      {subjects[selectedClass]?.map((subject) => (
-                        <MenuItem key={subject} value={subject}>
-                          {subject}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                {/* Selected Node Info */}
+                {selectedNodeData && (
+                  <Alert severity="info" sx={{ mb: 2, borderRadius: '8px' }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      Selected: {selectedNodeData.name}
+                    </Typography>
+                    {selectedNodeData.heading && (
+                      <Typography variant="caption">{selectedNodeData.heading}</Typography>
+                    )}
+                    {selectedNodeData.description && (
+                      <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
+                        {selectedNodeData.description}
+                      </Typography>
+                    )}
+                  </Alert>
+                )}
 
-                  <FormControl fullWidth size="small" disabled={!selectedSubject}>
-                    <InputLabel>Topic</InputLabel>
-                    <Select
-                      value={selectedTopic}
-                      onChange={(e: SelectChangeEvent) => setSelectedTopic(e.target.value)}
-                      label="Topic"
-                    >
-                      {selectedSubject &&
-                        topics[selectedSubject]?.map((topic) => (
-                          <MenuItem key={topic} value={topic}>
-                            {topic}
-                          </MenuItem>
-                        ))}
-                    </Select>
-                  </FormControl>
+                {/* Create Folder Button */}
+                {canCreateFolder ? (
+                  <Button
+                    variant="outlined"
+                    startIcon={<CreateNewFolderIcon />}
+                    onClick={() => setShowFolderDialog(true)}
+                    fullWidth
+                    sx={{
+                      mb: 2,
+                      borderColor: '#066466',
+                      color: '#066466',
+                      '&:hover': {
+                        borderColor: '#055254',
+                        backgroundColor: 'rgba(6, 100, 102, 0.04)',
+                      },
+                    }}
+                  >
+                    Create Subfolder
+                  </Button>
+                ) : (
+                  <Alert severity="warning" sx={{ borderRadius: '8px' }}>
+                    Select a folder from the tree to create subfolders
+                  </Alert>
+                )}
+              </UploadSection>
+            </Box>
+
+            {/* Materials Tree Section */}
+            <Box sx={{ flex: 1 }}>
+              <MaterialsSection elevation={2}>
+                <SectionTitle variant="h6" sx={{ mb: 2, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+                  <FolderIcon sx={{ mr: 1, verticalAlign: 'middle', fontSize: { xs: 20, sm: 24 } }} />
+                  {selectedClassLevel} Structure
+                </SectionTitle>
+
+                <Box sx={{ maxHeight: { xs: '500px', md: '700px' }, overflowY: 'auto', pr: 1 }}>
+                  {getClassNodes(selectedClassLevel).length > 0 ? (
+                    getClassNodes(selectedClassLevel).map(node => renderNode(node))
+                  ) : (
+                    <Box sx={{ textAlign: 'center', py: 6, color: '#999' }}>
+                      <FolderIcon sx={{ fontSize: 60, mb: 2, opacity: 0.3 }} />
+                      <Typography variant="body1">No structure created yet</Typography>
+                      <Typography variant="body2" sx={{ mt: 1 }}>
+                        Click "Create Subfolder" to start building your hierarchy
+                      </Typography>
+                    </Box>
+                  )}
                 </Box>
+              </MaterialsSection>
+            </Box>
+          </Box>
+        )}
 
-                <Box sx={{ display: 'flex', gap: 1.5, flexDirection: { xs: 'column', sm: 'row' } }}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Type *</InputLabel>
-                    <Select
-                      value={selectedType}
-                      onChange={(e: SelectChangeEvent) => setSelectedType(e.target.value)}
-                      label="Type *"
-                    >
-                      {fileTypes.map((type) => (
-                        <MenuItem key={type} value={type}>
-                          {type}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+        {!selectedClassLevel && (
+          <Box sx={{ textAlign: 'center', py: 8 }}>
+            <FolderIcon sx={{ fontSize: 80, color: '#ccc', mb: 2 }} />
+            <Typography variant="h6" color="textSecondary">
+              Please select a class/level to begin
+            </Typography>
+          </Box>
+        )}
 
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Stream</InputLabel>
-                    <Select
-                      value={stream}
-                      onChange={(e: SelectChangeEvent) => setStream(e.target.value)}
-                      label="Stream"
-                    >
-                      {streams.map((s) => (
-                        <MenuItem key={s} value={s}>
-                          {s}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Box>
-              </Box>
+        {/* Create Folder Dialog */}
+        <Dialog open={showFolderDialog} onClose={() => setShowFolderDialog(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>Create New Subfolder</DialogTitle>
+          <DialogContent>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+              <TextField
+                fullWidth
+                label="Folder Name *"
+                value={folderName}
+                onChange={(e) => setFolderName(e.target.value)}
+                placeholder="e.g., Science, Physics, Assignments"
+                size="small"
+              />
 
-              <Divider sx={{ my: 2 }} />
+              <TextField
+                fullWidth
+                label="Heading (Optional)"
+                value={folderHeading}
+                onChange={(e) => setFolderHeading(e.target.value)}
+                placeholder="e.g., Chapter 1"
+                size="small"
+              />
+
+              <TextField
+                fullWidth
+                multiline
+                rows={3}
+                label="Description (Optional)"
+                value={folderDescription}
+                onChange={(e) => setFolderDescription(e.target.value)}
+                placeholder="Enter folder description..."
+                size="small"
+              />
 
               <input
                 accept="*"
@@ -359,161 +493,77 @@ const FileUpload: React.FC = () => {
               />
               <label htmlFor="file-upload-input" style={{ display: 'block' }}>
                 <UploadButton variant="outlined" startIcon={<CloudUploadIcon />} fullWidth>
-                  Choose Files
+                  Choose Files (Optional)
                 </UploadButton>
               </label>
 
               {uploadedFiles.length > 0 && (
-                <FileList>
+                <Alert severity="success" sx={{ borderRadius: '8px' }}>
+                  <Typography variant="body2">
+                    {uploadedFiles.length} file(s) selected
+                  </Typography>
                   {uploadedFiles.map((file) => (
-                    <FileItem key={file.id}>
-                      <DescriptionIcon sx={{ mr: 1.5, color: '#066466', fontSize: 20 }} />
-                      <ListItemText
-                        primary={file.name}
-                        secondary={formatFileSize(file.size)}
-                        primaryTypographyProps={{ fontSize: '0.9rem' }}
-                        secondaryTypographyProps={{ fontSize: '0.75rem' }}
-                      />
-                      <IconButton edge="end" onClick={() => handleDeleteFile(file.id)} size="small">
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </FileItem>
+                    <Typography key={file.id} variant="caption" sx={{ display: 'block' }}>
+                      • {file.name} ({formatFileSize(file.size)})
+                    </Typography>
                   ))}
-                </FileList>
+                </Alert>
               )}
 
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                label="Description"
-                variant="outlined"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Enter file description..."
-                sx={{ mt: 2 }}
-                size="small"
-              />
-
-              <TagContainer>
-                <TagInput
-                  label="Add Tags"
-                  variant="outlined"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <TextField
+                  fullWidth
+                  label="Add Tags (Optional)"
+                  value={folderTagInput}
+                  onChange={(e) => setFolderTagInput(e.target.value)}
                   onKeyPress={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
-                      handleAddTag();
+                      handleAddFolderTag();
                     }
                   }}
                   size="small"
                   placeholder="Press Enter"
                 />
-                <AddTagButton color="primary" onClick={handleAddTag} size="small">
-                  <AddIcon fontSize="small" />
-                </AddTagButton>
-              </TagContainer>
+                <IconButton color="primary" onClick={handleAddFolderTag} size="small">
+                  <AddIcon />
+                </IconButton>
+              </Box>
 
-              {tags.length > 0 && (
-                <TagsDisplay>
-                  {tags.map((tag) => (
+              {folderTags.length > 0 && (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {folderTags.map((tag) => (
                     <Chip
                       key={tag}
                       label={tag}
-                      onDelete={() => handleDeleteTag(tag)}
+                      onDelete={() => handleDeleteFolderTag(tag)}
                       color="primary"
                       variant="outlined"
                       size="small"
                     />
                   ))}
-                </TagsDisplay>
-              )}
-
-              <SubmitButton
-                variant="contained"
-                onClick={handleUpload}
-                disabled={isUploadDisabled}
-                startIcon={<CloudUploadIcon />}
-                fullWidth
-              >
-                Upload Materials
-              </SubmitButton>
-            </UploadSection>
-          </Box>
-
-          {/* Materials List Section */}
-          <Box sx={{ flex: 1 }}>
-            <MaterialsSection elevation={2}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
-                <SectionTitle variant="h6" sx={{ mb: 0, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-                  <FolderIcon sx={{ mr: 1, verticalAlign: 'middle', fontSize: { xs: 20, sm: 24 } }} />
-                  {selectedClass} Materials ({filteredMaterials.length})
-                </SectionTitle>
-              </Box>
-
-              {filteredMaterials.length === 0 ? (
-                <Box sx={{ textAlign: 'center', py: 6, color: '#999' }}>
-                  <DescriptionIcon sx={{ fontSize: 60, mb: 2, opacity: 0.3 }} />
-                  <Typography variant="body1">No materials uploaded yet</Typography>
-                </Box>
-              ) : (
-                <Box sx={{ maxHeight: { xs: '500px', md: '700px' }, overflowY: 'auto', pr: { xs: 0.5, sm: 1 } }}>
-                  {filteredMaterials.map((material) => (
-                    <MaterialCard key={material.id} elevation={1}>
-                      <CardContent sx={{ pb: 1, px: { xs: 2, sm: 2.5 }, pt: { xs: 1.5, sm: 2 } }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 1 }}>
-                          <Box sx={{ display: 'flex', gap: { xs: 0.75, sm: 1 }, alignItems: 'start', flex: 1 }}>
-                            <DescriptionIcon sx={{ color: '#066466', mt: 0.5, fontSize: { xs: 20, sm: 24 } }} />
-                            <Box sx={{ flex: 1, minWidth: 0 }}>
-                              <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#0c1c24ff', mb: 0.5, fontSize: { xs: '0.9rem', sm: '1rem' }, wordBreak: 'break-word' }}>
-                                {material.name}
-                              </Typography>
-                              <Typography variant="body2" color="textSecondary" sx={{ mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                                {material.subject} → {material.topic} → {material.type}
-                              </Typography>
-                              {material.description && (
-                                <Typography variant="body2" sx={{ color: '#666', mb: 1, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                                  {material.description}
-                                </Typography>
-                              )}
-                              {material.tags.length > 0 && (
-                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
-                                  {material.tags.map((tag) => (
-                                    <Chip key={tag} label={tag} size="small" variant="outlined" sx={{ fontSize: { xs: '0.65rem', sm: '0.75rem' }, height: { xs: '20px', sm: '24px' } }} />
-                                  ))}
-                                </Box>
-                              )}
-                              <Typography variant="caption" color="textSecondary" sx={{ fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
-                                Uploaded: {material.uploadDate} • Size: {material.size}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </Box>
-                      </CardContent>
-                      <CardActions sx={{ justifyContent: 'flex-end', pt: 0, px: { xs: 1.5, sm: 2 }, pb: { xs: 1, sm: 1.5 }, flexWrap: 'wrap', gap: 0.5 }}>
-                        <Button size="small" startIcon={<DownloadIcon sx={{ fontSize: { xs: 16, sm: 20 } }} />} sx={{ color: '#066466', fontSize: { xs: '0.7rem', sm: '0.875rem' }, minWidth: 'auto', px: { xs: 0.75, sm: 1 } }}>
-                          Download
-                        </Button>
-                        <Button size="small" startIcon={<EditIcon sx={{ fontSize: { xs: 16, sm: 20 } }} />} sx={{ color: '#066466', fontSize: { xs: '0.7rem', sm: '0.875rem' }, minWidth: 'auto', px: { xs: 0.75, sm: 1 } }}>
-                          Edit
-                        </Button>
-                        <Button
-                          size="small"
-                          startIcon={<DeleteIcon sx={{ fontSize: { xs: 16, sm: 20 } }} />}
-                          onClick={() => handleDeleteMaterial(material.id)}
-                          sx={{ color: '#d32f2f', fontSize: { xs: '0.7rem', sm: '0.875rem' }, minWidth: 'auto', px: { xs: 0.75, sm: 1 } }}
-                        >
-                          Delete
-                        </Button>
-                      </CardActions>
-                    </MaterialCard>
-                  ))}
                 </Box>
               )}
-            </MaterialsSection>
-          </Box>
-        </Box>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowFolderDialog(false)}>Cancel</Button>
+            <Button
+              onClick={handleCreateFolder}
+              variant="contained"
+              disabled={!folderName.trim()}
+              sx={{
+                background: 'linear-gradient(135deg, #066466 0%, #0c1c24ff 100%)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #055254 0%, #0a161d 100%)',
+                },
+                color: "white"
+              }}
+            >
+              Create Folder
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </StyledContainer>
   );

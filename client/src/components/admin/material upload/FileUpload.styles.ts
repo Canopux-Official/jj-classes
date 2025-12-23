@@ -1,3 +1,4 @@
+// FileUpload.styles.ts
 import { styled } from '@mui/material/styles';
 import { Box, Paper, Typography, Button, List, ListItem, TextField, IconButton, Tabs, Tab, Card } from '@mui/material';
 
@@ -6,6 +7,8 @@ export const StyledContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
   backgroundColor: '#f5f7fa',
   padding: theme.spacing(3),
+  display: 'flex',
+  justifyContent: 'center',
   [theme.breakpoints.up('md')]: {
     padding: theme.spacing(4),
   },
