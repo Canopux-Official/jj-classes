@@ -246,8 +246,8 @@ const StudentsPage: React.FC = () => {
   
   // Fix 6: Use 'unknown' generic and cast value to string[] to satisfy MUI Select types
   const handleExamFilterChange = (event: SelectChangeEvent<unknown>) => {
-    const value = event.target.value as string[];
-    setExamFilter(typeof value === 'string' ? value.split(',') : value);
+    const value = event.target.value;
+    setExamFilter(typeof value === 'string' ? value.split(',') : (value as string[]));
   };
 
   const filteredStudents = students.filter((student) => {
