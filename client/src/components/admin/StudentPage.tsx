@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState, useRef } from 'react';
 import * as XLSX from 'xlsx'; 
 import {
@@ -33,7 +34,8 @@ import {
   addStudent,
   updateStudent,
   toggleStudentStatus,
-  bulkImportStudents
+  bulkImportStudents,
+  getSubjects
 } from '../../api/apiFunctions';
 
 interface IStudentUI {
@@ -51,11 +53,12 @@ interface IStudentUI {
   isActive: boolean;
 }
 
-const TARGET_OPTIONS = ['JEE', 'NEET', 'Boards', 'Foundation', 'Olympiad'];
-const MOCK_SUBJECTS = ['Physics', 'Chemistry', 'Maths', 'Biology', 'English']; 
+const TARGET_OPTIONS = ['JEE', 'NEET', 'Boards', 'Foundation', 'Olympiad', 'Other'];
 
 const StudentsPage: React.FC = () => {
   const [students, setStudents] = useState<IStudentUI[]>([]);
+  const [subjects, setSubjects] = useState<string[]>([]); 
+
   const [searchTerm, setSearchTerm] = useState('');
 
   const [classFilter, setClassFilter] = useState('All');
@@ -90,6 +93,7 @@ const StudentsPage: React.FC = () => {
 
   useEffect(() => {
     fetchStudentsList();
+    fetchSubjectsList();
   }, []);
 
   const fetchStudentsList = async () => {
@@ -102,6 +106,21 @@ const StudentsPage: React.FC = () => {
     }
   };
 
+  // UPDATED: Fixed Type Error here
+  const fetchSubjectsList = async () => {
+    try {
+      const response = await getSubjects();
+      // Cast to 'any' to bypass TypeScript thinking it is already an array
+      const data = response.data as any; 
+      
+      if (data.subjects && Array.isArray(data.subjects)) {
+        const subjectNames = data.subjects.map((sub: any) => sub.name);
+        setSubjects(subjectNames);
+      }
+    } catch (error) {
+      console.error('Error fetching subjects:', error);
+    }
+  };
 
   const handleOpenDialog = (student?: IStudentUI) => {
     if (student) {
@@ -185,16 +204,14 @@ const StudentsPage: React.FC = () => {
     }
   };
 
-
-const handleDownloadTemplate = () => {
-  const link = document.createElement("a");
-  link.href = "/Student_Import_Template.xlsx"; // public folder path
-  link.download = "Student_Import_Template.xlsx";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
-
+  const handleDownloadTemplate = () => {
+    const link = document.createElement("a");
+    link.href = "/Student_Import_Template.xlsx"; 
+    link.download = "Student_Import_Template.xlsx";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -486,7 +503,7 @@ const handleDownloadTemplate = () => {
                 input={<OutlinedInput label="Enrolled Subjects" />}
                 renderValue={(selected) => (selected as string[]).join(', ')}
               >
-                {MOCK_SUBJECTS.map((name) => (
+                {subjects.map((name) => (
                   <MenuItem key={name} value={name}>
                     <Checkbox checked={(formData.enrolledSubjects || []).indexOf(name) > -1} />
                     <ListItemText primary={name} />

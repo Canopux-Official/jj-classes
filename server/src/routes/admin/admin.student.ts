@@ -6,7 +6,7 @@ import {
     toggleStudentStatus, 
     bulkAddStudents 
 } from '../../controllers/studentController';
-
+import { getAllSubjects } from '../../controllers/subjectController';
 
 
 const router = express.Router();
@@ -16,5 +16,6 @@ router.post('/add', addStudent);
 router.post('/bulk-add', bulkAddStudents);
 router.put('/update/:id', updateStudent);
 router.put('/toggle-status/:id', toggleStudentStatus);
+router.get('/getAllSubjects', getAllSubjects);
 
 export default router;

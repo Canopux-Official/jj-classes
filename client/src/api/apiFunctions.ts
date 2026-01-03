@@ -258,3 +258,30 @@ export async function bulkImportStudents(studentsArray: unknown[]): Promise<ApiR
     return { success: false, message: axiosError.response?.data?.message || "Import failed" };
   }
 }
+export async function getSubjects(): Promise<ApiResponse> {
+  try {
+    const config: AxiosRequestConfig = {
+      method: "get",
+      url: `${import.meta.env.VITE_SERVER_LINK}/admin/getAllSubjects`,
+      headers: getAuthHeaders()
+    };
+    const response = await axios(config); 
+    if (response.status === 200) {
+      return {
+        success: true,
+        data: response.data,
+        status: response.status
+      };
+    }
+    return { success: false, status: response.status };
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    // @ts-expect-error response.data is not typed in AxiosError
+    const msg = axiosError.response?.data?.message || axiosError.message;
+    return {
+      success: false,
+      status: axiosError.response ? axiosError.response.status : 500,
+      message: msg
+    };
+  }
+}
