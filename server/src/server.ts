@@ -22,7 +22,6 @@ connectDB();
 
 app.use('/auth', authRoutes);
 app.use('/admin', adminStudentRoutes);
-
 app.use('/api/material', materialRoutes);
 
 // Vercel deployment config

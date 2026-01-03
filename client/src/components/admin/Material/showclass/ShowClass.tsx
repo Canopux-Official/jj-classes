@@ -132,13 +132,14 @@ const ShowClass: React.FC = () => {
 
     try {
       const response = await createOrFetchClass(className);
+      console.log(response)
 
       if (!response.success) {
         throw new Error(response.message || 'Failed to create class');
       }
 
       const newNode: Node = {
-        _id: response.data._id,
+        _id: (response.data as { _id: string })._id,
         heading: className,
         type: 'folder',
         parentId: null,
@@ -206,14 +207,15 @@ const ShowClass: React.FC = () => {
       // Show success message
       setSnackbar({
         open: true,
-        message: response?.message || 'Class updated successfully',
+        message: (response as { message: string }).message || 'Class updated successfully',
         severity: 'success',
       });
     } catch (error: unknown) {
       console.error('Error updating class:', error);
+      const typedError = error as Error;
       setSnackbar({
         open: true,
-        message: error instanceof Error ? error.message : 'Error updating class',
+        message: typedError.message || 'Error creating class',
         severity: 'error',
       });
     }
