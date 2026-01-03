@@ -9,31 +9,39 @@ import {
   DialogContent, DialogActions, TextField as MuiTextField,
   OutlinedInput, Checkbox, ListItemText,
   Box,
-  CircularProgress
+  CircularProgress,
+  Divider,
+  Select
 } from '@mui/material';
 
 import type { SelectChangeEvent } from '@mui/material';
 
+// Icons
 import AddIcon from '@mui/icons-material/Add';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever'; // Hard Delete
+import VisibilityIcon from '@mui/icons-material/Visibility'; // Active
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'; // Inactive
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
+// Styles
 import {
   PageContainer, PageHeader, FilterToolbar,
   SearchInput, FilterSelect, ActionButtonContainer
 } from './StudentPage.styles';
 
+// API
 import {
   getStudents,
   addStudent,
   updateStudent,
   toggleStudentStatus,
+  deleteStudent, // Ensure you have this exported in apiFunctions.ts
   bulkImportStudents,
   getSubjects
 } from '../../api/apiFunctions';
@@ -56,27 +64,32 @@ interface IStudentUI {
 const TARGET_OPTIONS = ['JEE', 'NEET', 'Boards', 'Foundation', 'Olympiad', 'Other'];
 
 const StudentsPage: React.FC = () => {
+  // --- State ---
   const [students, setStudents] = useState<IStudentUI[]>([]);
   const [subjects, setSubjects] = useState<string[]>([]); 
-
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Filters
   const [classFilter, setClassFilter] = useState('All');
   const [examFilter, setExamFilter] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState('All');
 
+  // Pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+  // Dialogs
   const [openDialog, setOpenDialog] = useState(false);
   const [openImportDialog, setOpenImportDialog] = useState(false);
   const [editingStudent, setEditingStudent] = useState<IStudentUI | null>(null);
 
+  // Import State
   const [importData, setImportData] = useState<Record<string, unknown>[]>([]);
   const [importFileName, setImportFileName] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Form State
   const [formData, setFormData] = useState<Partial<IStudentUI>>({
     name: '', 
     phoneNumber: '', 
@@ -91,6 +104,7 @@ const StudentsPage: React.FC = () => {
     isActive: true
   });
 
+  // --- Effects ---
   useEffect(() => {
     fetchStudentsList();
     fetchSubjectsList();
@@ -106,11 +120,9 @@ const StudentsPage: React.FC = () => {
     }
   };
 
-  // UPDATED: Fixed Type Error here
   const fetchSubjectsList = async () => {
     try {
       const response = await getSubjects();
-      // Cast to 'any' to bypass TypeScript thinking it is already an array
       const data = response.data as any; 
       
       if (data.subjects && Array.isArray(data.subjects)) {
@@ -121,6 +133,8 @@ const StudentsPage: React.FC = () => {
       console.error('Error fetching subjects:', error);
     }
   };
+
+  // --- Handlers ---
 
   const handleOpenDialog = (student?: IStudentUI) => {
     if (student) {
@@ -191,18 +205,36 @@ const StudentsPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to toggle the active status of this student?')) {
-      const response = await toggleStudentStatus(id);
-      if (response.success) {
-        setStudents(prev => prev.map(s =>
-          s._id === id ? { ...s, isActive: !s.isActive } : s
-        ));
-      } else {
-        alert("Error: " + response.message);
-      }
+  // 1. Toggle Status (Soft Delete/Deactivate)
+  const handleToggleStatus = async (id: string) => {
+    const response = await toggleStudentStatus(id);
+    if (response.success) {
+      setStudents(prev => prev.map(s =>
+        s._id === id ? { ...s, isActive: !s.isActive } : s
+      ));
+    } else {
+      alert("Error: " + response.message);
     }
   };
+
+  // 2. Hard Delete (Remove from DB)
+  const handleHardDelete = async (id: string) => {
+    if (window.confirm('⚠️ WARNING: This will PERMANENTLY delete the student record from the database.\n\nAre you sure you want to proceed?')) {
+        try {
+            const response = await deleteStudent(id); 
+            if (response.success) {
+                setStudents(prev => prev.filter(s => s._id !== id));
+            } else {
+                alert("Error deleting student: " + response.message);
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Failed to delete student.");
+        }
+    }
+  };
+
+  // --- Import Logic ---
 
   const handleDownloadTemplate = () => {
     const link = document.createElement("a");
@@ -367,6 +399,7 @@ const StudentsPage: React.FC = () => {
         </Tooltip>
       </FilterToolbar>
 
+      {/* TABLE */}
       <Box sx={{ border: '1px solid #e0e0e0', borderRadius: 2, overflow: 'hidden', bgcolor: 'white' }}>
         <TableContainer>
           <Table sx={{ minWidth: 800 }}>
@@ -415,10 +448,27 @@ const StudentsPage: React.FC = () => {
                   <TableCell>
                     <Chip label={student.isActive ? 'Active' : 'Inactive'} size="small" color={student.isActive ? 'success' : 'default'} />
                   </TableCell>
+                  
+                  {/* --- UPDATED: 3 ACTION BUTTONS --- */}
                   <TableCell align="right">
                     <ActionButtonContainer>
-                      <Tooltip title="Edit"><IconButton size="small" color="primary" onClick={() => handleOpenDialog(student)}><EditIcon fontSize="small" /></IconButton></Tooltip>
-                      <Tooltip title="Deactivate"><IconButton size="small" color="error" onClick={() => handleDelete(student._id)}><DeleteIcon fontSize="small" /></IconButton></Tooltip>
+                        <Tooltip title="Edit">
+                            <IconButton size="small" color="primary" onClick={() => handleOpenDialog(student)}>
+                                <EditIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                        
+                        <Tooltip title={student.isActive ? "Deactivate" : "Activate"}>
+                            <IconButton size="small" color={student.isActive ? "success" : "default"} onClick={() => handleToggleStatus(student._id)}>
+                                {student.isActive ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" />}
+                            </IconButton>
+                        </Tooltip>
+
+                        <Tooltip title="Delete Permanently">
+                            <IconButton size="small" color="error" onClick={() => handleHardDelete(student._id)}>
+                                <DeleteForeverIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
                     </ActionButtonContainer>
                   </TableCell>
                 </TableRow>
@@ -437,88 +487,137 @@ const StudentsPage: React.FC = () => {
         />
       </Box>
 
+      {/* --- ADD / EDIT DIALOG (Responsive without Grid) --- */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>{editingStudent ? 'Edit Student' : 'Add New Student'}</DialogTitle>
+        <DialogTitle sx={{ bgcolor: '#f8fafc', fontWeight: 600 }}>
+            {editingStudent ? 'Edit Student Details' : 'Add New Student'}
+        </DialogTitle>
         <DialogContent dividers>
-          <Stack spacing={2} pt={1}>
-             <Stack direction="row" spacing={2}>
-              <MuiTextField label="Full Name" required fullWidth value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
-              <MuiTextField label="Academic Session" required fullWidth value={formData.academicSession} onChange={(e) => setFormData({ ...formData, academicSession: e.target.value })} />
-            </Stack>
-
-            <Stack direction="row" spacing={2}>
-              <MuiTextField label="Phone Number" required fullWidth value={formData.phoneNumber} onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })} />
-              
-              <MuiTextField label="Email Address" fullWidth value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
-            </Stack>
-
-            <Stack direction="row" spacing={2}>
-              <MuiTextField label="Parent Phone" fullWidth value={formData.parentPhoneNumber} onChange={(e) => setFormData({ ...formData, parentPhoneNumber: e.target.value })} />
-              <MuiTextField 
-                required
-                label="Date of Birth" 
-                type="date"
-                fullWidth 
-                InputLabelProps={{ shrink: true }}
-                value={formData.dob} 
-                onChange={(e) => setFormData({ ...formData, dob: e.target.value })} 
-              />
-            </Stack>
-
-            <Stack direction="row" spacing={2}>
-              <FormControl fullWidth required>
-                <InputLabel>Class</InputLabel>
-                <FilterSelect value={formData.currentClass} label="Class" onChange={(e) => setFormData({ ...formData, currentClass: e.target.value as string })}>
-                  {['9', '10', '11', '12'].map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
-                </FilterSelect>
-              </FormControl>
-              
-              <MuiTextField label="Stream" required fullWidth value={formData.stream} onChange={(e) => setFormData({ ...formData, stream: e.target.value })} />
-            </Stack>
+          
+          <Stack spacing={3} pt={1}>
             
-            <FormControl fullWidth required>
-              <InputLabel>Target Exams</InputLabel>
-              <FilterSelect
-                multiple
-                value={formData.targetExams}
-                onChange={(e) => setFormData({ ...formData, targetExams: typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[] })}
-                input={<OutlinedInput label="Target Exams" />}
-                renderValue={(selected) => (selected as string[]).join(', ')}
-              >
-                {TARGET_OPTIONS.map((name) => (
-                  <MenuItem key={name} value={name}>
-                    <Checkbox checked={(formData.targetExams || []).indexOf(name) > -1} />
-                    <ListItemText primary={name} />
-                  </MenuItem>
-                ))}
-              </FilterSelect>
-            </FormControl>
+            {/* Section 1: Personal Details */}
+            <Box>
+                <Typography variant="subtitle2" color="primary" gutterBottom sx={{ fontWeight: 600 }}>
+                    Personal Information
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
 
-            <FormControl fullWidth required>
-              <InputLabel>Enrolled Subjects</InputLabel>
-              <FilterSelect
-                multiple
-                value={formData.enrolledSubjects}
-                onChange={(e) => setFormData({ ...formData, enrolledSubjects: typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[] })}
-                input={<OutlinedInput label="Enrolled Subjects" />}
-                renderValue={(selected) => (selected as string[]).join(', ')}
-              >
-                {subjects.map((name) => (
-                  <MenuItem key={name} value={name}>
-                    <Checkbox checked={(formData.enrolledSubjects || []).indexOf(name) > -1} />
-                    <ListItemText primary={name} />
-                  </MenuItem>
-                ))}
-              </FilterSelect>
-            </FormControl>
+                <Stack spacing={2}>
+                    {/* Row 1: Name & DOB */}
+                    <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
+                        <MuiTextField 
+                            label="Full Name" required fullWidth 
+                            value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
+                        />
+                        <MuiTextField 
+                            required label="Date of Birth" type="date" fullWidth 
+                            InputLabelProps={{ shrink: true }}
+                            value={formData.dob} onChange={(e) => setFormData({ ...formData, dob: e.target.value })} 
+                        />
+                    </Box>
+
+                    {/* Row 2: Phone & Parent Phone */}
+                    <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
+                        <MuiTextField 
+                            label="Phone Number" required fullWidth 
+                            value={formData.phoneNumber} onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })} 
+                        />
+                         <MuiTextField 
+                            label="Parent Phone" fullWidth 
+                            value={formData.parentPhoneNumber} onChange={(e) => setFormData({ ...formData, parentPhoneNumber: e.target.value })} 
+                        />
+                    </Box>
+                    
+                    {/* Row 3: Email */}
+                    <MuiTextField 
+                        label="Email Address" fullWidth 
+                        value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} 
+                    />
+                </Stack>
+            </Box>
+
+            {/* Section 2: Academic Details */}
+            <Box>
+                <Typography variant="subtitle2" color="primary" gutterBottom sx={{ fontWeight: 600 }}>
+                    Academic Details
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+                
+                <Stack spacing={2}>
+                    {/* Row 1: Session, Class, Stream */}
+                    <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
+                         <MuiTextField 
+                            label="Academic Session" required fullWidth 
+                            value={formData.academicSession} onChange={(e) => setFormData({ ...formData, academicSession: e.target.value })} 
+                            sx={{ flex: 2 }}
+                        />
+                        <FormControl fullWidth required sx={{ flex: 1 }}>
+                            <InputLabel>Class</InputLabel>
+                            <Select value={formData.currentClass} label="Class" onChange={(e) => setFormData({ ...formData, currentClass: e.target.value as string })}>
+                              {['9', '10', '11', '12'].map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+                            </Select>
+                        </FormControl>
+                        <MuiTextField 
+                            label="Stream" required fullWidth 
+                            value={formData.stream} onChange={(e) => setFormData({ ...formData, stream: e.target.value })} 
+                             sx={{ flex: 1 }}
+                        />
+                    </Box>
+
+                    {/* Row 2: Targets */}
+                    <FormControl fullWidth required>
+                        <InputLabel>Target Exams</InputLabel>
+                        <Select
+                            multiple
+                            value={formData.targetExams}
+                            onChange={(e) => setFormData({ ...formData, targetExams: typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[] })}
+                            input={<OutlinedInput label="Target Exams" />}
+                            renderValue={(selected) => (selected as string[]).join(', ')}
+                        >
+                            {TARGET_OPTIONS.map((name) => (
+                            <MenuItem key={name} value={name}>
+                                <Checkbox checked={(formData.targetExams || []).indexOf(name) > -1} />
+                                <ListItemText primary={name} />
+                            </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    
+                    {/* Row 3: Subjects */}
+                    <FormControl fullWidth required>
+                        <InputLabel>Enrolled Subjects</InputLabel>
+                        <Select
+                            multiple
+                            value={formData.enrolledSubjects}
+                            onChange={(e) => setFormData({ ...formData, enrolledSubjects: typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[] })}
+                            input={<OutlinedInput label="Enrolled Subjects" />}
+                            renderValue={(selected) => (selected as string[]).join(', ')}
+                        >
+                            {subjects.map((name) => (
+                            <MenuItem key={name} value={name}>
+                                <Checkbox checked={(formData.enrolledSubjects || []).indexOf(name) > -1} />
+                                <ListItemText primary={name} />
+                            </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+
+                </Stack>
+            </Box>
+
           </Stack>
+
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-          <Button onClick={handleSave} variant="contained">Save Student</Button>
+        <DialogActions sx={{ p: 2, bgcolor: '#f8fafc' }}>
+          <Button onClick={() => setOpenDialog(false)} color="inherit">Cancel</Button>
+          <Button onClick={handleSave} variant="contained" disableElevation>
+            {editingStudent ? 'Update Student' : 'Save Student'}
+          </Button>
         </DialogActions>
       </Dialog>
 
+      {/* --- IMPORT DIALOG --- */}
       <Dialog open={openImportDialog} onClose={handleCloseImport} maxWidth="sm" fullWidth>
         <DialogTitle>Import Students</DialogTitle>
         <DialogContent dividers>

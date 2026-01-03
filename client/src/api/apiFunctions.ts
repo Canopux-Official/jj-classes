@@ -285,3 +285,19 @@ export async function getSubjects(): Promise<ApiResponse> {
     };
   }
 }
+export async function deleteStudent(id: string): Promise<ApiResponse> {
+  try {
+    const config: AxiosRequestConfig = {
+      method: "delete",
+      url: `${import.meta.env.VITE_SERVER_LINK}/admin/deleteStudent/${id}`,
+      headers: getAuthHeaders()
+    };
+    const response = await axios(config);
+    return { success: true, data: response.data, status: response.status };
+  }
+  catch (error) {
+    const axiosError = error as AxiosError;
+    // @ts-expect-error response.data is not typed in AxiosError
+    return { success: false, message: axiosError.response?.data?.message || "Failed to delete student" };
+  }
+}
