@@ -16,7 +16,7 @@ import {
   type SelectChangeEvent,
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
-import ClassCard, { type ClassCardProps } from '../classcard/ClassCard';
+import ClassCard from '../classcard/ClassCard';
 import ShowSubnode from '../showsubnode/ShowSubNode';
 
 import { MainContainer, PageHeader, ClassGrid } from './ShowClass.styles';

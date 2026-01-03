@@ -1,7 +1,7 @@
 import { styled } from '@mui/material/styles';
 import { Card, Box, Chip } from '@mui/material';
 
-export const StyledCard = styled(Card)(({ theme }) => ({
+export const StyledCard = styled(Card)(() => ({
   height: '100%',
   display: 'flex',
   flexDirection: 'column',

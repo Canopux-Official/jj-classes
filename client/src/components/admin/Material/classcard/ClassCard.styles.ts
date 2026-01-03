@@ -28,7 +28,7 @@ export const CardHeader = styled(Box)(({ theme }) => ({
   gap: theme.spacing(2),
 }));
 
-export const IconWrapper = styled(Box)(({ theme }) => ({
+export const IconWrapper = styled(Box)(() => ({
   width: '48px',
   height: '48px',
   borderRadius: '12px',
@@ -76,7 +76,7 @@ export const TagsWrapper = styled(Box)(({ theme }) => ({
   marginTop: theme.spacing(2),
 }));
 
-export const TagChip = styled(Chip)(({ theme }) => ({
+export const TagChip = styled(Chip)(() => ({
   height: '26px',
   fontSize: '0.75rem',
   fontWeight: 500,
