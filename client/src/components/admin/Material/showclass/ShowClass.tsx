@@ -16,7 +16,7 @@ import {
   type SelectChangeEvent,
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
-import ClassCard, { type ClassCardProps } from '../classcard/ClassCard';
+import ClassCard from '../classcard/ClassCard';
 import ShowSubnode from '../showsubnode/ShowSubNode';
 
 import { MainContainer, PageHeader, ClassGrid } from './ShowClass.styles';
@@ -157,11 +157,11 @@ const ShowClass: React.FC = () => {
         message: response.message || 'Class created successfully',
         severity: 'success',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating class:', error);
       setSnackbar({
         open: true,
-        message: error.message || 'Error creating class',
+        message: error instanceof Error ? error.message : 'Error creating class',
         severity: 'error',
       });
     }
@@ -209,11 +209,11 @@ const ShowClass: React.FC = () => {
         message: response?.message || 'Class updated successfully',
         severity: 'success',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating class:', error);
       setSnackbar({
         open: true,
-        message: error.message || 'Error updating class',
+        message: error instanceof Error ? error.message : 'Error updating class',
         severity: 'error',
       });
     }
@@ -297,11 +297,11 @@ const ShowClass: React.FC = () => {
           severity: result.message?.includes('subfolders') ? 'warning' : 'error',
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       handleCloseDeleteDialog();
       setSnackbar({
         open: true,
-        message: error.message || 'Error deleting folder',
+        message: error instanceof Error ? error.message : 'Error deleting folder',
         severity: 'error',
       });
     }

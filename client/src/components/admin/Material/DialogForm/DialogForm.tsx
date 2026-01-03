@@ -155,9 +155,10 @@ const NodeDialogForm: React.FC<NodeDialogFormProps> = ({
       // Reset selection
       setSelectedFiles(null);
       setUploadProgress({});
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Upload error:', error);
-      alert(`Upload failed: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`Upload failed: ${errorMessage}`);
     } finally {
       setUploading(false);
     }

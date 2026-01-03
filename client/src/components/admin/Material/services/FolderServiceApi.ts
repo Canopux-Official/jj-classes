@@ -7,7 +7,7 @@ import type { Node } from "../types/node";
 interface ApiResponse {
   success: boolean;
   message: string;
-  data?: any;
+  data?: unknown;
 }
 
 const host = import.meta.env.VITE_SERVER_LINK || '';
@@ -38,7 +38,7 @@ export const createOrFetchClass = async (className: string): Promise<ApiResponse
   }
 };
 
-export const createFolder = async (parentId: string, folderData: Node): Promise<any> => {
+export const createFolder = async (parentId: string, folderData: Node): Promise<unknown> => {
   try {
     const response = await fetch(`${host}/api/material/create-sub-folder/${parentId}`, {
       method: 'POST',
@@ -55,7 +55,7 @@ export const createFolder = async (parentId: string, folderData: Node): Promise<
   }
 };
 
-export const updateFolder = async (folderId: string, folderData: Node): Promise<any> => {
+export const updateFolder = async (folderId: string, folderData: Node): Promise<unknown> => {
   try {
     const response = await fetch(`${host}/api/material/update-sub-folder/${folderId}`, {
       method: 'PATCH',
