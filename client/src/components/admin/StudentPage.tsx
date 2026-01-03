@@ -11,10 +11,8 @@ import {
   CircularProgress
 } from '@mui/material';
 
-// Fix 1: Explicitly import the type
 import type { SelectChangeEvent } from '@mui/material';
 
-// Icons
 import AddIcon from '@mui/icons-material/Add';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import SearchIcon from '@mui/icons-material/Search';
@@ -25,13 +23,11 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
-// Styles
 import {
   PageContainer, PageHeader, FilterToolbar,
   SearchInput, FilterSelect, ActionButtonContainer
 } from './StudentPage.styles';
 
-// API
 import {
   getStudents,
   addStudent,
@@ -40,12 +36,13 @@ import {
   bulkImportStudents
 } from '../../api/apiFunctions';
 
-// --- Types ---
 interface IStudentUI {
   _id: string;
   name: string;
   phoneNumber: string;
   parentPhoneNumber: string;
+  email: string;      
+  dob: string;        
   currentClass: string;
   stream?: string;
   targetExams: string[];
@@ -58,39 +55,39 @@ const TARGET_OPTIONS = ['JEE', 'NEET', 'Boards', 'Foundation', 'Olympiad'];
 const MOCK_SUBJECTS = ['Physics', 'Chemistry', 'Maths', 'Biology', 'English']; 
 
 const StudentsPage: React.FC = () => {
-  // --- State ---
   const [students, setStudents] = useState<IStudentUI[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Filters
   const [classFilter, setClassFilter] = useState('All');
   const [examFilter, setExamFilter] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState('All');
 
-  // Pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // Dialogs
   const [openDialog, setOpenDialog] = useState(false);
   const [openImportDialog, setOpenImportDialog] = useState(false);
   const [editingStudent, setEditingStudent] = useState<IStudentUI | null>(null);
 
-  // Import State
-  // Fix 2: Defined a specific type for the imported rows instead of any[]
   const [importData, setImportData] = useState<Record<string, unknown>[]>([]);
   const [importFileName, setImportFileName] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Form State
   const [formData, setFormData] = useState<Partial<IStudentUI>>({
-    name: '', phoneNumber: '', parentPhoneNumber: '',
-    currentClass: '', stream: '', targetExams: [], enrolledSubjects: [],
-    academicSession: '2024-2025', isActive: true
+    name: '', 
+    phoneNumber: '', 
+    parentPhoneNumber: '',
+    email: '',          
+    dob: '',            
+    currentClass: '', 
+    stream: '', 
+    targetExams: [], 
+    enrolledSubjects: [],
+    academicSession: '2024-2025', 
+    isActive: true
   });
 
-  // --- Effects ---
   useEffect(() => {
     fetchStudentsList();
   }, []);
@@ -105,20 +102,32 @@ const StudentsPage: React.FC = () => {
     }
   };
 
-  // --- Handlers ---
 
   const handleOpenDialog = (student?: IStudentUI) => {
     if (student) {
       setEditingStudent(student);
-      // Fix 3: Removed explicit 'any' and added safety check
+      
+      let formattedDob = '';
+      if (student.dob) {
+          try {
+             formattedDob = new Date(student.dob).toISOString().split('T')[0];
+          } catch (e) { console.error("Invalid Date", e) }
+      }
+
       const subjectNames = student.enrolledSubjects.map((s) => 
         (typeof s === 'object' && s !== null && 'name' in s) ? s.name : String(s)
       );
-      setFormData({ ...student, enrolledSubjects: subjectNames });
+      
+      setFormData({ 
+          ...student, 
+          dob: formattedDob, 
+          enrolledSubjects: subjectNames 
+      });
     } else {
       setEditingStudent(null);
       setFormData({
         name: '', phoneNumber: '', parentPhoneNumber: '',
+        email: '', dob: '', 
         currentClass: '', stream: '', targetExams: [], enrolledSubjects: [],
         academicSession: '2024-2025', isActive: true
       });
@@ -128,6 +137,19 @@ const StudentsPage: React.FC = () => {
 
   const handleSave = async () => {
     try {
+      if (
+          !formData.name || 
+          !formData.phoneNumber || 
+          !formData.currentClass || 
+          !formData.dob ||
+          !formData.stream || 
+          !formData.targetExams || formData.targetExams.length === 0 ||
+          !formData.enrolledSubjects || formData.enrolledSubjects.length === 0
+      ) {
+          alert("Please fill in all mandatory fields: Name, Phone, DOB, Class, Stream, Target Exams, and Enrolled Subjects.");
+          return;
+      }
+
       let response;
       const payload = { ...formData };
 
@@ -163,29 +185,16 @@ const StudentsPage: React.FC = () => {
     }
   };
 
-  // --- IMPORT HANDLERS (XLSX Logic) ---
 
-  const handleDownloadTemplate = () => {
-    const templateData = [
-      {
-        name: "Arjun Sharma",
-        phoneNumber: "9876543210", 
-        parentPhoneNumber: "9988776655",
-        email: "arjun@example.com",
-        currentClass: "12",
-        stream: "Science",
-        targetExams: "JEE|Boards",      
-        enrolledSubjects: "Physics|Maths", 
-        academicSession: "2024-2025",
-        dob: "2007-08-15"
-      }
-    ];
+const handleDownloadTemplate = () => {
+  const link = document.createElement("a");
+  link.href = "/Student_Import_Template.xlsx"; // public folder path
+  link.download = "Student_Import_Template.xlsx";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 
-    const ws = XLSX.utils.json_to_sheet(templateData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Students");
-    XLSX.writeFile(wb, "Student_Import_Template.xlsx");
-  };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -194,7 +203,6 @@ const StudentsPage: React.FC = () => {
     setImportFileName(file.name);
 
     const reader = new FileReader();
-    // Fix 4: Typed the ProgressEvent properly
     reader.onload = (e: ProgressEvent<FileReader>) => {
       const data = e.target?.result;
       if (data) {
@@ -220,7 +228,6 @@ const StudentsPage: React.FC = () => {
     try {
       const response = await bulkImportStudents(importData);
       if (response.success) {
-        // Fix 5: Cast response.data to avoid 'unknown' error
         const msg = (response.data as { message?: string })?.message || "Import Successful";
         alert(msg);
         handleCloseImport();
@@ -242,19 +249,24 @@ const StudentsPage: React.FC = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // --- Filtering Logic ---
   
-  // Fix 6: Use 'unknown' generic and cast value to string[] to satisfy MUI Select types
   const handleExamFilterChange = (event: SelectChangeEvent<unknown>) => {
     const value = event.target.value;
     setExamFilter(typeof value === 'string' ? value.split(',') : (value as string[]));
   };
 
   const filteredStudents = students.filter((student) => {
-    const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) || student.phoneNumber.includes(searchTerm);
+    const term = searchTerm.toLowerCase();
+    
+    const matchesSearch = 
+        student.name.toLowerCase().includes(term) || 
+        student.phoneNumber.includes(term) ||
+        (student.email && student.email.toLowerCase().includes(term));
+
     const matchesClass = classFilter === 'All' || student.currentClass === classFilter;
     const matchesExam = examFilter.length === 0 || examFilter.some(filter => student.targetExams.includes(filter));
     const matchesStatus = statusFilter === 'All' || (statusFilter === 'Active' ? student.isActive : !student.isActive);
+    
     return matchesSearch && matchesClass && matchesExam && matchesStatus;
   });
 
@@ -262,7 +274,6 @@ const StudentsPage: React.FC = () => {
 
   return (
     <PageContainer>
-      {/* HEADER */}
       <PageHeader>
         <Box>
           <Typography variant="h5" fontWeight="700" color="text.primary">Students Directory</Typography>
@@ -288,11 +299,10 @@ const StudentsPage: React.FC = () => {
         </Stack>
       </PageHeader>
 
-      {/* FILTERS */}
       <FilterToolbar elevation={0}>
         <SearchInput
           size="small"
-          placeholder="Search Name or Phone..."
+          placeholder="Search Name, Phone, or Email..." 
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
@@ -340,7 +350,6 @@ const StudentsPage: React.FC = () => {
         </Tooltip>
       </FilterToolbar>
 
-      {/* TABLE */}
       <Box sx={{ border: '1px solid #e0e0e0', borderRadius: 2, overflow: 'hidden', bgcolor: 'white' }}>
         <TableContainer>
           <Table sx={{ minWidth: 800 }}>
@@ -362,6 +371,7 @@ const StudentsPage: React.FC = () => {
                     <Box>
                       <Typography variant="subtitle2" fontWeight={700}>{student.name}</Typography>
                       <Typography variant="caption" color="text.secondary">{student.phoneNumber}</Typography>
+                      <Typography variant="caption" display="block" color="text.secondary">{student.email}</Typography>
                     </Box>
                   </TableCell>
                   <TableCell>
@@ -377,7 +387,6 @@ const StudentsPage: React.FC = () => {
                   </TableCell>
                   <TableCell>
                     <Typography variant="caption" color="text.secondary">
-                      {/* Fix 7: Safe rendering of enrolled subjects */}
                       {student.enrolledSubjects.length > 0 
                         ? student.enrolledSubjects.map((s) => 
                             (typeof s === 'object' && s !== null && 'name' in s) ? s.name : String(s)
@@ -411,29 +420,46 @@ const StudentsPage: React.FC = () => {
         />
       </Box>
 
-      {/* --- ADD / EDIT DIALOG --- */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
         <DialogTitle>{editingStudent ? 'Edit Student' : 'Add New Student'}</DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2} pt={1}>
              <Stack direction="row" spacing={2}>
-              <MuiTextField label="Full Name" fullWidth value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
-              <MuiTextField label="Academic Session" fullWidth value={formData.academicSession} onChange={(e) => setFormData({ ...formData, academicSession: e.target.value })} />
+              <MuiTextField label="Full Name" required fullWidth value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+              <MuiTextField label="Academic Session" required fullWidth value={formData.academicSession} onChange={(e) => setFormData({ ...formData, academicSession: e.target.value })} />
             </Stack>
+
             <Stack direction="row" spacing={2}>
-              <MuiTextField label="Phone Number" fullWidth value={formData.phoneNumber} onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })} />
+              <MuiTextField label="Phone Number" required fullWidth value={formData.phoneNumber} onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })} />
+              
+              <MuiTextField label="Email Address" fullWidth value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+            </Stack>
+
+            <Stack direction="row" spacing={2}>
               <MuiTextField label="Parent Phone" fullWidth value={formData.parentPhoneNumber} onChange={(e) => setFormData({ ...formData, parentPhoneNumber: e.target.value })} />
+              <MuiTextField 
+                required
+                label="Date of Birth" 
+                type="date"
+                fullWidth 
+                InputLabelProps={{ shrink: true }}
+                value={formData.dob} 
+                onChange={(e) => setFormData({ ...formData, dob: e.target.value })} 
+              />
             </Stack>
+
             <Stack direction="row" spacing={2}>
-              <FormControl fullWidth>
+              <FormControl fullWidth required>
                 <InputLabel>Class</InputLabel>
                 <FilterSelect value={formData.currentClass} label="Class" onChange={(e) => setFormData({ ...formData, currentClass: e.target.value as string })}>
                   {['9', '10', '11', '12'].map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
                 </FilterSelect>
               </FormControl>
-              <MuiTextField label="Stream (Optional)" fullWidth value={formData.stream} onChange={(e) => setFormData({ ...formData, stream: e.target.value })} />
+              
+              <MuiTextField label="Stream" required fullWidth value={formData.stream} onChange={(e) => setFormData({ ...formData, stream: e.target.value })} />
             </Stack>
-            <FormControl fullWidth>
+            
+            <FormControl fullWidth required>
               <InputLabel>Target Exams</InputLabel>
               <FilterSelect
                 multiple
@@ -450,7 +476,8 @@ const StudentsPage: React.FC = () => {
                 ))}
               </FilterSelect>
             </FormControl>
-            <FormControl fullWidth>
+
+            <FormControl fullWidth required>
               <InputLabel>Enrolled Subjects</InputLabel>
               <FilterSelect
                 multiple
@@ -475,11 +502,9 @@ const StudentsPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* --- IMPORT DIALOG --- */}
       <Dialog open={openImportDialog} onClose={handleCloseImport} maxWidth="sm" fullWidth>
         <DialogTitle>Import Students</DialogTitle>
         <DialogContent dividers>
-          {/* Allow .xlsx, .xls, .csv */}
           <input
             type="file"
             accept=".xlsx, .xls, .csv"

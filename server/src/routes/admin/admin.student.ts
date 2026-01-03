@@ -7,8 +7,7 @@ import {
     bulkAddStudents 
 } from '../../controllers/studentController';
 
-// Note: Ensure your verifyAuth middleware is used in the parent route (e.g. server.ts or index.ts)
-// router.use(verifyAuth); 
+
 
 const router = express.Router();
 

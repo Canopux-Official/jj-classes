@@ -46,8 +46,6 @@ const StudentSchema: Schema = new Schema({
   },
   email: { 
     type: String, 
-    required: true,
-    unique: true,
     index: true,
     // Comment: Used for sending newsletters, performance reports, and important announcements.
   },
@@ -71,6 +69,7 @@ const StudentSchema: Schema = new Schema({
     type: [String],
     enum: ['JEE', 'NEET', 'Boards', 'Foundation', 'Olympiad', 'Other'],
     default: [],
+    required: true,
     // Comment: The specific goals of the student. 
     // If a student has ['JEE'], they will see content tagged 'JEE'.
     // If they have ['JEE', 'Boards'], they see both. 
@@ -81,6 +80,7 @@ const StudentSchema: Schema = new Schema({
   enrolledSubjects: [{ 
     type: Schema.Types.ObjectId, 
     ref: 'Subject',
+    required: true,
     // Comment: Array of Subject IDs (e.g., Physics ID, Math ID). 
     // Allows you to restrict a student who hasn't paid for "Math" from seeing Math content, 
     // even if they are in the correct class.

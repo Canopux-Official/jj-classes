@@ -19,7 +19,6 @@ import {
   TagsWrapper,
   TagChip,
   CardFooter,
-  StatusIndicator,
 } from './ClassCard.styles';
 import type { Node } from '../types/node';
 import { Box } from '@mui/system';

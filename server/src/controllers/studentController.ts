@@ -9,9 +9,18 @@ const hashPassword = async (password: string) => {
 };
 
 // Helper to map Subject Names -> ObjectIds
-const getSubjectIds = async (subjectNames: string[]) => {
-    if (!subjectNames || subjectNames.length === 0) return [];
-    const subjects = await Subject.find({ name: { $in: subjectNames } });
+const getSubjectIds = async (subjectInput: string | string[]) => {
+    if (!subjectInput) return [];
+    
+    // If it's a string "Physics,Maths", split it. If it's already an array, use it.
+    const names = Array.isArray(subjectInput) ? subjectInput : String(subjectInput).split(',');
+    
+    if (names.length === 0) return [];
+
+    // Find all subjects that match these names
+    const subjects = await Subject.find({ name: { $in: names } });
+    
+    // Return just the _id array
     return subjects.map(s => s._id);
 };
 
@@ -45,63 +54,132 @@ export const getStudentById = async (req: Request, res: Response) => {
 }
 
 // --- CREATE ---
-export const addStudent = async (req, res) => {
+export const addStudent = async (req: Request, res: Response) => {
   try {
-    const { students } = req.body; // Expecting an array of student objects
+    let students = [];
+    if (req.body.students && Array.isArray(req.body.students)) {
+      students = req.body.students;
+    } else if (req.body.name || req.body.phoneNumber) {
+      students = [req.body];
+    } else {
+      return res.status(400).json({ message: "Invalid data: No student data found." });
+    }
     
     const addedStudents = [];
     const failedStudents = [];
 
-    // Loop through each student in the request
     for (const student of students) {
-      const { name, phoneNumber, dob, studentClass } = student; // Assuming 'studentClass' or 'class'
+      const { name, phoneNumber, dob, email, stream } = student;
+      
+      const currentClass = student.currentClass || student.studentClass || student.class || student.standard;
+      
+      // UPDATED: No default value, now compulsory
+      const academicSession = student.academicSession; 
+      
+      const targetExams = student.targetExams || [];
+      
+      const missingFields = [];
+      if (!name) missingFields.push('name');
+      if (!phoneNumber) missingFields.push('phoneNumber');
+      if (!dob) missingFields.push('dob');
+      if (!currentClass) missingFields.push('currentClass');
+      
+      // UPDATED: Added check for academicSession
+      if (!academicSession) missingFields.push('academicSession');
+      
+      if (!targetExams || targetExams.length === 0) missingFields.push('targetExams');
+      
+      if (missingFields.length > 0) {
+         failedStudents.push({ 
+             name: name || 'Unknown', 
+             phoneNumber: phoneNumber || 'N/A', 
+             reason: `Missing required fields: ${missingFields.join(', ')}` 
+         });
+         continue; 
+      }
+      
+      const dobDate = new Date(dob);
+      if (isNaN(dobDate.getTime())) {
+          failedStudents.push({ name, phoneNumber, reason: "Invalid Date of Birth format" });
+          continue;
+      }
 
-      // 1. CHECK: Do we have an exact match on ALL 4 fields?
+      let subjectIds = [];
+      try {
+        subjectIds = await getSubjectIds(student.enrolledSubjects);
+      } catch (err) {
+        console.error("Subject lookup failed", err);
+      }
+
+      const hashedPassword = await hashPassword(phoneNumber);
+
       const existingStudent = await Student.findOne({
         name: name,
         phoneNumber: phoneNumber,
-        dob: dob,
-        class: studentClass 
+        currentClass: currentClass,
+        dob: dobDate 
       });
 
       if (existingStudent) {
-        // 2. FAIL: If all 4 match, skip and add to failed list
         failedStudents.push({
           name,
           phoneNumber,
-          reason: "Duplicate entry: Name, Phone, DOB, and Class already exist."
+          reason: "Duplicate: Name, Phone, Class & DOB match an existing student."
         });
       } else {
-        // 3. SUCCESS: No exact match found, create the student
-        const newStudent = await Student.create(student);
-        addedStudents.push(newStudent);
+        try {
+            const newStudent = await Student.create({
+              name,
+              phoneNumber,
+              dob: dobDate,
+              currentClass,
+              academicSession,
+              password: hashedPassword, 
+              targetExams, 
+              enrolledSubjects: subjectIds, 
+              email: email || 'N/A', 
+              stream: stream || 'N/A',
+              parentPhoneNumber: student.parentPhoneNumber || undefined,
+              isActive: true,
+              admissionDate: new Date()
+            });
+            
+            addedStudents.push(newStudent);
+        } catch (createError: any) {
+            failedStudents.push({
+                name,
+                phoneNumber,
+                reason: createError.message.includes('E11000') 
+                    ? "Phone number or Email already exists in system (Unique Constraint)." 
+                    : `Database Error: ${createError.message}`
+            });
+        }
       }
     }
 
-    // 4. RESPONSE: Send back both lists so the frontend can display them
     return res.status(200).json({
       message: "Process completed",
       addedCount: addedStudents.length,
       failedCount: failedStudents.length,
       addedStudents,
-      failedStudents, // Frontend can loop through this to show toast/alert
+      failedStudents,
     });
 
   } catch (error) {
-    console.error("Error adding students:", error);
-    return res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Error in addStudent controller:", error);
+    return res.status(500).json({ 
+        message: "Server error", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+    });
   }
 };
 
-// --- UPDATE ---
 export const updateStudent = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const updates = req.body;
 
-        // If updating subjects, resolve names to IDs again
         if (updates.enrolledSubjects && Array.isArray(updates.enrolledSubjects)) {
-            // Check if they are already IDs or Names
             const isName = typeof updates.enrolledSubjects[0] === 'string' && !updates.enrolledSubjects[0].match(/^[0-9a-fA-F]{24}$/);
             if (isName) {
                 updates.enrolledSubjects = await getSubjectIds(updates.enrolledSubjects);
@@ -140,58 +218,141 @@ export const toggleStudentStatus = async (req: Request, res: Response) => {
 // --- BULK IMPORT ---
 
 export const bulkAddStudents = async (req: Request, res: Response) => {
-    try {
-        const { students } = req.body; 
-        if (!Array.isArray(students) || students.length === 0) {
-            return res.status(400).json({ message: "Invalid data format" });
+  try {
+    const { students } = req.body;
+    
+    if (!Array.isArray(students) || students.length === 0) {
+      return res.status(400).json({ message: "Invalid data format: 'students' array is required." });
+    }
+
+    const addedStudents = [];
+    const failedStudents = [];
+
+    for (const s of students) {
+      try {
+        // --- 1. Safe Type Conversion & Sanitization ---
+        
+        const name = s.name ? String(s.name).trim() : "";
+        const phoneNumber = s.phoneNumber ? String(s.phoneNumber).trim() : "";
+        const email = s.email ? String(s.email).trim() : "";
+        const dobRaw = s.dob; 
+        
+        // Handle Class Aliases
+        const rawClass = s.currentClass || s.studentClass || s.class || s.standard;
+        const currentClass = rawClass ? String(rawClass).trim() : "";
+        
+        // UPDATED: No default value for academicSession
+        const academicSession = s.academicSession ? String(s.academicSession).trim() : "";
+        
+        const stream = s.stream ? String(s.stream).trim() : 'N/A';
+        const parentPhoneNumber = s.parentPhoneNumber ? String(s.parentPhoneNumber).trim() : undefined;
+
+        // Handle Target Exams
+        let targetExams: string[] = [];
+        if (typeof s.targetExams === 'string') {
+            targetExams = s.targetExams.split(/[|,]/).map((t: string) => t.trim()).filter((t: string) => t);
+        } else if (Array.isArray(s.targetExams)) {
+            targetExams = s.targetExams;
         }
 
-        let successCount = 0;
-        let failCount = 0;
+        // --- 2. Validation ---
+        const missingFields = [];
+        if (!name) missingFields.push('name');
+        if (!phoneNumber) missingFields.push('phoneNumber');
+        if (!dobRaw) missingFields.push('dob');
+        if (!currentClass) missingFields.push('currentClass');
+        
+        // UPDATED: Added check for academicSession
+        if (!academicSession) missingFields.push('academicSession');
+        
+        if (targetExams.length === 0) missingFields.push('targetExams');
 
-        for (const s of students) {
-            try {
-                // 1. Safe Type Conversion (Excel Protection)
-                const phoneStr = s.phoneNumber ? String(s.phoneNumber).trim() : "";
-                if(!phoneStr) { failCount++; continue; } // Skip if no phone
-
-                // Quick duplicate check
-                const exists = await Student.findOne({ phoneNumber: phoneStr });
-                if (exists) { failCount++; continue; }
-
-                // 2. Hash Password (must be string)
-                const hashedPassword = await hashPassword(phoneStr);
-
-                // 3. Handle Pipe/Comma Split safely
-                // String(...) ensures .split() never crashes even if value is null/number
-                const enrolledSubjectsRaw = s.enrolledSubjects ? String(s.enrolledSubjects) : "";
-                const subjectIds = await getSubjectIds(enrolledSubjectsRaw.split(/[|,]/));
-
-                const targetExamsRaw = s.targetExams ? String(s.targetExams) : "";
-
-                await Student.create({
-                    ...s,
-                    phoneNumber: phoneStr,
-                    parentPhoneNumber: s.parentPhoneNumber ? String(s.parentPhoneNumber) : "",
-                    enrolledSubjects: subjectIds,
-                    password: hashedPassword,
-                    email: s.email || `${phoneStr}@jjclasses.com`,
-                    dob: s.dob ? new Date(s.dob) : new Date(),
-                    targetExams: targetExamsRaw.split(/[|,]/)
-                });
-                successCount++;
-            } catch (err) {
-                console.error("Bulk Import Row Error:", err);
-                failCount++;
-            }
+        if (missingFields.length > 0) {
+            throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
         }
 
-        res.status(200).json({ 
-            success: true, 
-            message: `Import complete. Success: ${successCount}, Failed: ${failCount}` 
+        // --- 3. Date Parsing ---
+        const dobDate = new Date(dobRaw);
+        if (isNaN(dobDate.getTime())) {
+            throw new Error("Invalid Date of Birth format");
+        }
+
+        // --- 4. Subject Lookup ---
+        let subjectInput = s.enrolledSubjects;
+        if (typeof subjectInput === 'string') {
+            subjectInput = subjectInput.split(/[|,]/).map((sub: string) => sub.trim());
+        }
+        
+        let subjectIds = [];
+        try {
+            subjectIds = await getSubjectIds(subjectInput || []);
+        } catch (err) {
+            console.error(`Subject lookup warning for ${name}:`, err);
+        }
+
+        // --- 5. Password Hashing ---
+        const hashedPassword = await hashPassword(phoneNumber);
+
+        // --- 6. Duplicate Check (Manual) ---
+        const existingStudent = await Student.findOne({
+            name: name,
+            phoneNumber: phoneNumber,
+            currentClass: currentClass,
+            dob: dobDate
         });
 
-    } catch (error) {
-        res.status(500).json({ message: "Bulk import failed" });
+        if (existingStudent) {
+            throw new Error("Duplicate: Name, Phone, Class & DOB match an existing student.");
+        }
+
+        // --- 7. Database Creation ---
+        const newStudent = await Student.create({
+            name,
+            phoneNumber,
+            dob: dobDate,
+            currentClass,
+            academicSession,
+            password: hashedPassword,
+            targetExams,
+            enrolledSubjects: subjectIds,
+            email: email || 'N/A',
+            stream: stream,
+            parentPhoneNumber,
+            isActive: true,
+            admissionDate: new Date()
+        });
+
+        addedStudents.push(newStudent);
+
+      } catch (err: any) {
+        // --- Error Handling for Row ---
+        let reason = err.message;
+        if (err.message && err.message.includes('E11000')) {
+            reason = "Phone number or Email already exists in system (Unique Constraint).";
+        }
+
+        failedStudents.push({
+            name: s.name || 'Unknown',
+            phoneNumber: s.phoneNumber || 'N/A',
+            reason: reason
+        });
+      }
     }
-}
+
+    // --- Final Response ---
+    return res.status(200).json({
+        message: "Process completed",
+        addedCount: addedStudents.length,
+        failedCount: failedStudents.length,
+        addedStudents,
+        failedStudents,
+    });
+
+  } catch (error: any) {
+    console.error("Error in bulkAddStudents controller:", error);
+    return res.status(500).json({ 
+        message: "Server error", 
+        error: error.message || "Unknown error" 
+    });
+  }
+};
