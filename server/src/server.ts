@@ -7,6 +7,7 @@ import connectDB from './config/db';
 const port = process.env.PORT || 3000;
 import authRoutes from './routes/auth/auth'; 
 import adminStudentRoutes from './routes/admin/admin.student';
+import materialRoutes from './routes/materialRoutes';
 const corsOptions = {
   origin: `${process.env.CLIENT_LINK}`,
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
@@ -22,6 +23,9 @@ connectDB();
 app.use('/auth', authRoutes);
 app.use('/admin', adminStudentRoutes);
 
+app.use('/api/material', materialRoutes);
+
+// Vercel deployment config
 if (process.env.VERCEL !== "true") {
   app.listen(port, () => { 
     console.log(`Server is running on http://localhost:${port}`);
