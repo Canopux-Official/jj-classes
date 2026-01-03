@@ -28,8 +28,8 @@ export interface ClassCardProps {
   name: string;
   tags: string[];
   description?: string;
-  fileDetails?: any[];
-  referenceDetails?: any[];
+  fileDetails?: unknown[];
+  referenceDetails?: unknown[];
   createdAt?: string;
   lastDate?: string;
   node: Node; // Add the full node object
@@ -136,8 +136,8 @@ const ClassCard: React.FC<ClassCardProps> = ({
             id="class-card-menu"
             anchorEl={anchorEl}
             open={open}
-            onClose={(e: any) => {
-              e?.stopPropagation();
+            onClose={(e: React.SyntheticEvent) => {
+              (e as React.SyntheticEvent)?.stopPropagation();
               handleMenuClose();
             }}
             MenuListProps={{
