@@ -8,7 +8,7 @@ import AdminSidebar from '../../components/admin/AdminSidebar';
 import AdminHeader from '../../components/admin/AdminHeader';
 
 // Page Components
-import DashboardHome from './DashboardHome';
+import DashboardHome from '../../components/admin/DashboardHome';
 import StudentsPage from '../../components/admin/StudentPage';
 import SubjectsPage from './../../components/admin/SubjectPage';
 import SessionPage from '../../components/admin/SessionPage';

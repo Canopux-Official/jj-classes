@@ -1,13 +1,18 @@
-import React, { useState } from 'react';
-import { 
-  Typography, Button, Table, TableBody, TableCell, 
-  TableContainer, TableHead, TableRow, Chip, IconButton, 
+import React, { useEffect, useState, useRef } from 'react';
+import * as XLSX from 'xlsx'; 
+import {
+  Typography, Button, Table, TableBody, TableCell,
+  TableContainer, TableHead, TableRow, Chip, IconButton,
   MenuItem, InputAdornment, TablePagination, Tooltip,
   FormControl, InputLabel, Stack, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField as MuiTextField,
   OutlinedInput, Checkbox, ListItemText,
-  Box
+  Box,
+  CircularProgress
 } from '@mui/material';
+
+// Fix 1: Explicitly import the type
+import type { SelectChangeEvent } from '@mui/material';
 
 // Icons
 import AddIcon from '@mui/icons-material/Add';
@@ -17,12 +22,23 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 // Styles
-import { 
-  PageContainer, PageHeader, FilterToolbar, 
-  SearchInput, FilterSelect, ActionButtonContainer 
+import {
+  PageContainer, PageHeader, FilterToolbar,
+  SearchInput, FilterSelect, ActionButtonContainer
 } from './StudentPage.styles';
+
+// API
+import {
+  getStudents,
+  addStudent,
+  updateStudent,
+  toggleStudentStatus,
+  bulkImportStudents
+} from '../../api/apiFunctions';
 
 // --- Types ---
 interface IStudentUI {
@@ -33,88 +49,207 @@ interface IStudentUI {
   currentClass: string;
   stream?: string;
   targetExams: string[];
-  enrolledSubjects: string[]; // Mocking IDs as strings for UI
+  enrolledSubjects: (string | { name: string })[]; 
   academicSession: string;
   isActive: boolean;
 }
 
-const INITIAL_STUDENTS: IStudentUI[] = [
-  { 
-    _id: '1', name: 'Rahul Sharma', phoneNumber: '9876543210', parentPhoneNumber: '9998887770', 
-    currentClass: '12', stream: 'Science', targetExams: ['JEE', 'Boards'], 
-    enrolledSubjects: ['Physics', 'Maths'], academicSession: '2024-2025', isActive: true 
-  },
-];
-
 const TARGET_OPTIONS = ['JEE', 'NEET', 'Boards', 'Foundation', 'Olympiad'];
-const MOCK_SUBJECTS = ['Physics', 'Chemistry', 'Maths', 'Biology', 'English'];
+const MOCK_SUBJECTS = ['Physics', 'Chemistry', 'Maths', 'Biology', 'English']; 
 
 const StudentsPage: React.FC = () => {
   // --- State ---
-  const [students, setStudents] = useState<IStudentUI[]>(INITIAL_STUDENTS);
+  const [students, setStudents] = useState<IStudentUI[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Filters
   const [classFilter, setClassFilter] = useState('All');
   const [examFilter, setExamFilter] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState('All');
-  
+
   // Pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   // Dialogs
-  const [openDialog, setOpenDialog] = useState(false); // Add/Edit
-  const [openCsvDialog, setOpenCsvDialog] = useState(false); // CSV Upload
+  const [openDialog, setOpenDialog] = useState(false);
+  const [openImportDialog, setOpenImportDialog] = useState(false);
   const [editingStudent, setEditingStudent] = useState<IStudentUI | null>(null);
+
+  // Import State
+  // Fix 2: Defined a specific type for the imported rows instead of any[]
+  const [importData, setImportData] = useState<Record<string, unknown>[]>([]);
+  const [importFileName, setImportFileName] = useState<string | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form State
   const [formData, setFormData] = useState<Partial<IStudentUI>>({
-    name: '', phoneNumber: '', parentPhoneNumber: '', 
+    name: '', phoneNumber: '', parentPhoneNumber: '',
     currentClass: '', stream: '', targetExams: [], enrolledSubjects: [],
     academicSession: '2024-2025', isActive: true
   });
+
+  // --- Effects ---
+  useEffect(() => {
+    fetchStudentsList();
+  }, []);
+
+  const fetchStudentsList = async () => {
+    try {
+      const response = await getStudents();
+      const data = response.data as IStudentUI[];
+      setStudents(data);
+    } catch (error) {
+      console.error('Error fetching students:', error);
+    }
+  };
 
   // --- Handlers ---
 
   const handleOpenDialog = (student?: IStudentUI) => {
     if (student) {
       setEditingStudent(student);
-      setFormData(student);
+      // Fix 3: Removed explicit 'any' and added safety check
+      const subjectNames = student.enrolledSubjects.map((s) => 
+        (typeof s === 'object' && s !== null && 'name' in s) ? s.name : String(s)
+      );
+      setFormData({ ...student, enrolledSubjects: subjectNames });
     } else {
       setEditingStudent(null);
-      setFormData({ 
-        name: '', phoneNumber: '', parentPhoneNumber: '', 
+      setFormData({
+        name: '', phoneNumber: '', parentPhoneNumber: '',
         currentClass: '', stream: '', targetExams: [], enrolledSubjects: [],
-        academicSession: '2024-2025', isActive: true 
+        academicSession: '2024-2025', isActive: true
       });
     }
     setOpenDialog(true);
   };
 
-  const handleSave = () => {
-    // Save logic (mock)
-    if (editingStudent) {
-      setStudents(prev => prev.map(s => s._id === editingStudent._id ? { ...s, ...formData } as IStudentUI : s));
-    } else {
-      setStudents(prev => [{ ...formData, _id: Date.now().toString() } as IStudentUI, ...prev]);
+  const handleSave = async () => {
+    try {
+      let response;
+      const payload = { ...formData };
+
+      if (editingStudent) {
+        response = await updateStudent(editingStudent._id, payload);
+      } else {
+        response = await addStudent(payload);
+      }
+
+      if (response.success) {
+        alert(editingStudent ? "Student updated!" : "Student added!");
+        setOpenDialog(false);
+        fetchStudentsList();
+      } else {
+        alert("Error: " + response.message);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("An unexpected error occurred.");
     }
-    setOpenDialog(false);
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Deactivate this student?')) {
-      setStudents(prev => prev.map(s => s._id === id ? { ...s, isActive: false } : s));
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Are you sure you want to toggle the active status of this student?')) {
+      const response = await toggleStudentStatus(id);
+      if (response.success) {
+        setStudents(prev => prev.map(s =>
+          s._id === id ? { ...s, isActive: !s.isActive } : s
+        ));
+      } else {
+        alert("Error: " + response.message);
+      }
     }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleExamFilterChange = (event: any) => {
-    const { target: { value } } = event;
-    setExamFilter(typeof value === 'string' ? value.split(',') : value);
+  // --- IMPORT HANDLERS (XLSX Logic) ---
+
+  const handleDownloadTemplate = () => {
+    const templateData = [
+      {
+        name: "Arjun Sharma",
+        phoneNumber: "9876543210", 
+        parentPhoneNumber: "9988776655",
+        email: "arjun@example.com",
+        currentClass: "12",
+        stream: "Science",
+        targetExams: "JEE|Boards",      
+        enrolledSubjects: "Physics|Maths", 
+        academicSession: "2024-2025",
+        dob: "2007-08-15"
+      }
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Students");
+    XLSX.writeFile(wb, "Student_Import_Template.xlsx");
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImportFileName(file.name);
+
+    const reader = new FileReader();
+    // Fix 4: Typed the ProgressEvent properly
+    reader.onload = (e: ProgressEvent<FileReader>) => {
+      const data = e.target?.result;
+      if (data) {
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet);
+        
+        if (jsonData.length === 0) {
+          alert("File appears to be empty.");
+          return;
+        }
+        setImportData(jsonData);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const handleImportSubmit = async () => {
+    if (importData.length === 0) return;
+
+    setIsImporting(true);
+    try {
+      const response = await bulkImportStudents(importData);
+      if (response.success) {
+        // Fix 5: Cast response.data to avoid 'unknown' error
+        const msg = (response.data as { message?: string })?.message || "Import Successful";
+        alert(msg);
+        handleCloseImport();
+        fetchStudentsList();
+      } else {
+        alert("Import failed: " + response.message);
+      }
+    } catch {
+      alert("Import failed due to server error");
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleCloseImport = () => {
+    setOpenImportDialog(false);
+    setImportData([]);
+    setImportFileName(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   // --- Filtering Logic ---
+  
+  // Fix 6: Use 'unknown' generic and cast value to string[] to satisfy MUI Select types
+  const handleExamFilterChange = (event: SelectChangeEvent<unknown>) => {
+    const value = event.target.value as string[];
+    setExamFilter(typeof value === 'string' ? value.split(',') : value);
+  };
+
   const filteredStudents = students.filter((student) => {
     const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) || student.phoneNumber.includes(searchTerm);
     const matchesClass = classFilter === 'All' || student.currentClass === classFilter;
@@ -134,16 +269,16 @@ const StudentsPage: React.FC = () => {
           <Typography variant="body2" color="text.secondary">Manage admissions and access.</Typography>
         </Box>
         <Stack direction="row" spacing={2}>
-          <Button 
-            variant="outlined" 
-            startIcon={<CloudUploadIcon />} 
-            onClick={() => setOpenCsvDialog(true)}
+          <Button
+            variant="outlined"
+            startIcon={<CloudUploadIcon />}
+            onClick={() => setOpenImportDialog(true)}
             sx={{ backgroundColor: 'white' }}
           >
-            Import CSV
+            Import Excel
           </Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             startIcon={<AddIcon />}
             onClick={() => handleOpenDialog()}
             sx={{ bgcolor: 'primary.main' }}
@@ -162,8 +297,7 @@ const StudentsPage: React.FC = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
           InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
         />
-        
-        {/* Class Filter */}
+
         <FormControl size="small">
           <InputLabel>Class</InputLabel>
           <FilterSelect value={classFilter} label="Class" onChange={(e) => setClassFilter(e.target.value as string)}>
@@ -172,7 +306,6 @@ const StudentsPage: React.FC = () => {
           </FilterSelect>
         </FormControl>
 
-        {/* Target Filter */}
         <FormControl size="small" sx={{ minWidth: 200 }}>
           <InputLabel>Target Exams</InputLabel>
           <FilterSelect
@@ -191,7 +324,6 @@ const StudentsPage: React.FC = () => {
           </FilterSelect>
         </FormControl>
 
-        {/* Status Filter */}
         <FormControl size="small">
           <InputLabel>Status</InputLabel>
           <FilterSelect value={statusFilter} label="Status" onChange={(e) => setStatusFilter(e.target.value as string)}>
@@ -200,7 +332,7 @@ const StudentsPage: React.FC = () => {
             <MenuItem value="Inactive">Inactive</MenuItem>
           </FilterSelect>
         </FormControl>
-        
+
         <Tooltip title="Reset Filters">
           <IconButton onClick={() => { setClassFilter('All'); setExamFilter([]); setStatusFilter('All'); setSearchTerm(''); }}>
             <FilterListIcon />
@@ -233,7 +365,7 @@ const StudentsPage: React.FC = () => {
                     </Box>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2" fontWeight={600}>Class {student.currentClass}</Typography>
+                    <Typography variant="body2" fontWeight={600}>{student.currentClass}</Typography>
                     {student.stream && <Typography variant="caption">{student.stream}</Typography>}
                   </TableCell>
                   <TableCell>
@@ -245,7 +377,12 @@ const StudentsPage: React.FC = () => {
                   </TableCell>
                   <TableCell>
                     <Typography variant="caption" color="text.secondary">
-                      {student.enrolledSubjects.length > 0 ? student.enrolledSubjects.join(', ') : 'None'}
+                      {/* Fix 7: Safe rendering of enrolled subjects */}
+                      {student.enrolledSubjects.length > 0 
+                        ? student.enrolledSubjects.map((s) => 
+                            (typeof s === 'object' && s !== null && 'name' in s) ? s.name : String(s)
+                          ).join(', ') 
+                        : 'None'}
                     </Typography>
                   </TableCell>
                   <TableCell><Chip label={student.academicSession} size="small" sx={{ bgcolor: '#f1f5f9' }} /></TableCell>
@@ -279,30 +416,29 @@ const StudentsPage: React.FC = () => {
         <DialogTitle>{editingStudent ? 'Edit Student' : 'Add New Student'}</DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2} pt={1}>
-            <Stack direction="row" spacing={2}>
-              <MuiTextField label="Full Name" fullWidth value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
-              <MuiTextField label="Academic Session" fullWidth value={formData.academicSession} onChange={(e) => setFormData({...formData, academicSession: e.target.value})} />
+             <Stack direction="row" spacing={2}>
+              <MuiTextField label="Full Name" fullWidth value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+              <MuiTextField label="Academic Session" fullWidth value={formData.academicSession} onChange={(e) => setFormData({ ...formData, academicSession: e.target.value })} />
             </Stack>
             <Stack direction="row" spacing={2}>
-              <MuiTextField label="Phone Number" fullWidth value={formData.phoneNumber} onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})} />
-              <MuiTextField label="Parent Phone" fullWidth value={formData.parentPhoneNumber} onChange={(e) => setFormData({...formData, parentPhoneNumber: e.target.value})} />
+              <MuiTextField label="Phone Number" fullWidth value={formData.phoneNumber} onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })} />
+              <MuiTextField label="Parent Phone" fullWidth value={formData.parentPhoneNumber} onChange={(e) => setFormData({ ...formData, parentPhoneNumber: e.target.value })} />
             </Stack>
             <Stack direction="row" spacing={2}>
               <FormControl fullWidth>
                 <InputLabel>Class</InputLabel>
-                <FilterSelect value={formData.currentClass} label="Class" onChange={(e) => setFormData({...formData, currentClass: e.target.value as string})}>
+                <FilterSelect value={formData.currentClass} label="Class" onChange={(e) => setFormData({ ...formData, currentClass: e.target.value as string })}>
                   {['9', '10', '11', '12'].map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
                 </FilterSelect>
               </FormControl>
-              <MuiTextField label="Stream (Optional)" fullWidth value={formData.stream} onChange={(e) => setFormData({...formData, stream: e.target.value})} />
+              <MuiTextField label="Stream (Optional)" fullWidth value={formData.stream} onChange={(e) => setFormData({ ...formData, stream: e.target.value })} />
             </Stack>
-            
             <FormControl fullWidth>
               <InputLabel>Target Exams</InputLabel>
               <FilterSelect
                 multiple
                 value={formData.targetExams}
-                onChange={(e) => setFormData({...formData, targetExams: typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[]})}
+                onChange={(e) => setFormData({ ...formData, targetExams: typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[] })}
                 input={<OutlinedInput label="Target Exams" />}
                 renderValue={(selected) => (selected as string[]).join(', ')}
               >
@@ -314,14 +450,13 @@ const StudentsPage: React.FC = () => {
                 ))}
               </FilterSelect>
             </FormControl>
-
             <FormControl fullWidth>
-              <InputLabel>Enrolled Subjects (Access Control)</InputLabel>
+              <InputLabel>Enrolled Subjects</InputLabel>
               <FilterSelect
                 multiple
                 value={formData.enrolledSubjects}
-                onChange={(e) => setFormData({...formData, enrolledSubjects: typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[]})}
-                input={<OutlinedInput label="Enrolled Subjects (Access Control)" />}
+                onChange={(e) => setFormData({ ...formData, enrolledSubjects: typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[] })}
+                input={<OutlinedInput label="Enrolled Subjects" />}
                 renderValue={(selected) => (selected as string[]).join(', ')}
               >
                 {MOCK_SUBJECTS.map((name) => (
@@ -340,36 +475,74 @@ const StudentsPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* --- CSV IMPORT DIALOG --- */}
-      <Dialog open={openCsvDialog} onClose={() => setOpenCsvDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Import Students via CSV</DialogTitle>
+      {/* --- IMPORT DIALOG --- */}
+      <Dialog open={openImportDialog} onClose={handleCloseImport} maxWidth="sm" fullWidth>
+        <DialogTitle>Import Students</DialogTitle>
         <DialogContent dividers>
-          <Box 
-            sx={{ 
-              border: '2px dashed #ccc', 
-              borderRadius: 2, 
-              p: 4, 
-              textAlign: 'center', 
+          {/* Allow .xlsx, .xls, .csv */}
+          <input
+            type="file"
+            accept=".xlsx, .xls, .csv"
+            hidden
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+          />
+          
+          <Box
+            onClick={() => fileInputRef.current?.click()}
+            sx={{
+              border: '2px dashed',
+              borderColor: importFileName ? 'success.main' : '#ccc',
+              borderRadius: 2,
+              p: 4,
+              textAlign: 'center',
               cursor: 'pointer',
-              bgcolor: '#fafafa',
-              '&:hover': { bgcolor: '#f0f0f0', borderColor: '#999' }
+              bgcolor: importFileName ? '#f0fff4' : '#fafafa',
+              transition: 'all 0.2s',
+              '&:hover': { bgcolor: importFileName ? '#e6fffa' : '#f0f0f0', borderColor: importFileName ? 'success.dark' : '#999' }
             }}
           >
-            <CloudUploadIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
-            <Typography variant="h6">Click or Drag CSV file here</Typography>
-            <Typography variant="body2" color="text.secondary">Supported columns: Name, Phone, Class, Stream...</Typography>
+            {importFileName ? (
+              <>
+                <CheckCircleIcon sx={{ fontSize: 48, color: 'success.main', mb: 1 }} />
+                <Typography variant="h6" color="success.main">File Selected</Typography>
+                <Stack direction="row" alignItems="center" justifyContent="center" spacing={1} mt={1}>
+                    <InsertDriveFileIcon color="action" fontSize="small"/>
+                    <Typography variant="body1" fontWeight="500">{importFileName}</Typography>
+                </Stack>
+                <Typography variant="caption" display="block" mt={1} color="text.secondary">Click to change file</Typography>
+              </>
+            ) : (
+              <>
+                <CloudUploadIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
+                <Typography variant="h6">Click to Upload Excel File</Typography>
+                <Typography variant="body2" color="text.secondary">Supported: .xlsx, .xls, .csv</Typography>
+              </>
+            )}
           </Box>
+
           <Box mt={2} display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="caption" color="text.secondary">Need a template?</Typography>
-            <Button startIcon={<FileDownloadIcon />} size="small">Download Sample CSV</Button>
+            <Typography variant="caption" color="text.secondary">
+              {importData.length > 0 ? `${importData.length} records ready to import` : "Need a template?"}
+            </Typography>
+            <Button startIcon={<FileDownloadIcon />} size="small" onClick={handleDownloadTemplate}>
+              Download Excel Template
+            </Button>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenCsvDialog(false)}>Cancel</Button>
-          <Button variant="contained" color="primary">Upload & Process</Button>
+          <Button onClick={handleCloseImport}>Cancel</Button>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={handleImportSubmit}
+            disabled={!importFileName || isImporting}
+            startIcon={isImporting ? <CircularProgress size={20} color="inherit"/> : null}
+          >
+            {isImporting ? 'Importing...' : 'Upload & Process'}
+          </Button>
         </DialogActions>
       </Dialog>
-
     </PageContainer>
   );
 };

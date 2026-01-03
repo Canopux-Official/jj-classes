@@ -4,6 +4,8 @@ export interface IAdmin extends Document {
   name: string;
   phoneNumber: string;
   role: 'superadmin' | 'admin';
+  email: string;
+  password: string;
 }
 
 const AdminSchema: Schema = new Schema({
@@ -28,6 +30,17 @@ const AdminSchema: Schema = new Schema({
     // Comment: Future-proofing. 'superadmin' might be able to delete other admins, 
     // while 'admin' can only manage students.
   },
+  email: { 
+    type: String, 
+    required: true,
+    unique: true,
+    // Comment: Contact email for the admin. Used for notifications and password recovery.
+  },
+  password: {
+    type: String,
+    required: true,
+    // Comment: Hashed password for admin authentication.
+  }
 }, { timestamps: true });
 
 export default mongoose.model<IAdmin>('Admin', AdminSchema);

@@ -2,9 +2,12 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IStudent extends Document {
   name: string;
+  dob: Date; 
   phoneNumber: string;
   parentPhoneNumber?: string;
+  email: string;
   currentClass: string;
+  password: string;
   stream?: string;
   targetExams: string[];
   enrolledSubjects: mongoose.Types.ObjectId[];
@@ -21,6 +24,12 @@ const StudentSchema: Schema = new Schema({
     // Comment: Full legal name of the student for records.
   },
 
+  dob: { 
+    type: Date, 
+    required: true,
+    // Comment: Date of Birth. Used for verification and potential age eligibility checks.
+  },
+
   // Authentication Key
   phoneNumber: { 
     type: String, 
@@ -35,7 +44,13 @@ const StudentSchema: Schema = new Schema({
     type: String,
     // Comment: Stored for emergency contact or sending performance reports/absenteeism alerts.
   },
-
+  email: { 
+    type: String, 
+    required: true,
+    unique: true,
+    index: true,
+    // Comment: Used for sending newsletters, performance reports, and important announcements.
+  },
   // Academic Standing
   currentClass: { 
     type: String, 
@@ -46,6 +61,7 @@ const StudentSchema: Schema = new Schema({
 
   stream: { 
     type: String,
+    default: 'N/A'
     // Comment: Relevant for 11th/12th (e.g., "Science", "Commerce"). 
     // Can be 'N/A' for 9th/10th. Helps in filtering subjects.
   },
@@ -53,7 +69,7 @@ const StudentSchema: Schema = new Schema({
   // *** CRITICAL ACCESS CONTROL ***
   targetExams: {
     type: [String],
-    enum: ['JEE', 'NEET', 'Boards', 'Other'],
+    enum: ['JEE', 'NEET', 'Boards', 'Foundation', 'Olympiad', 'Other'],
     default: [],
     // Comment: The specific goals of the student. 
     // If a student has ['JEE'], they will see content tagged 'JEE'.
@@ -90,6 +106,11 @@ const StudentSchema: Schema = new Schema({
     // Comment: "Soft Delete" flag. If a student leaves mid-session, set this to false. 
     // They can no longer log in, but their data remains for analytics.
   },
+  password: {
+    type: String,
+    required: true,
+    // Comment: Hashed password for student authentication.
+  }
 }, { timestamps: true }); // Automatically adds createdAt and updatedAt
 
 export default mongoose.model<IStudent>('Student', StudentSchema);

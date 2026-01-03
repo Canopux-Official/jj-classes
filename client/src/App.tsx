@@ -1,5 +1,6 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ThemeProvider, CssBaseline } from '@mui/material';
+import { useState, useEffect, type ReactNode } from 'react'; // Import ReactNode
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { ThemeProvider, CssBaseline, CircularProgress, Box } from '@mui/material';
 import theme from './theme/theme';
 
 // Import Pages
@@ -9,12 +10,65 @@ import LoginPage from './pages/auth/LoginPage';
 
 // Import Dashboard Layouts
 import AdminDashboard from './pages/admin/AdminDashboard';
-
-// Placeholder for Student Dashboard (or import it if you have created the file)
-// If you haven't created the file yet, keep this placeholder:
-// const StudentDashboard = () => <h1>Student Dashboard</h1>;
-// Assuming the file exists based on your structure:
 import StudentDashboard from './pages/student/StudentDashboard'; 
+
+// Import API check
+import { validateToken } from './api/apiFunctions';
+
+// 👇 Define the props interface
+interface ProtectedRouteProps {
+  children: ReactNode;
+}
+
+/**
+ * 🛡️ Protected Route Component (Async)
+ * Verifies token with backend before allowing access.
+ */
+// 👇 Apply the interface here
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // Explicit typing for state
+  const location = useLocation();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        setIsAuthenticated(false);
+        return;
+      }
+
+      // Verify with backend
+      const isValid = await validateToken();
+      if (!isValid) {
+        localStorage.removeItem('authToken'); 
+        localStorage.removeItem('authEmail'); 
+        setIsAuthenticated(false);
+      } else {
+        setIsAuthenticated(true);
+      }
+    };
+
+    checkAuth();
+  }, [location.pathname]);
+
+  // 1. Loading State
+  if (isAuthenticated === null) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress color="secondary" />
+      </Box>
+    );
+  }
+
+  // 2. Unauthenticated State -> Redirect
+  if (isAuthenticated === false) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // 3. Authenticated -> Render Dashboard
+  return <>{children}</>;
+};
 
 function App() {
   return (
@@ -27,11 +81,24 @@ function App() {
           <Route path="/courses" element={<CoursesPage />} />
           <Route path="/login" element={<LoginPage />} />
 
-          {/* Protected Routes 
-              The '/*' is crucial here because AdminDashboard has its own nested <Routes> 
-          */}
-          <Route path="/admin/*" element={<AdminDashboard />} />
-          <Route path="/student/*" element={<StudentDashboard />} />
+          {/* 🔒 Protected Routes */}
+          <Route 
+            path="/admin/*" 
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/student/*" 
+            element={
+              <ProtectedRoute>
+                <StudentDashboard />
+              </ProtectedRoute>
+            } 
+          />
 
           {/* 404 Handler */}
           <Route path="*" element={<h1 style={{textAlign:'center', marginTop:'50px'}}>404: Page Not Found</h1>} />

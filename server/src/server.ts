@@ -1,29 +1,31 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
+import cors from 'cors';
 import dotenv from 'dotenv';
-import connectDB from './config/db'; // Import the connection logic
-
-// Load env vars
 dotenv.config();
-
-// Connect to Database
-connectDB();
-
-const app = express();
-
-// Middleware to parse JSON
-app.use(express.json());
+import connectDB from './config/db'; 
 
 const port = process.env.PORT || 3000;
+import authRoutes from './routes/auth/auth'; 
+import adminStudentRoutes from './routes/admin/admin.student';
+const corsOptions = {
+  origin: `${process.env.CLIENT_LINK}`,
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+};
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello, TypeScript with Express!');
-});
+const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors(corsOptions));
 
-// Vercel deployment config
+connectDB();
+
+app.use('/auth', authRoutes);
+app.use('/admin', adminStudentRoutes);
+
 if (process.env.VERCEL !== "true") {
-  app.listen(port, () => { // Changed 2424 to port variable
+  app.listen(port, () => { 
     console.log(`Server is running on http://localhost:${port}`);
   });
 }
 
-module.exports = app;
+export default app;
