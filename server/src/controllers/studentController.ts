@@ -69,8 +69,8 @@ export const addStudent = async (req: Request, res: Response) => {
     const failedStudents = [];
 
     for (const student of students) {
-      const { name, phoneNumber, dob, email, stream } = student;
-      
+      const { name, phoneNumber, dob, email} = student;
+      const stream = student.stream ? String(student.stream).trim().toLowerCase() : 'N/A';
       const currentClass = student.currentClass || student.studentClass || student.class || student.standard;
       
       // UPDATED: No default value, now compulsory
@@ -244,7 +244,7 @@ export const bulkAddStudents = async (req: Request, res: Response) => {
         // UPDATED: No default value for academicSession
         const academicSession = s.academicSession ? String(s.academicSession).trim() : "";
         
-        const stream = s.stream ? String(s.stream).trim() : 'N/A';
+        const stream = s.stream ? String(s.stream).trim().toLowerCase() : 'N/A';
         const parentPhoneNumber = s.parentPhoneNumber ? String(s.parentPhoneNumber).trim() : undefined;
 
         // Handle Target Exams
