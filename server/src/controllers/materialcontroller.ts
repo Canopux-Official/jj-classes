@@ -6,8 +6,8 @@ import Material from '../models/Material';
 // otherwise create a new class and return the id of the created class
 const createClassId = async (req: Request, res: Response) => {
     try {
-        const name = req.body.name;
-        const findExisting = await Material.findOne({ heading: name });
+        const {name,targetExam} = req.body;
+        const findExisting = await Material.findOne({ heading: name,targetExam: targetExam });
         if (findExisting) {
             // here i need to show all the details of the existing class
             return res.status(200).json({ message: 'Class Already Exists', success: false, data: findExisting });
@@ -15,6 +15,7 @@ const createClassId = async (req: Request, res: Response) => {
         else {
             const newClass = new Material({
                 heading: name,
+                targetExam: targetExam,
                 parentId: null
             })
             const savedClass = await newClass.save();
@@ -256,12 +257,13 @@ const updateSubFolder = async (req: Request, res: Response) => {
         }
 
         // Get updated values from the request body
-        const { heading, description, fileDetails, referenceDetails, tags, lastDate, type, fileId } = req.body;
+        const { heading, description, fileDetails, referenceDetails, tags, lastDate, type, fileId,targetExam } = req.body;
 
         // Update fields with new values, keeping the existing ones if not provided
         folder.heading = heading || "";
         folder.description = description || "";
         folder.fileDetails = fileDetails || [];
+        folder.targetExam = targetExam || "";
         folder.referenceDetails = referenceDetails || [];
         folder.tags = tags || [];
         folder.lastDate = lastDate || "";

@@ -4,6 +4,7 @@ import type { ReferenceDetail } from "./referenceDetails";
 export interface Node {
   _id: string;
   heading: string;
+  targetExam: string;
   type: 'folder' | 'file';
   parentId: string | null;
   description?: string;

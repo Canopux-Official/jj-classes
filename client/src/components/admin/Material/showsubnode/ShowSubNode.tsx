@@ -162,6 +162,7 @@ const ShowSubnode: React.FC<ShowSubnodeProps> = ({
         heading: nodeData.heading!,
         type: nodeData.type || 'folder',
         parentId: currentNodeId,
+        targetExam : "",
         description: nodeData.description || '',
         tags: nodeData.tags || [],
         createdAt: new Date().toISOString(),
@@ -216,6 +217,7 @@ const ShowSubnode: React.FC<ShowSubnodeProps> = ({
         _id: editingNode._id,
         heading: nodeData.heading!,
         type: nodeData.type || editingNode.type,
+        targetExam: nodeData.targetExam || editingNode.targetExam,
         description: nodeData.description || editingNode.description,
         tags: nodeData.tags || editingNode.tags,
         parentId: editingNode.parentId,
@@ -474,7 +476,7 @@ const ShowSubnode: React.FC<ShowSubnodeProps> = ({
                 wordBreak: 'break-word',
               }}
             >
-              {currentNode?.heading}
+              {currentNode?.heading} {currentNode?.targetExam && `+ ${currentNode.targetExam}`}
             </Typography>
             
             {currentNode?.description && (

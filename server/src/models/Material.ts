@@ -34,6 +34,7 @@ export interface IMaterial extends Document {
   // Access Control
   // stream: string;
   class: 'Class 9' | 'Class 10' | 'Class 11' | 'Class 12' | 'JEE';
+  targetExam: 'JEE' | 'NEET' | 'BOARD' | 'OTHER' | '';
 
   // Status & Workflow
   // status: 'Pending' | 'Completed' | 'Graded';
@@ -127,6 +128,12 @@ const MaterialSchema: Schema = new Schema({
     enum: ['Class 9', 'Class 10', 'Class 11', 'Class 12', 'JEE'],
     required: false,
     // Comment: Specifies the grade level for the material
+  },
+  targetExam:{
+    type: String,
+    enum: ['JEE', 'NEET', 'BOARD', 'OTHER',""],
+    required: false,
+    default: ''
   },
   // visibility: {
   //   type: String,

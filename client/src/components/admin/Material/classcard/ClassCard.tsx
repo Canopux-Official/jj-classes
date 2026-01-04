@@ -29,6 +29,7 @@ export interface ClassCardProps {
   tags: string[];
   description?: string;
   fileDetails?: unknown[];
+  targetExam: string;
   referenceDetails?: unknown[];
   createdAt?: string;
   lastDate?: string;
@@ -43,6 +44,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
   name,
   tags,
   description,
+  targetExam,
   fileDetails = [],
   referenceDetails = [],
   createdAt,
@@ -101,7 +103,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
               lineHeight: 1.3,
             }}
           >
-            {name}
+            {name} + {targetExam}
           </Typography>
           {description && (
             <Typography

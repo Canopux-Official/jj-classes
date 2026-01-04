@@ -12,14 +12,14 @@ interface ApiResponse {
 
 const host = import.meta.env.VITE_SERVER_LINK || '';
 
-export const createOrFetchClass = async (className: string): Promise<ApiResponse> => {
+export const createOrFetchClass = async (className: string,targetExam: string): Promise<ApiResponse> => {
   try {
     const response = await fetch(`${host}/api/material/create-class`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name: className }),
+      body: JSON.stringify({ name: className,targetExam: targetExam}),
     });
 
     const data: ApiResponse = await response.json();

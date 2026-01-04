@@ -23,9 +23,9 @@ import { MainContainer, PageHeader, ClassGrid } from './ShowClass.styles';
 import type { Node } from '../types/node';
 
 import { confirmFolderDeletion, createOrFetchClass, deleteSubFolder, getAllClasses, updateFolder } from '../services/FolderServiceApi';
-import NodeDialogForm from '../DialogForm/DialogForm';
 import { deleteFileFromDrive } from '../utils/googleDriveService';
 import { ClassCardSkeleton } from '../utils/CardSkeleton';
+import EditClassDialog from '../DialogForm/EditClassDialog';
 
 
 // Available class options
@@ -37,6 +37,13 @@ const CLASS_OPTIONS = [
   { value: 'jee', label: 'JEE' },
 ];
 
+const TARGET_EXAM_OPTIONS = [
+  { value: 'jee', label: 'JEE' },
+  { value: 'neet', label: 'NEET' },
+  { value: 'board', label: 'BOARD' },
+  { value: 'other', label: 'OTHER' },
+]
+
 const ShowClass: React.FC = () => {
   const [allNodes, setAllNodes] = useState<Node[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -45,6 +52,7 @@ const ShowClass: React.FC = () => {
   // Dialog states
   const [openClassSelectionDialog, setOpenClassSelectionDialog] = useState(false);
   const [selectedClassType, setSelectedClassType] = useState<string>('');
+  const [selectedTargetExamType, setSelectedTargetExamType] = useState<string>('');
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
 
   const [openEditDialog, setOpenEditDialog] = useState(false);
@@ -111,6 +119,10 @@ const ShowClass: React.FC = () => {
     setSelectedClassType(event.target.value);
   };
 
+  const handleTargetExamTypeChange = (event: SelectChangeEvent<string>) => {
+    setSelectedTargetExamType(event.target.value);
+  };
+
   const handleProceedToConfirm = () => {
     if (selectedClassType) {
       setOpenClassSelectionDialog(false);
@@ -128,10 +140,12 @@ const ShowClass: React.FC = () => {
 
     // Get the label for the selected class
     const selectedOption = CLASS_OPTIONS.find(opt => opt.value === selectedClassType);
+    const selectedTargetExamOption = TARGET_EXAM_OPTIONS.find(opt => opt.value === selectedTargetExamType);
     const className = selectedOption?.label || selectedClassType;
+    const targetExamName = selectedTargetExamOption?.label || selectedTargetExamType;
 
     try {
-      const response = await createOrFetchClass(className);
+      const response = await createOrFetchClass(className, targetExamName);
       console.log(response)
 
       if (!response.success) {
@@ -141,6 +155,7 @@ const ShowClass: React.FC = () => {
       const newNode: Node = {
         _id: (response.data as { _id: string })._id,
         heading: className,
+        targetExam: targetExamName,
         type: 'folder',
         parentId: null,
         description: '',
@@ -178,24 +193,17 @@ const ShowClass: React.FC = () => {
     setEditingNode(null);
   };
 
-  const handleSaveEdit = async (nodeData: Partial<Node>) => {
+  const handleSaveEdit = async (classType: string, targetExam: string) => {
     if (!editingNode) return;
 
     try {
       const updatedNode: Node = {
-        _id: editingNode._id,
-        heading: nodeData.heading || "",
-        type: nodeData.type || "folder",
-        description: nodeData.description || "",
-        tags: nodeData.tags || [],
-        parentId: editingNode.parentId,
-        lastDate: nodeData.lastDate || "",
-        fileDetails: nodeData.fileDetails || [],
-        referenceDetails: nodeData.referenceDetails || [],
-        createdAt: editingNode.createdAt,
+        ...editingNode,
+        heading: classType,
+        targetExam: targetExam,
       };
 
-      const response = await updateFolder(editingNode._id, updatedNode);
+      await updateFolder(editingNode._id, updatedNode);
 
       const updatedNodes = allNodes.map((node) =>
         node._id === editingNode._id ? updatedNode : node
@@ -204,18 +212,16 @@ const ShowClass: React.FC = () => {
       setAllNodes(updatedNodes);
       handleCloseEditDialog();
 
-      // Show success message
       setSnackbar({
         open: true,
-        message: (response as { message: string }).message || 'Class updated successfully',
+        message: 'Class updated successfully',
         severity: 'success',
       });
     } catch (error: unknown) {
       console.error('Error updating class:', error);
-      const typedError = error as Error;
       setSnackbar({
         open: true,
-        message: typedError.message || 'Error creating class',
+        message: error instanceof Error ? error.message : 'Error updating class',
         severity: 'error',
       });
     }
@@ -348,9 +354,11 @@ const ShowClass: React.FC = () => {
   const displayClasses = rootClasses.map((node) => ({
     id: node._id,
     name: node.heading,
+
     tags: node.tags || [],
     status: 'active' as const,
     description: node.description,
+    targetExam: node.targetExam,
     fileDetails: node.fileDetails || [],
     referenceDetails: node.referenceDetails || [],
     createdAt: node.createdAt,
@@ -439,6 +447,27 @@ const ShowClass: React.FC = () => {
               ))}
             </Select>
           </FormControl>
+
+          {/* Added gap between the inputs */}
+          <Box sx={{ mt: 3 }} />
+
+          <FormControl fullWidth>
+            <InputLabel id="target-exam-label">Target Exam</InputLabel>
+            <Select
+              labelId="target-exam-label"
+              id="target-exam-select"
+              value={selectedTargetExamType}
+              label="Target Exam"
+              onChange={handleTargetExamTypeChange}
+            >
+              {TARGET_EXAM_OPTIONS.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
           <Typography variant="body2" sx={{ mt: 2, color: '#5f6368' }}>
             Select the class you want to create. This will set up the curriculum structure for the selected class.
           </Typography>
@@ -479,6 +508,8 @@ const ShowClass: React.FC = () => {
           >
             <Typography variant="h6" sx={{ fontWeight: 600, color: '#1976d2' }}>
               {CLASS_OPTIONS.find(opt => opt.value === selectedClassType)?.label}
+              {' - '}
+              {TARGET_EXAM_OPTIONS.find(opt => opt.value === selectedTargetExamType)?.label}
             </Typography>
             <Typography variant="body2" sx={{ color: '#5f6368', mt: 0.5 }}>
               This will create a new class with default curriculum structure.
@@ -497,15 +528,16 @@ const ShowClass: React.FC = () => {
         </DialogActions>
       </Dialog>
 
+
       {/* Edit Class Dialog */}
+      {/* Edit Class Dialog - REPLACED */}
       {editingNode && (
-        <NodeDialogForm
+        <EditClassDialog
           open={openEditDialog}
           onClose={handleCloseEditDialog}
           onSave={handleSaveEdit}
-          initialData={editingNode}
-          title="Edit Class"
-          parentId="root"
+          initialClassType={editingNode.heading}
+          initialTargetExam={editingNode.targetExam}
         />
       )}
 
