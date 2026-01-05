@@ -57,8 +57,8 @@ const seedDatabase = async () => {
         name: "JJ Sir",
         phoneNumber: "9999999999",
         role: "superadmin",
-        // email: "demo77.off@gmail.com",
-        email: "dummyforwork22898@gmail.com",
+        email: "demo77.off@gmail.com",
+        // email: "dummyforwork22898@gmail.com",
         password: "adminpassword123", // Plain text as requested
       },
       {
