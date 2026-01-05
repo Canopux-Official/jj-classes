@@ -8,10 +8,10 @@ import verifyAuth, { AuthRequest } from '../../middlewares/verifyAuth';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
-console.log(JWT_SECRET)
 
 router.post('/getLoggedInUser', async (req, res): Promise<any> => {
     const { name, dob, phoneNumber, currentClass, password } = req.body;
+    console.log(JWT_SECRET)
 
     if (!JWT_SECRET) {
         return res.status(500).json({ success: false, message: 'Server Config Error: JWT_SECRET missing' });
