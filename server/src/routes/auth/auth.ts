@@ -7,14 +7,14 @@ import { sendOtp, verifyOtp, resendOtp } from '../../controllers/otpController';
 import verifyAuth, { AuthRequest } from '../../middlewares/verifyAuth';
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET;
+const jwt_secret = process.env.JWT_SECRET;
 
 router.post('/getLoggedInUser', async (req, res): Promise<any> => {
     const { name, dob, phoneNumber, currentClass, password } = req.body;
-    console.log(JWT_SECRET)
+    console.log(jwt_secret)
 
-    if (!JWT_SECRET) {
-        return res.status(500).json({ success: false, message: 'Server Config Error: JWT_SECRET missing' });
+    if (!jwt_secret) {
+        return res.status(500).json({ success: false, message: 'Server Config Error: JWT_SECRET missing error here' });
     }
 
     try {
@@ -71,7 +71,7 @@ router.post('/getLoggedInUser', async (req, res): Promise<any> => {
         if (!student.email) {
             const authToken = jwt.sign(
                 { id: student._id, role: "student", currentClass: student.currentClass },
-                JWT_SECRET,
+                jwt_secret,
                 { expiresIn: '30d' }
             );
 
@@ -151,7 +151,7 @@ router.post('/verifyOtp', async (req, res): Promise<any> => {
 
             const authToken = jwt.sign(
                 payload,
-                JWT_SECRET as string,
+                jwt_secret as string,
                 { expiresIn: '30d' }
             );
 
