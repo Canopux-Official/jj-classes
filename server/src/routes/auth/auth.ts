@@ -8,6 +8,7 @@ import verifyAuth, { AuthRequest } from '../../middlewares/verifyAuth';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
+console.log(JWT_SECRET)
 
 router.post('/getLoggedInUser', async (req, res): Promise<any> => {
     const { name, dob, phoneNumber, currentClass, password } = req.body;
