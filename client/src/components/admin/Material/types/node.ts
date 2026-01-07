@@ -5,12 +5,14 @@ export interface Node {
   _id: string;
   heading: string;
   targetExam: string;
+  stream: string;
   type: 'folder' | 'file';
   parentId: string | null;
   description?: string;
   tags?: string[];
   lastDate?: string;
   createdAt?: string;
+  updatedAt?: string;
   fileDetails?: FileDetail[];
   referenceDetails?: ReferenceDetail[];
 }

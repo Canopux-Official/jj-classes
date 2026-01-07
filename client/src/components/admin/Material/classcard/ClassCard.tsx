@@ -1,13 +1,13 @@
 // components/ClassCard/ClassCard.tsx
 import React from 'react';
-import { Typography, IconButton, Menu, MenuItem } from '@mui/material';
+import { Typography, IconButton, Menu, MenuItem, Box } from '@mui/material';
 import {
   School,
   CalendarToday,
-  Description,
   MoreVert,
   Edit,
   Delete,
+  Update,
 } from '@mui/icons-material';
 import {
   StyledClassCard,
@@ -16,12 +16,9 @@ import {
   ContentWrapper,
   DetailsContainer,
   DetailItem,
-  TagsWrapper,
-  TagChip,
-  CardFooter,
+  IconButtonWrapper,
 } from './ClassCard.styles';
 import type { Node } from '../types/node';
-import { Box } from '@mui/system';
 
 export interface ClassCardProps {
   id: string;
@@ -30,25 +27,24 @@ export interface ClassCardProps {
   description?: string;
   fileDetails?: unknown[];
   targetExam: string;
+  stream: string;
   referenceDetails?: unknown[];
   createdAt?: string;
+  updatedAt?: string;
   lastDate?: string;
-  node: Node; // Add the full node object
+  node: Node;
   onClick?: (id: string) => void;
-  onEdit?: (node: Node) => void; // Changed to pass full node
+  onEdit?: (node: Node) => void;
   onDelete?: (id: string) => void;
 }
 
 const ClassCard: React.FC<ClassCardProps> = ({
   id,
   name,
-  tags,
-  description,
   targetExam,
-  fileDetails = [],
-  referenceDetails = [],
+  stream,
   createdAt,
-  lastDate,
+  updatedAt,
   node,
   onClick,
   onEdit,
@@ -70,7 +66,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
   const handleEdit = (event: React.MouseEvent) => {
     event.stopPropagation();
     handleMenuClose();
-    onEdit?.(node); // Pass the full node object
+    onEdit?.(node);
   };
 
   const handleDelete = (event: React.MouseEvent) => {
@@ -84,55 +80,84 @@ const ClassCard: React.FC<ClassCardProps> = ({
   };
 
   const formatDate = (dateString?: string) => {
-    return dateString ? new Date(dateString).toLocaleDateString() : 'N/A';
+    return dateString
+      ? new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      })
+      : 'N/A';
   };
 
   return (
     <StyledClassCard onClick={handleCardClick}>
       <CardHeader>
-        <IconWrapper>
-          <School />
-        </IconWrapper>
-        <ContentWrapper>
-          <Typography
-            variant="h6"
-            sx={{
-              fontWeight: 600,
-              color: '#202124',
-              fontSize: '1.1rem',
-              lineHeight: 1.3,
-            }}
-          >
-            {name} + {targetExam}
-          </Typography>
-          {description && (
+        {/* Header with Icon and Menu Button */}
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2 }}>
+          <IconWrapper>
+            <School />
+          </IconWrapper>
+
+          <ContentWrapper>
+            {/* Class Name */}
             <Typography
-              variant="body2"
+              variant="h6"
               sx={{
-                color: '#5f6368',
-                fontSize: '0.8rem',
-                mt: 0.5,
-                fontStyle: 'italic',
+                fontWeight: 700,
+                color: '#202124',
+                fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                lineHeight: 1.3,
+                mb: 0.5,
               }}
             >
-              {description.length > 100 ? `${description.substring(0, 100)}...` : description}
+              {name}
             </Typography>
-          )}
-        </ContentWrapper>
 
-        {/* Status + Actions Menu */}
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+            {/* Target Exam and Stream as Text */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+              {targetExam && (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: '#1976d2',
+                    fontWeight: 600,
+                    fontSize: '0.813rem',
+                  }}
+                >
+                  Target Exam: {targetExam}
+                </Typography>
+              )}
+              {stream && (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: '#7b1fa2',
+                    fontWeight: 600,
+                    fontSize: '0.813rem',
+                  }}
+                >
+                  Stream: {stream}
+                </Typography>
+              )}
+            </Box>
+          </ContentWrapper>
 
-          <IconButton
-            aria-label="more options"
-            aria-controls={open ? 'class-card-menu' : undefined}
-            aria-haspopup="true"
-            aria-expanded={open ? 'true' : undefined}
-            onClick={handleMenuClick}
-            size="small"
-          >
-            <MoreVert />
-          </IconButton>
+          {/* Actions Menu - Positioned at top right */}
+          <IconButtonWrapper>
+            <IconButton
+              aria-label="more options"
+              aria-controls={open ? 'class-card-menu' : undefined}
+              aria-haspopup="true"
+              aria-expanded={open ? 'true' : undefined}
+              onClick={handleMenuClick}
+              size="small"
+              sx={{
+                '&:hover': { backgroundColor: 'rgba(0,0,0,0.04)' },
+              }}
+            >
+              <MoreVert />
+            </IconButton>
+          </IconButtonWrapper>
 
           <Menu
             id="class-card-menu"
@@ -150,10 +175,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
               <Edit fontSize="small" sx={{ mr: 1 }} />
               Edit
             </MenuItem>
-            <MenuItem
-              onClick={handleDelete}
-              sx={{ color: 'error.main' }}
-            >
+            <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
               <Delete fontSize="small" sx={{ mr: 1 }} />
               Delete
             </MenuItem>
@@ -161,39 +183,25 @@ const ClassCard: React.FC<ClassCardProps> = ({
         </Box>
       </CardHeader>
 
+
+      {/* Dates Section */}
       <DetailsContainer>
         <DetailItem>
-          <CalendarToday />
-          <Typography variant="body2">Created: {formatDate(createdAt)}</Typography>
+          <CalendarToday sx={{ fontSize: '18px' }} />
+          <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+            <Box component="span" sx={{ fontWeight: 600 }}>Created:</Box> {formatDate(createdAt)}
+          </Typography>
         </DetailItem>
-        <DetailItem>
-          <CalendarToday />
-          <Typography variant="body2">Last Date: {formatDate(lastDate)}</Typography>
-        </DetailItem>
+
+        {formatDate(createdAt) !== formatDate(updatedAt) && (
+          <DetailItem>
+            <Update sx={{ fontSize: '18px' }} />
+            <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+              <Box component="span" sx={{ fontWeight: 600 }}>Updated:</Box> {formatDate(updatedAt)}
+            </Typography>
+          </DetailItem>
+        )}
       </DetailsContainer>
-
-      <TagsWrapper>
-        {tags.map((tag, index) => (
-          <TagChip key={index} label={tag} size="small" />
-        ))}
-      </TagsWrapper>
-
-      <CardFooter>
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <DetailItem sx={{ justifyContent: 'flex-start' }}>
-            <Description />
-            <Typography variant="body2" sx={{ ml: 1 }}>
-              {fileDetails.length} Uploads
-            </Typography>
-          </DetailItem>
-          <DetailItem sx={{ justifyContent: 'flex-start' }}>
-            <Description />
-            <Typography variant="body2" sx={{ ml: 1 }}>
-              {referenceDetails.length} References
-            </Typography>
-          </DetailItem>
-        </Box>
-      </CardFooter>
     </StyledClassCard>
   );
 };

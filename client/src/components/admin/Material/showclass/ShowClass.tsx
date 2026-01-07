@@ -33,8 +33,7 @@ const CLASS_OPTIONS = [
   { value: 'class-9', label: 'Class 9' },
   { value: 'class-10', label: 'Class 10' },
   { value: 'class-11', label: 'Class 11' },
-  { value: 'class-12', label: 'Class 12' },
-  { value: 'jee', label: 'JEE' },
+  { value: 'class-12', label: 'Class 12' }
 ];
 
 const TARGET_EXAM_OPTIONS = [
@@ -43,6 +42,12 @@ const TARGET_EXAM_OPTIONS = [
   { value: 'board', label: 'BOARD' },
   { value: 'other', label: 'OTHER' },
 ]
+
+const STREAM_OPTINS = [
+  { value: 'Science', label: 'Science' },
+  { value: 'Commerce', label: 'Commerce' },
+  { value: 'Arts', label: 'Arts' }
+];
 
 const ShowClass: React.FC = () => {
   const [allNodes, setAllNodes] = useState<Node[]>([]);
@@ -53,6 +58,7 @@ const ShowClass: React.FC = () => {
   const [openClassSelectionDialog, setOpenClassSelectionDialog] = useState(false);
   const [selectedClassType, setSelectedClassType] = useState<string>('');
   const [selectedTargetExamType, setSelectedTargetExamType] = useState<string>('');
+  const [selectedStreamType, setSelectedStreamType] = useState<string>('');
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
 
   const [openEditDialog, setOpenEditDialog] = useState(false);
@@ -123,6 +129,10 @@ const ShowClass: React.FC = () => {
     setSelectedTargetExamType(event.target.value);
   };
 
+  const handleStreamTypeChange = (event: SelectChangeEvent<string>) => {
+    setSelectedStreamType(event.target.value);
+  };
+
   const handleProceedToConfirm = () => {
     if (selectedClassType) {
       setOpenClassSelectionDialog(false);
@@ -141,11 +151,13 @@ const ShowClass: React.FC = () => {
     // Get the label for the selected class
     const selectedOption = CLASS_OPTIONS.find(opt => opt.value === selectedClassType);
     const selectedTargetExamOption = TARGET_EXAM_OPTIONS.find(opt => opt.value === selectedTargetExamType);
+    const selectedStreamOption = STREAM_OPTINS.find(opt => opt.value === selectedStreamType);
     const className = selectedOption?.label || selectedClassType;
     const targetExamName = selectedTargetExamOption?.label || selectedTargetExamType;
+    const streamName = selectedStreamOption?.label || selectedStreamType
 
     try {
-      const response = await createOrFetchClass(className, targetExamName);
+      const response = await createOrFetchClass(className, targetExamName, streamName);
       console.log(response)
 
       if (!response.success) {
@@ -156,6 +168,7 @@ const ShowClass: React.FC = () => {
         _id: (response.data as { _id: string })._id,
         heading: className,
         targetExam: targetExamName,
+        stream: streamName,
         type: 'folder',
         parentId: null,
         description: '',
@@ -193,7 +206,7 @@ const ShowClass: React.FC = () => {
     setEditingNode(null);
   };
 
-  const handleSaveEdit = async (classType: string, targetExam: string) => {
+  const handleSaveEdit = async (classType: string, targetExam: string, stream: string) => {
     if (!editingNode) return;
 
     try {
@@ -201,6 +214,7 @@ const ShowClass: React.FC = () => {
         ...editingNode,
         heading: classType,
         targetExam: targetExam,
+        stream: stream
       };
 
       await updateFolder(editingNode._id, updatedNode);
@@ -359,6 +373,8 @@ const ShowClass: React.FC = () => {
     status: 'active' as const,
     description: node.description,
     targetExam: node.targetExam,
+    stream: node.stream,
+    updatedAt: node.updatedAt,
     fileDetails: node.fileDetails || [],
     referenceDetails: node.referenceDetails || [],
     createdAt: node.createdAt,
@@ -468,6 +484,25 @@ const ShowClass: React.FC = () => {
             </Select>
           </FormControl>
 
+          <Box sx={{ mt: 3 }} />
+
+          <FormControl fullWidth>
+            <InputLabel id="stream-label">Stream</InputLabel>
+            <Select
+              labelId="stream-label"
+              id="stream-select"
+              value={selectedStreamType}
+              label="Stream"
+              onChange={handleStreamTypeChange}
+            >
+              {STREAM_OPTINS.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
           <Typography variant="body2" sx={{ mt: 2, color: '#5f6368' }}>
             Select the class you want to create. This will set up the curriculum structure for the selected class.
           </Typography>
@@ -510,6 +545,8 @@ const ShowClass: React.FC = () => {
               {CLASS_OPTIONS.find(opt => opt.value === selectedClassType)?.label}
               {' - '}
               {TARGET_EXAM_OPTIONS.find(opt => opt.value === selectedTargetExamType)?.label}
+              {' - '}
+              {STREAM_OPTINS.find(opt => opt.value === selectedStreamType)?.label}
             </Typography>
             <Typography variant="body2" sx={{ color: '#5f6368', mt: 0.5 }}>
               This will create a new class with default curriculum structure.
@@ -538,6 +575,7 @@ const ShowClass: React.FC = () => {
           onSave={handleSaveEdit}
           initialClassType={editingNode.heading}
           initialTargetExam={editingNode.targetExam}
+          initialStream={editingNode.stream}
         />
       )}
 

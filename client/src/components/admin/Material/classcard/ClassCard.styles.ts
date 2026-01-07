@@ -26,7 +26,15 @@ export const CardHeader = styled(Box)(({ theme }) => ({
   justifyContent: 'space-between',
   marginBottom: theme.spacing(2.5),
   gap: theme.spacing(2),
+  position: 'relative', // Add this to ensure the button can be absolutely positioned
 }));
+
+export const IconButtonWrapper = styled(Box)(() => ({
+  position: 'absolute', // This will position the button in the top-right corner
+  top: 0,
+  right: 0,
+}));
+
 
 export const IconWrapper = styled(Box)(() => ({
   width: '48px',
@@ -118,13 +126,13 @@ export const StatusIndicator = styled(Box)<{ status: 'active' | 'inactive' | 'up
       status === 'active'
         ? '#e8f5e9'
         : status === 'upcoming'
-        ? '#fff3e0'
-        : '#f5f5f5',
+          ? '#fff3e0'
+          : '#f5f5f5',
     color:
       status === 'active'
         ? '#2e7d32'
         : status === 'upcoming'
-        ? '#e65100'
-        : '#616161',
+          ? '#e65100'
+          : '#616161',
   })
 );
