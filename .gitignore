@@ -44,3 +44,4 @@ yarn.lock
 
 # Ignore any files ending with .cache
 *.cache
+seedDb.ts
