@@ -33,8 +33,9 @@ export interface IMaterial extends Document {
 
   // Access Control
   // stream: string;
-  class: 'Class 9' | 'Class 10' | 'Class 11' | 'Class 12' | 'JEE';
+  class: 'Class 9' | 'Class 10' | 'Class 11' | 'Class 12' | '';
   targetExam: 'JEE' | 'NEET' | 'BOARD' | 'OTHER' | '';
+  stream: 'Science' | 'Commerce' | 'Arts' | '';
 
   // Status & Workflow
   // status: 'Pending' | 'Completed' | 'Graded';
@@ -91,7 +92,7 @@ const MaterialSchema: Schema = new Schema({
   // },
   type: {
     type: String,
-    defult: 'folder'
+    default: 'folder'
     // Comment: File type (PDF, Image, Video, etc.)
   },
   // fileSize: {
@@ -118,15 +119,17 @@ const MaterialSchema: Schema = new Schema({
     // Comment: Additional tags for categorization and search
   },
   // Access Control
-  // stream: { 
-  //   type: String, 
-  //   required: true,
-  //   // Comment: Level 1 filter. Matches Student.currentClass
-  // },
+  stream: { 
+    type: String, 
+    enum: ['Science','Commerce','Arts',""],
+    required: false,
+    default: '',
+  },
   class: {
     type: String,
-    enum: ['Class 9', 'Class 10', 'Class 11', 'Class 12', 'JEE'],
+    enum: ['Class 9', 'Class 10', 'Class 11', 'Class 12',''],
     required: false,
+    default: ''
     // Comment: Specifies the grade level for the material
   },
   targetExam:{

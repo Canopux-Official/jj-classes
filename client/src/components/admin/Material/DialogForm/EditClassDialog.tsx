@@ -17,41 +17,50 @@ import { StyledFormControl } from './EditClassDialog.styles';
 interface DialogProps {
   open: boolean;
   onClose: () => void;
-  onSave: (classType: string, targetExam: string) => void;
+  onSave: (classType: string, targetExam: string, stream: string) => void;
   initialClassType?: string;
   initialTargetExam?: string;
+  initialStream?: string;
 }
 
-export const CLASS_OPTIONS = [
+const CLASS_OPTIONS = [
   { value: 'Class 9', label: 'Class 9' },
   { value: 'Class 10', label: 'Class 10' },
   { value: 'Class 11', label: 'Class 11' },
   { value: 'Class 12', label: 'Class 12' },
-  { value: 'JEE', label: 'JEE' },
 ];
 
-export const TARGET_EXAM_OPTIONS = [
+const TARGET_EXAM_OPTIONS = [
   { value: 'JEE', label: 'JEE' },
   { value: 'NEET', label: 'NEET' },
   { value: 'BOARD', label: 'BOARD' },
   { value: 'OTHER', label: 'OTHER' },
 ];
 
-const EditClassDialog: React.FC<DialogProps> = ({ 
-  open, 
-  onClose, 
+const STREAM_OPTINS = [
+  { value: 'Science', label: 'Science' },
+  { value: 'Commerce', label: 'Commerce' },
+  { value: 'Arts', label: 'Arts' }
+];
+
+const EditClassDialog: React.FC<DialogProps> = ({
+  open,
+  onClose,
   onSave,
   initialClassType = '',
-  initialTargetExam = ''
+  initialTargetExam = '',
+  initialStream = ''
 }) => {
   const [selectedClass, setSelectedClass] = useState(initialClassType);
   const [selectedTargetExam, setSelectedTargetExam] = useState(initialTargetExam);
+  const [selectedStream, setSelectedStream] = useState(initialStream)
 
   // Update state when initial values change
   useEffect(() => {
     setSelectedClass(initialClassType);
     setSelectedTargetExam(initialTargetExam);
-  }, [initialClassType, initialTargetExam]);
+    setSelectedStream(initialStream)
+  }, [initialClassType, initialTargetExam,initialStream]);
 
   const handleClassChange = (event: SelectChangeEvent<string>) => {
     setSelectedClass(event.target.value);
@@ -61,8 +70,13 @@ const EditClassDialog: React.FC<DialogProps> = ({
     setSelectedTargetExam(event.target.value);
   };
 
+  const handleStreamChange = (event: SelectChangeEvent<string>) => {
+    setSelectedStream(event.target.value);
+  };
+
+
   const handleSubmit = () => {
-    onSave(selectedClass, selectedTargetExam);
+    onSave(selectedClass, selectedTargetExam, selectedStream);
   };
 
   const handleClose = () => {
@@ -107,6 +121,26 @@ const EditClassDialog: React.FC<DialogProps> = ({
             fullWidth
           >
             {TARGET_EXAM_OPTIONS.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </StyledFormControl>
+
+        <Box sx={{ mt: 3 }} />
+
+        <StyledFormControl fullWidth>
+          <InputLabel id="strem-label">Stream</InputLabel>
+          <Select
+            labelId="stream-label"
+            id="stream-select"
+            value={selectedStream}
+            label="Stream"
+            onChange={handleStreamChange}
+            fullWidth
+          >
+            {STREAM_OPTINS.map((option) => (
               <MenuItem key={option.value} value={option.value}>
                 {option.label}
               </MenuItem>
