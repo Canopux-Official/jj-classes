@@ -1,14 +1,20 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { List, ListItem, ListItemButton, ListItemIcon, ListItemText, Divider, Drawer, Box, Typography } from '@mui/material';
+
+// Icons
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import PaymentIcon from '@mui/icons-material/Payment';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
+import SchoolIcon from '@mui/icons-material/School'; // For Streams
+import QuizIcon from '@mui/icons-material/Quiz';     // For Target Exams
+
 import { LogoContainer, drawerPaperStyles } from './AdminSidebar.styles';
 import LogoImg from '../../assets/logo.jpeg';
-import { UploadFile } from '@mui/icons-material';
+
 interface AdminSidebarProps {
   mobileOpen: boolean;
   handleDrawerToggle: () => void;
@@ -22,64 +28,73 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen, handleDrawerTog
 
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/admin' },
-    { text: 'Students', icon: <PeopleIcon />, path: '/admin/students' },
-    { text: 'Subjects', icon: <LibraryBooksIcon />, path: '/admin/subjects' },
+    { text: 'Students Directory', icon: <PeopleIcon />, path: '/admin/students' },
+    
+    // Academic Configuration Group
+    { text: 'Streams Manager', icon: <SchoolIcon />, path: '/admin/streams' },
+    { text: 'Target Exams Manager', icon: <QuizIcon />, path: '/admin/target-exams' },
+    { text: 'Subjects Manager', icon: <LibraryBooksIcon />, path: '/admin/subjects' },
+    
+    // Management Group
     { text: 'Session Manager', icon: <SettingsSuggestIcon />, path: '/admin/session' },
     { text: 'Fees & Payments', icon: <PaymentIcon />, path: '/admin/fees' },
-    { text: 'Upload Material', icon: <UploadFile />, path: '/admin/upload' },
+    { text: 'Upload Material', icon: <UploadFileIcon />, path: '/admin/upload' },
   ];
 
   // Common content for both drawers
   const drawerContent = (
-    <><LogoContainer>
-      <Box display="flex" alignItems="center" gap={2}>
-        {/* Logo with Round White Background */}
-        <Box
-          sx={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: '50%',
-            padding: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(6, 100, 102, 0.15)',
-            width: '48px',
-            height: '48px',
-          }}
-        >
-          <img
-            src={LogoImg}
-            alt="JJ Institute"
-            style={{
-              height: '32px',
-              width: '32px',
-              objectFit: 'contain'
+    <>
+      <LogoContainer>
+        <Box display="flex" alignItems="center" gap={2}>
+          {/* Logo with Round White Background */}
+          <Box
+            sx={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: '50%',
+              padding: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(6, 100, 102, 0.15)',
+              width: '48px',
+              height: '48px',
             }}
-          />
-        </Box>
+          >
+            <img
+              src={LogoImg}
+              alt="JJ Institute"
+              style={{
+                height: '32px',
+                width: '32px',
+                objectFit: 'contain'
+              }}
+            />
+          </Box>
 
-        {/* Title with Good Colors */}
-        <Typography
-          variant="subtitle1"
-          fontWeight={800}
-          lineHeight={1.2}
-          sx={{
-            color: 'white', // Main teal color
-          }}
-        >
-          JJ INSTITUTE <br />
-          <span style={{
-            fontSize: '0.75rem',
-            fontWeight: 500,
-            color: '#b4acacff', // Subtle gray for subtitle
-            letterSpacing: '0.5px'
-          }}>
-            OF SCIENCE
-          </span>
-        </Typography>
-      </Box>
-    </LogoContainer>
+          {/* Title */}
+          <Typography
+            variant="subtitle1"
+            fontWeight={800}
+            lineHeight={1.2}
+            sx={{
+              color: 'white',
+            }}
+          >
+            JJ INSTITUTE <br />
+            <span style={{
+              fontSize: '0.75rem',
+              fontWeight: 500,
+              color: '#b4acacff',
+              letterSpacing: '0.5px'
+            }}>
+              OF SCIENCE
+            </span>
+          </Typography>
+        </Box>
+      </LogoContainer>
+      
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
+      
       <List>
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path;
@@ -88,7 +103,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen, handleDrawerTog
               <ListItemButton
                 onClick={() => {
                   navigate(item.path);
-                  // Close drawer on mobile when a link is clicked
                   if (mobileOpen) handleDrawerToggle();
                 }}
                 sx={{
@@ -119,13 +133,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen, handleDrawerTog
         variant="temporary"
         open={mobileOpen}
         onClose={handleDrawerToggle}
-        ModalProps={{ keepMounted: true }} // Better open performance on mobile
+        ModalProps={{ keepMounted: true }} 
         sx={{
-          display: { xs: 'block', sm: 'none' }, // Show on Mobile, Hide on Desktop
+          display: { xs: 'block', sm: 'none' }, 
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
             width: DRAWER_WIDTH,
-            ...drawerPaperStyles // Import styles
+            ...drawerPaperStyles 
           },
         }}
       >
@@ -136,11 +150,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen, handleDrawerTog
       <Drawer
         variant="permanent"
         sx={{
-          display: { xs: 'none', sm: 'block' }, // Hide on Mobile, Show on Desktop
+          display: { xs: 'none', sm: 'block' }, 
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
             width: DRAWER_WIDTH,
-            ...drawerPaperStyles // Import styles
+            ...drawerPaperStyles 
           },
         }}
         open

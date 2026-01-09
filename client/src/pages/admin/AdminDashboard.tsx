@@ -14,6 +14,9 @@ import SubjectsPage from './../../components/admin/SubjectPage';
 import SessionPage from '../../components/admin/SessionPage';
 import ShowClass from '../../components/admin/Material/showclass/ShowClass';
 
+// NEW COMPONENTS
+import StreamPage from '../../components/admin/StreamPage';
+import TargetExamPage from '../../components/admin/TargetExamPage';
 
 const DRAWER_WIDTH = 260; 
 
@@ -44,7 +47,6 @@ const AdminDashboard: React.FC = () => {
       <MainContent>
         <AdminHeader handleDrawerToggle={handleDrawerToggle} />
         
-        {/* FIX: Removed component="main" prop here */}
         <ContentWrapper>
           <Routes>
             <Route path="/" element={<DashboardHome />} />
@@ -52,6 +54,11 @@ const AdminDashboard: React.FC = () => {
             <Route path="subjects" element={<SubjectsPage />} />
             <Route path="session" element={<SessionPage />} />
             <Route path="upload" element={<ShowClass />} />
+            
+            {/* NEW ROUTES */}
+            <Route path="streams" element={<StreamPage />} />
+            <Route path="target-exams" element={<TargetExamPage />} />
+
             <Route path="*" element={<Navigate to="/admin" replace />} />
           </Routes>
         </ContentWrapper>
