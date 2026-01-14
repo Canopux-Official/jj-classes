@@ -10,10 +10,10 @@ import LoginPage from './pages/auth/LoginPage';
 
 // Import Dashboard Layouts
 import AdminDashboard from './pages/admin/AdminDashboard';
-import StudentDashboard from './pages/student/StudentDashboard'; 
 
 // Import API check
 import { validateToken } from './api/apiFunctions';
+import StudentPage from './pages/student/StudentPage';
 
 // 👇 Define the props interface
 interface ProtectedRouteProps {
@@ -95,7 +95,7 @@ function App() {
             path="/student/*" 
             element={
               <ProtectedRoute>
-                <StudentDashboard />
+                <StudentPage />
               </ProtectedRoute>
             } 
           />
