@@ -1,5 +1,6 @@
 // services/folderService.ts
 
+import type { GetAllFilesResponse } from "../types/FileDetail";
 import type { DeleteFolderResponse } from "../types/FolderDetails";
 import type { Node } from "../types/node";
 
@@ -162,6 +163,37 @@ export const confirmFolderDeletion = async (folderId: string) => {
     return data;
   } catch (error) {
     console.error('Error confirming folder deletion:', error);
+    throw error;
+  }
+};
+
+
+
+
+// Fetch all existing files with optional search
+export const getAllExistingFiles = async (
+  searchQuery?: string
+): Promise<GetAllFilesResponse> => {
+  try {
+    const url = searchQuery
+      ? `${host}/api/material/files?search=${encodeURIComponent(searchQuery)}`
+      : `${host}/api/material/files`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data: GetAllFilesResponse = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching existing files:', error);
     throw error;
   }
 };
