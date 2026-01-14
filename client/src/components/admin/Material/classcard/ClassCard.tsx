@@ -1,6 +1,6 @@
 // components/ClassCard/ClassCard.tsx
 import React from 'react';
-import { Typography, IconButton, Menu, MenuItem, Box } from '@mui/material';
+import { Typography, IconButton, Menu, MenuItem, Box, Chip } from '@mui/material';
 import {
   School,
   CalendarToday,
@@ -8,16 +8,9 @@ import {
   Edit,
   Delete,
   Update,
+  TrendingUp,
+  Category,
 } from '@mui/icons-material';
-import {
-  StyledClassCard,
-  CardHeader,
-  IconWrapper,
-  ContentWrapper,
-  DetailsContainer,
-  DetailItem,
-  IconButtonWrapper,
-} from './ClassCard.styles';
 import type { Node } from '../types/node';
 
 export interface ClassCardProps {
@@ -90,74 +83,134 @@ const ClassCard: React.FC<ClassCardProps> = ({
   };
 
   return (
-    <StyledClassCard onClick={handleCardClick}>
-      <CardHeader>
-        {/* Header with Icon and Menu Button */}
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2 }}>
-          <IconWrapper>
-            <School />
-          </IconWrapper>
+    <Box
+      onClick={handleCardClick}
+      sx={{
+        position: 'relative',
+        background: '#ffffff',
+        borderRadius: '12px',
+        overflow: 'hidden',
+        cursor: 'pointer',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        border: '1px solid rgba(15, 32, 39, 0.08)',
+        boxShadow: '0 2px 8px rgba(15, 32, 39, 0.06)',
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: '0 8px 24px rgba(15, 32, 39, 0.12)',
+          borderColor: 'rgba(255, 215, 0, 0.3)',
+        },
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '4px',
+          background: 'linear-gradient(90deg, #0b2021 0%, #203A43 100%)',
+        },
+      }}
+    >
+      {/* Header Section */}
+      <Box sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2.5 }}>
+          {/* Icon with gradient background */}
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #0b2021 0%, #203A43 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              boxShadow: '0 4px 12px rgba(11, 32, 33, 0.2)',
+            }}
+          >
+            <School sx={{ color: '#d1f5dd', fontSize: 26 }} />
+          </Box>
 
-          <ContentWrapper>
-            {/* Class Name */}
+          {/* Content */}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography
               variant="h6"
               sx={{
+                fontFamily: '"Montserrat", sans-serif',
                 fontWeight: 700,
-                color: '#202124',
-                fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                color: '#0F2027',
+                fontSize: { xs: '1.15rem', sm: '1.3rem' },
                 lineHeight: 1.3,
-                mb: 0.5,
+                mb: 1,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
               }}
             >
               {name}
             </Typography>
 
-            {/* Target Exam and Stream as Text */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+            {/* Badges */}
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               {targetExam && (
-                <Typography
-                  variant="body2"
+                <Chip
+                  icon={<TrendingUp sx={{ fontSize: 16 }} />}
+                  label={targetExam}
+                  size="small"
                   sx={{
-                    color: '#1976d2',
+                    backgroundColor: 'rgba(25, 26, 26, 0.08)',
+                    color: '#000000',
                     fontWeight: 600,
-                    fontSize: '0.813rem',
+                    fontSize: '0.75rem',
+                    height: 26,
+                    '& .MuiChip-icon': {
+                      color: '#000000',
+                      marginLeft: '8px',
+                    },
                   }}
-                >
-                  Target Exam: {targetExam}
-                </Typography>
+                />
               )}
               {stream && (
-                <Typography
-                  variant="body2"
+                <Chip
+                  icon={<Category sx={{ fontSize: 16 }} />}
+                  label={stream}
+                  size="small"
                   sx={{
-                    color: '#7b1fa2',
+                    backgroundColor: 'rgba(31, 32, 31, 0.15)',
+                    color: '#032d25',
                     fontWeight: 600,
-                    fontSize: '0.813rem',
+                    fontSize: '0.75rem',
+                    height: 26,
+                    '& .MuiChip-icon': {
+                      color: '#03261e',
+                      marginLeft: '8px',
+                    },
                   }}
-                >
-                  Stream: {stream}
-                </Typography>
+                />
               )}
             </Box>
-          </ContentWrapper>
+          </Box>
 
-          {/* Actions Menu - Positioned at top right */}
-          <IconButtonWrapper>
-            <IconButton
-              aria-label="more options"
-              aria-controls={open ? 'class-card-menu' : undefined}
-              aria-haspopup="true"
-              aria-expanded={open ? 'true' : undefined}
-              onClick={handleMenuClick}
-              size="small"
-              sx={{
-                '&:hover': { backgroundColor: 'rgba(0,0,0,0.04)' },
-              }}
-            >
-              <MoreVert />
-            </IconButton>
-          </IconButtonWrapper>
+          {/* Menu Button */}
+          <IconButton
+            aria-label="more options"
+            aria-controls={open ? 'class-card-menu' : undefined}
+            aria-haspopup="true"
+            aria-expanded={open ? 'true' : undefined}
+            onClick={handleMenuClick}
+            size="small"
+            sx={{
+              flexShrink: 0,
+              color: '#546e7a',
+              '&:hover': {
+                backgroundColor: 'rgba(11, 32, 33, 0.06)',
+                color: '#0b2021',
+              },
+            }}
+          >
+            <MoreVert />
+          </IconButton>
 
           <Menu
             id="class-card-menu"
@@ -170,39 +223,105 @@ const ClassCard: React.FC<ClassCardProps> = ({
             MenuListProps={{
               'aria-labelledby': 'more-options-button',
             }}
+            PaperProps={{
+              sx: {
+                borderRadius: '12px',
+                boxShadow: '0 4px 20px rgba(15, 32, 39, 0.15)',
+                mt: 1,
+              },
+            }}
           >
-            <MenuItem onClick={handleEdit}>
-              <Edit fontSize="small" sx={{ mr: 1 }} />
+            <MenuItem 
+              onClick={handleEdit}
+              sx={{
+                fontFamily: '"Montserrat", sans-serif',
+                fontWeight: 500,
+                '&:hover': {
+                  backgroundColor: 'rgba(11, 32, 33, 0.06)',
+                },
+              }}
+            >
+              <Edit fontSize="small" sx={{ mr: 1.5, color: '#546e7a' }} />
               Edit
             </MenuItem>
-            <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
-              <Delete fontSize="small" sx={{ mr: 1 }} />
+            <MenuItem 
+              onClick={handleDelete} 
+              sx={{ 
+                color: '#d32f2f',
+                fontFamily: '"Montserrat", sans-serif',
+                fontWeight: 500,
+                '&:hover': {
+                  backgroundColor: 'rgba(211, 47, 47, 0.08)',
+                },
+              }}
+            >
+              <Delete fontSize="small" sx={{ mr: 1.5 }} />
               Delete
             </MenuItem>
           </Menu>
         </Box>
-      </CardHeader>
 
+        {/* Divider */}
+        <Box
+          sx={{
+            height: '1px',
+            background: 'linear-gradient(90deg, rgba(15, 32, 39, 0.1) 0%, rgba(15, 32, 39, 0.05) 50%, rgba(15, 32, 39, 0) 100%)',
+            mb: 2,
+          }}
+        />
 
-      {/* Dates Section */}
-      <DetailsContainer>
-        <DetailItem>
-          <CalendarToday sx={{ fontSize: '18px' }} />
-          <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
-            <Box component="span" sx={{ fontWeight: 600 }}>Created:</Box> {formatDate(createdAt)}
-          </Typography>
-        </DetailItem>
-
-        {formatDate(createdAt) !== formatDate(updatedAt) && (
-          <DetailItem>
-            <Update sx={{ fontSize: '18px' }} />
-            <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
-              <Box component="span" sx={{ fontWeight: 600 }}>Updated:</Box> {formatDate(updatedAt)}
+        {/* Dates Section */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <CalendarToday 
+              sx={{ 
+                fontSize: 16, 
+                color: '#546e7a',
+                flexShrink: 0,
+              }} 
+            />
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                fontSize: '0.875rem',
+                color: '#546e7a',
+                fontFamily: '"Open Sans", sans-serif',
+              }}
+            >
+              <Box component="span" sx={{ fontWeight: 600, color: '#0F2027' }}>
+                Created:
+              </Box>{' '}
+              {formatDate(createdAt)}
             </Typography>
-          </DetailItem>
-        )}
-      </DetailsContainer>
-    </StyledClassCard>
+          </Box>
+
+          {formatDate(createdAt) !== formatDate(updatedAt) && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Update 
+                sx={{ 
+                  fontSize: 16, 
+                  color: '#FFD700',
+                  flexShrink: 0,
+                }} 
+              />
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  fontSize: '0.875rem',
+                  color: '#546e7a',
+                  fontFamily: '"Open Sans", sans-serif',
+                }}
+              >
+                <Box component="span" sx={{ fontWeight: 600, color: '#0F2027' }}>
+                  Updated:
+                </Box>{' '}
+                {formatDate(updatedAt)}
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

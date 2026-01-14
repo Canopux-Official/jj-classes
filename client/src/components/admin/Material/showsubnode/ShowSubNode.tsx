@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -15,6 +14,8 @@ import {
   Chip,
   useMediaQuery,
   useTheme,
+  Paper,
+  Fade,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -22,6 +23,9 @@ import {
   Folder as FolderIcon,
   NavigateNext as NavigateNextIcon,
   CalendarToday as CalendarIcon,
+  Warning as WarningIcon,
+  Info as InfoIcon,
+  FolderOpen as FolderOpenIcon,
 } from '@mui/icons-material';
 import type { Node } from '../types/node';
 import NodeDialogForm from '../DialogForm/DialogForm';
@@ -162,7 +166,7 @@ const ShowSubnode: React.FC<ShowSubnodeProps> = ({
         heading: nodeData.heading!,
         type: nodeData.type || 'folder',
         parentId: currentNodeId,
-        targetExam : "",
+        targetExam: "",
         stream: "",
         description: nodeData.description || '',
         tags: nodeData.tags || [],
@@ -377,39 +381,50 @@ const ShowSubnode: React.FC<ShowSubnodeProps> = ({
   }
 
   return (
-    <Box sx={{ 
-      p: { xs: 2, sm: 3, md: 4 },
-      maxWidth: '1600px',
-      margin: '0 auto',
-    }}>
-      {/* Header Section */}
-      <Box sx={{ mb: { xs: 3, sm: 4 } }}>
-        {/* Back Button and Breadcrumbs */}
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: { xs: 1, sm: 2 }, 
-          mb: 2,
-          flexWrap: 'wrap',
-        }}>
-          <IconButton 
-            onClick={handleBackClick} 
-            sx={{ 
-              color: '#1976d2',
-              '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.08)' }
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #fdfbf7 0%, #f5f5f5 100%)',
+        p: { xs: 2, sm: 3, md: 4 },
+      }}
+    >
+      <Box sx={{ maxWidth: '1600px', margin: '0 auto' }}>
+        {/* Breadcrumbs Navigation */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 2, sm: 2.5 },
+            mb: 3,
+            borderRadius: '12px',
+            background: '#ffffff',
+            border: '1px solid rgba(11, 32, 33, 0.08)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: { xs: 1, sm: 2 },
+            flexWrap: 'wrap',
+          }}
+        >
+          <IconButton
+            onClick={handleBackClick}
+            sx={{
+              color: '#0b2021',
+              background: 'rgba(11, 32, 33, 0.06)',
+              '&:hover': {
+                background: 'rgba(11, 32, 33, 0.12)',
+              },
             }}
             size={isMobile ? 'small' : 'medium'}
           >
             <ArrowBackIcon />
           </IconButton>
-          <Breadcrumbs 
-            separator={<NavigateNextIcon fontSize="small" />}
+          <Breadcrumbs
+            separator={<NavigateNextIcon fontSize="small" sx={{ color: '#546e7a' }} />}
             sx={{
               flex: 1,
               minWidth: 0,
               '& .MuiBreadcrumbs-ol': {
                 flexWrap: 'wrap',
-              }
+              },
             }}
           >
             {breadcrumbPath.map((node, index) => {
@@ -425,22 +440,24 @@ const ShowSubnode: React.FC<ShowSubnodeProps> = ({
                     cursor: isLast ? 'default' : 'pointer',
                     maxWidth: { xs: '150px', sm: '200px', md: 'none' },
                     overflow: 'hidden',
+                    transition: 'all 0.2s ease',
                     '&:hover': {
-                      textDecoration: isLast ? 'none' : 'underline',
+                      opacity: isLast ? 1 : 0.7,
                     },
                   }}
                 >
                   <FolderIcon
                     sx={{
                       fontSize: { xs: 16, sm: 18 },
-                      color: isLast ? '#1976d2' : '#5f6368',
+                      color: isLast ? '#FFD700' : '#546e7a',
                       flexShrink: 0,
                     }}
                   />
                   <Typography
                     sx={{
+                      fontFamily: '"Open Sans", sans-serif',
                       fontWeight: isLast ? 600 : 400,
-                      color: isLast ? '#202124' : '#5f6368',
+                      color: isLast ? '#0F2027' : '#546e7a',
                       fontSize: { xs: '0.8rem', sm: '0.875rem' },
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -453,186 +470,285 @@ const ShowSubnode: React.FC<ShowSubnodeProps> = ({
               );
             })}
           </Breadcrumbs>
-        </Box>
+        </Paper>
 
-        {/* Folder Info Card */}
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: { xs: 'column', md: 'row' },
-          justifyContent: 'space-between', 
-          alignItems: { xs: 'stretch', md: 'flex-start' },
-          gap: { xs: 2, md: 3 },
-          p: { xs: 2.5, sm: 3, md: 3.5 },
-          backgroundColor: '#ffffff',
-          borderRadius: '16px',
-          border: '1px solid #e8eaed',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-        }}>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography 
-              variant={isMobile ? 'h5' : 'h4'} 
-              sx={{ 
-                fontWeight: 700, 
-                color: '#202124',
-                mb: { xs: 1, sm: 1.5 },
-                wordBreak: 'break-word',
-              }}
-            >
-              {currentNode?.heading} {currentNode?.targetExam && `+ ${currentNode.targetExam}`}
-            </Typography>
-            
-            {currentNode?.description && (
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  color: '#5f6368', 
-                  mb: 2,
-                  lineHeight: 1.6,
-                  display: '-webkit-box',
-                  WebkitLineClamp: { xs: 3, sm: 2 },
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {currentNode.description}
-              </Typography>
-            )}
-
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: { xs: 1.5, sm: 2 },
-              flexWrap: 'wrap',
-            }}>
-              {isLoadingChildren ? (
-                <LoadingSpinner text="Loading..." />
-              ) : (
-                <>
-                  <Chip
-                    icon={<FolderIcon sx={{ fontSize: 18 }} />}
-                    label={`${childNodes.length} item${childNodes.length !== 1 ? 's' : ''}`}
-                    size="small"
-                    sx={{
-                      backgroundColor: '#e8f0fe',
-                      color: '#1967d2',
-                      fontWeight: 500,
-                      fontSize: '0.8125rem',
-                    }}
-                  />
-                  
-                  {currentNode?.lastDate && (
-                    <Chip
-                      icon={<CalendarIcon sx={{ fontSize: 16 }} />}
-                      label={new Date(currentNode.lastDate).toLocaleDateString()}
-                      size="small"
-                      sx={{
-                        backgroundColor: '#f8f9fa',
-                        color: '#5f6368',
-                        fontSize: '0.8125rem',
-                      }}
-                    />
-                  )}
-
-                  {currentNode?.tags && currentNode.tags.length > 0 && (
-                    <>
-                      {currentNode.tags.slice(0, isMobile ? 2 : 3).map((tag, idx) => (
-                        <Chip
-                          key={idx}
-                          label={tag}
-                          size="small"
-                          sx={{
-                            backgroundColor: '#f1f3f4',
-                            color: '#3c4043',
-                            fontSize: '0.75rem',
-                          }}
-                        />
-                      ))}
-                      {currentNode.tags.length > (isMobile ? 2 : 3) && (
-                        <Typography variant="caption" sx={{ color: '#5f6368' }}>
-                          +{currentNode.tags.length - (isMobile ? 2 : 3)} more
-                        </Typography>
-                      )}
-                    </>
-                  )}
-                </>
-              )}
-            </Box>
-          </Box>
-
-          <Button
-            variant="contained"
-            startIcon={!isMobile && <AddIcon />}
-            onClick={handleOpenCreateDialog}
-            disabled={isLoadingChildren}
+        {/* Folder Info Header - Professional Rectangle */}
+        <Paper
+          elevation={0}
+          sx={{
+            mb: 4,
+            borderRadius: '16px',
+            background: '#ffffff',
+            border: '1px solid rgba(11, 32, 33, 0.08)',
+            overflow: 'hidden',
+            boxShadow: '0 2px 8px rgba(11, 32, 33, 0.06)',
+          }}
+        >
+          {/* Gradient Top Border */}
+          <Box
             sx={{
-              backgroundColor: '#1976d2',
-              textTransform: 'none',
-              borderRadius: '8px',
-              px: { xs: 2, sm: 3 },
-              py: { xs: 1, sm: 1.5 },
-              fontWeight: 600,
-              fontSize: { xs: '0.875rem', sm: '0.9375rem' },
-              alignSelf: { xs: 'stretch', md: 'flex-start' },
-              whiteSpace: 'nowrap',
-              '&:hover': {
-                backgroundColor: '#1565c0',
-              },
-              '&:disabled': {
-                backgroundColor: '#e0e0e0',
-              }
+              height: '4px',
+              background: 'linear-gradient(90deg, #0b2021 0%, #203A43 100%)',
+            }}
+          />
+          
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              justifyContent: 'space-between',
+              alignItems: { xs: 'stretch', md: 'flex-start' },
+              gap: { xs: 2, md: 3 },
+              p: { xs: 3, sm: 3.5, md: 4 },
             }}
           >
-            {isMobile ? <AddIcon /> : 'Add Item'}
-          </Button>
-        </Box>
-      </Box>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              {/* Folder Icon and Title */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                <Box
+                  sx={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #0b2021 0%, #203A43 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <FolderOpenIcon sx={{ color: '#9bc8c5', fontSize: 32 }} />
+                </Box>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography
+                    variant={isMobile ? 'h5' : 'h4'}
+                    sx={{
+                      fontFamily: '"Montserrat", sans-serif',
+                      fontWeight: 700,
+                      color: '#0F2027',
+                      wordBreak: 'break-word',
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {currentNode?.heading}
+                  </Typography>
+                  {currentNode?.targetExam && (
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: '#011816',
+                        fontWeight: 600,
+                        mt: 0.5,
+                      }}
+                    >
+                      Target: {currentNode.targetExam}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
 
-      {/* Child Nodes Grid or Loading State */}
-      {isLoadingChildren ? (
-        <ClassCardSkeleton count={isMobile ? 4 : isTablet ? 6 : 8} />
-      ) : childNodes.length > 0 ? (
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              sm: 'repeat(2, 1fr)',
-              md: 'repeat(3, 1fr)',
-              lg: 'repeat(4, 1fr)',
-              xl: 'repeat(5, 1fr)',
-            },
-            gap: { xs: 2, sm: 2.5, md: 3 },
-          }}
-        >
-          {childNodes.map((node) => (
-            <SubnodeCard
-              key={node._id}
-              node={node}
-              onClick={handleNodeClick}
-              onEdit={handleEditNode}
-              onDelete={handleDeleteNode}
-            />
-          ))}
-        </Box>
-      ) : (
-        <Box
-          sx={{
-            textAlign: 'center',
-            py: { xs: 6, sm: 8, md: 10 },
-            px: 2,
-            color: '#5f6368',
-          }}
-        >
-          <FolderIcon sx={{ fontSize: { xs: 48, sm: 64 }, color: '#dadce0', mb: 2 }} />
-          <Typography variant={isMobile ? 'body1' : 'h6'} sx={{ mb: 1, fontWeight: 500 }}>
-            This folder is empty
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#80868b' }}>
-            Click "Add Item" to create folders or files
-          </Typography>
-        </Box>
-      )}
+              {currentNode?.description && (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: '#546e7a',
+                    mb: 2.5,
+                    lineHeight: 1.6,
+                    fontFamily: '"Open Sans", sans-serif',
+                  }}
+                >
+                  {currentNode.description}
+                </Typography>
+              )}
+
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  flexWrap: 'wrap',
+                }}
+              >
+                {isLoadingChildren ? (
+                  <LoadingSpinner text="Loading..." />
+                ) : (
+                  <>
+                    <Chip
+                      icon={<FolderIcon sx={{ fontSize: 18 }} />}
+                      label={`${childNodes.length} item${childNodes.length !== 1 ? 's' : ''}`}
+                      size="small"
+                      sx={{
+                        background: 'rgba(11, 32, 33, 0.08)',
+                        color: '#0b2021',
+                        fontWeight: 600,
+                        fontSize: '0.8125rem',
+                        border: '1px solid rgba(11, 32, 33, 0.12)',
+                        height: 28,
+                      }}
+                    />
+
+                    {currentNode?.lastDate && (
+                      <Chip
+                        icon={<CalendarIcon sx={{ fontSize: 16 }} />}
+                        label={new Date(currentNode.lastDate).toLocaleDateString()}
+                        size="small"
+                        sx={{
+                          background: 'rgba(255, 215, 0, 0.12)',
+                          color: '#C79100',
+                          fontSize: '0.8125rem',
+                          fontWeight: 500,
+                          height: 28,
+                        }}
+                      />
+                    )}
+
+                    {currentNode?.tags && currentNode.tags.length > 0 && (
+                      <>
+                        {currentNode.tags.slice(0, isMobile ? 2 : 3).map((tag, idx) => (
+                          <Chip
+                            key={idx}
+                            label={tag}
+                            size="small"
+                            sx={{
+                              background: '#f1f3f4',
+                              color: '#0F2027',
+                              fontSize: '0.75rem',
+                              height: 28,
+                            }}
+                          />
+                        ))}
+                        {currentNode.tags.length > (isMobile ? 2 : 3) && (
+                          <Typography variant="caption" sx={{ color: '#546e7a' }}>
+                            +{currentNode.tags.length - (isMobile ? 2 : 3)} more
+                          </Typography>
+                        )}
+                      </>
+                    )}
+                  </>
+                )}
+              </Box>
+            </Box>
+
+            <Button
+              variant="contained"
+              startIcon={!isMobile && <AddIcon />}
+              onClick={handleOpenCreateDialog}
+              disabled={isLoadingChildren}
+              sx={{
+                background: '#011816',
+                color: 'white',
+                fontFamily: '"Montserrat", sans-serif',
+                fontWeight: 700,
+                borderRadius: '12px',
+                px: { xs: 2.5, sm: 3.5 },
+                py: { xs: 1.25, sm: 1.5 },
+                fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                alignSelf: { xs: 'stretch', md: 'flex-start' },
+                whiteSpace: 'nowrap',
+                '&:hover': {
+                  background: '#011816',
+                  transform: 'translateY(-2px)',
+                },
+                transition: 'all 0.3s ease',
+                '&:disabled': {
+                  background: '#e0e0e0',
+                  color: '#9e9e9e',
+                },
+              }}
+            >
+              {isMobile ? <AddIcon /> : 'Add Item'}
+            </Button>
+          </Box>
+        </Paper>
+
+        {/* Child Nodes or Loading State */}
+        {isLoadingChildren ? (
+          <ClassCardSkeleton count={isMobile ? 4 : isTablet ? 6 : 8} />
+        ) : childNodes.length > 0 ? (
+          <Fade in={!isLoadingChildren} timeout={500}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: { xs: 2, sm: 2.5, md: 3 },
+                justifyContent: { xs: 'center', sm: 'flex-start' },
+              }}
+            >
+              {childNodes.map((node) => (
+                <Box
+                  key={node._id}
+                  sx={{
+                    width: {
+                      xs: '100%',
+                      sm: 'calc(50% - 10px)',
+                      md: 'calc(33.333% - 16px)',
+                      lg: 'calc(25% - 18px)',
+                      xl: 'calc(20% - 19.2px)',
+                    },
+                    minWidth: { xs: '100%', sm: '280px' },
+                    maxWidth: { xs: '100%', sm: '450px' },
+                  }}
+                >
+                  <SubnodeCard
+                    node={node}
+                    onClick={handleNodeClick}
+                    onEdit={handleEditNode}
+                    onDelete={handleDeleteNode}
+                  />
+                </Box>
+              ))}
+            </Box>
+          </Fade>
+        ) : (
+          <Paper
+            elevation={0}
+            sx={{
+              textAlign: 'center',
+              py: { xs: 8, sm: 10, md: 12 },
+              px: 2,
+              borderRadius: '16px',
+              border: '2px dashed rgba(11, 32, 33, 0.2)',
+              background: '#ffffff',
+            }}
+          >
+            <Box
+              sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '16px',
+                background: 'rgba(11, 32, 33, 0.06)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto',
+                mb: 3,
+              }}
+            >
+              <FolderOpenIcon sx={{ fontSize: 40, color: 'rgba(11, 32, 33, 0.3)' }} />
+            </Box>
+            <Typography
+              variant={isMobile ? 'body1' : 'h6'}
+              sx={{
+                mb: 1,
+                fontFamily: '"Montserrat", sans-serif',
+                fontWeight: 600,
+                color: '#0F2027',
+              }}
+            >
+              This folder is empty
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                color: '#546e7a',
+                fontFamily: '"Open Sans", sans-serif',
+              }}
+            >
+              Click "Add Item" to create folders or files
+            </Typography>
+          </Paper>
+        )}
+      </Box>
 
       {/* Dialogs */}
       <NodeDialogForm
@@ -654,54 +770,97 @@ const ShowSubnode: React.FC<ShowSubnodeProps> = ({
         />
       )}
 
-      <Dialog 
-        open={openDeleteDialog} 
+      <Dialog
+        open={openDeleteDialog}
         onClose={handleCloseDeleteDialog}
         fullScreen={isMobile}
         PaperProps={{
           sx: {
-            borderRadius: isMobile ? 0 : '12px',
+            borderRadius: isMobile ? 0 : '16px',
             maxWidth: '500px',
-          }
+          },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 600, pb: 1 }}>
-          Confirm Delete
+        <DialogTitle
+          sx={{
+            fontFamily: '"Montserrat", sans-serif',
+            fontWeight: 700,
+            pb: 1,
+            fontSize: '1.25rem',
+            color: '#d32f2f',
+            borderBottom: '1px solid rgba(211, 47, 47, 0.1)',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <WarningIcon />
+            Confirm Delete
+          </Box>
         </DialogTitle>
-        <DialogContent>
-          <Typography sx={{ mb: 2 }}>
+        <DialogContent sx={{ pt: 3 }}>
+          <Typography
+            sx={{
+              mb: 2,
+              color: '#546e7a',
+              fontFamily: '"Open Sans", sans-serif',
+            }}
+          >
             Are you sure you want to delete this item? This action cannot be undone.
           </Typography>
           {localNodes.find((n) => n._id === deletingNodeId)?.type === 'folder' && (
-            <Alert severity="error" sx={{ mb: 2 }}>
+            <Alert
+              severity="error"
+              icon={<WarningIcon />}
+              sx={{
+                mb: 2,
+                borderRadius: '12px',
+                background: 'rgba(211, 47, 47, 0.08)',
+                border: '1px solid rgba(211, 47, 47, 0.2)',
+              }}
+            >
               <Typography variant="body2" sx={{ fontWeight: 600 }}>
                 Warning: This will also delete all files inside this folder.
               </Typography>
             </Alert>
           )}
-          <Alert severity="warning">
+          <Alert
+            severity="warning"
+            icon={<InfoIcon />}
+            sx={{
+              borderRadius: '12px',
+              background: 'rgba(255, 152, 0, 0.08)',
+              border: '1px solid rgba(255, 152, 0, 0.2)',
+            }}
+          >
             <Typography variant="body2">
               Note: Subfolders must be deleted separately before deleting the parent folder.
             </Typography>
           </Alert>
         </DialogContent>
-        <DialogActions sx={{ p: 2, gap: 1 }}>
-          <Button 
+        <DialogActions sx={{ p: 2.5, gap: 1 }}>
+          <Button
             onClick={handleCloseDeleteDialog}
-            sx={{ 
+            sx={{
+              fontFamily: '"Montserrat", sans-serif',
+              fontWeight: 600,
               textTransform: 'none',
-              color: '#5f6368',
+              color: '#546e7a',
+              borderRadius: '10px',
             }}
           >
             Cancel
           </Button>
-          <Button 
-            onClick={handleConfirmDelete} 
-            color="error" 
+          <Button
+            onClick={handleConfirmDelete}
             variant="contained"
             sx={{
-              textTransform: 'none',
+              fontFamily: '"Montserrat", sans-serif',
+              background: '#d32f2f',
+              borderRadius: '10px',
               fontWeight: 600,
+              textTransform: 'none',
+              '&:hover': {
+                background: '#c62828',
+              },
             }}
           >
             Delete
@@ -718,7 +877,12 @@ const ShowSubnode: React.FC<ShowSubnodeProps> = ({
         <Alert
           onClose={handleCloseSnackbar}
           severity={snackbar.severity}
-          sx={{ width: '100%' }}
+          sx={{
+            width: '100%',
+            borderRadius: '12px',
+            fontFamily: '"Montserrat", sans-serif',
+            fontWeight: 600,
+          }}
           variant="filled"
         >
           {snackbar.message}

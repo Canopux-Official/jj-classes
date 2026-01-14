@@ -8,6 +8,8 @@ const port = process.env.PORT || 3000;
 import authRoutes from './routes/auth/auth'; 
 import adminStudentRoutes from './routes/admin/admin.student';
 import materialRoutes from './routes/materialRoutes';
+import studentMaterialRoutes from './routes/student/studentMaterialRoutes'
+
 const corsOptions = {
   origin: `${process.env.CLIENT_LINK}`,
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
@@ -23,6 +25,7 @@ connectDB();
 app.use('/auth', authRoutes);
 app.use('/admin', adminStudentRoutes);
 app.use('/api/material', materialRoutes);
+app.use('/api/student', studentMaterialRoutes);
 
 // Vercel deployment config
 if (process.env.VERCEL !== "true") {

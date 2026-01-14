@@ -20,6 +20,7 @@ const createClassId = async (req: Request, res: Response) => {
         else {
             const newClass = new Material({
                 heading: name,
+                class: name,
                 targetExam: targetExam,
                 stream,
                 parentId: null
@@ -39,6 +40,7 @@ const createClassId = async (req: Request, res: Response) => {
 const createSubFolder = async (req: Request, res: Response) => {
     try {
         const parentId = req.params.id;
+        const parent = await Material.findById(parentId)
         const { heading, description, fileDetails, referenceDetails, tags, lastDate, type,fileId } = req.body;
 
         if (!parentId) {
@@ -49,6 +51,9 @@ const createSubFolder = async (req: Request, res: Response) => {
         }
         const newSubMaterial = new Material({
             heading,
+            class: parent.class,
+            stream: parent.stream,
+            targetExam: parent.targetExam,
             description,
             fileDetails,
             referenceDetails,
