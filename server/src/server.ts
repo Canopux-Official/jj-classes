@@ -9,6 +9,7 @@ import authRoutes from './routes/auth/auth';
 import adminStudentRoutes from './routes/admin/admin.student';
 import materialRoutes from './routes/materialRoutes';
 import studentMaterialRoutes from './routes/student/studentMaterialRoutes'
+import studentProfileRoutes from './routes/student/studentProfileRoutes'
 
 const corsOptions = {
   origin: `${process.env.CLIENT_LINK}`,
@@ -24,6 +25,7 @@ connectDB();
 
 app.use('/auth', authRoutes);
 app.use('/admin', adminStudentRoutes);
+app.use('/api/studentProfile', studentProfileRoutes);
 app.use('/api/material', materialRoutes);
 app.use('/api/student', studentMaterialRoutes);
 

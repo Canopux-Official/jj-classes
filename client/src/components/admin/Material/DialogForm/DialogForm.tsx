@@ -417,13 +417,13 @@ const NodeDialogForm: React.FC<NodeDialogFormProps> = ({
 
             {/* Link Existing Files Button */}
             <Paper variant="outlined" sx={{ p: 2, mb: 2, bgcolor: 'success.50', borderColor: 'success.main' }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2,color: "white" }}>
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                   Link files that are already uploaded in other folders
                 </Typography>
                 <Button
                   variant="contained"
-                  color="success"
+                  sx={{color: "white"}}
                   onClick={() => setFileBrowserOpen(true)}
                   startIcon={<LinkIcon />}
                   fullWidth

@@ -301,3 +301,18 @@ export async function deleteStudent(id: string): Promise<ApiResponse> {
     return { success: false, message: axiosError.response?.data?.message || "Failed to delete student" };
   }
 }
+export async function getStudent(){
+  try{
+    const config: AxiosRequestConfig ={
+      method: "get",
+      url: `${import.meta.env.VITE_SERVER_LINK}/api/studentProfile/getStudent`,
+      headers: getAuthHeaders()
+    };
+    const response = await axios(config);
+    return {success: true, data: response.data, status: response.status};
+  } catch (error){
+    const axiosError = error as AxiosError;
+    // @ts-expect-error response.data is not typed in AxiosError
+    return {success: false, message: axiosError.response?.data?.message || "Failed to fetch student details"};
+  }
+}

@@ -7,7 +7,6 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
-import PaymentIcon from '@mui/icons-material/Payment';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import SchoolIcon from '@mui/icons-material/School'; // For Streams
 import QuizIcon from '@mui/icons-material/Quiz';     // For Target Exams
@@ -37,7 +36,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen, handleDrawerTog
     
     // Management Group
     { text: 'Session Manager', icon: <SettingsSuggestIcon />, path: '/admin/session' },
-    { text: 'Fees & Payments', icon: <PaymentIcon />, path: '/admin/fees' },
     { text: 'Upload Material', icon: <UploadFileIcon />, path: '/admin/upload' },
   ];
 
