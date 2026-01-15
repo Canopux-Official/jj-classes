@@ -1,29 +1,71 @@
-/* eslint-disable react-hooks/purity */
-import React, { useState } from 'react';
-import { Typography, Avatar, Button, TextField, Box, Stack,  Chip, Divider } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Typography, Avatar, Button, TextField, Box, Stack, Chip, Divider, CircularProgress, Alert } from '@mui/material';
 import LockResetIcon from '@mui/icons-material/LockReset';
 import EditIcon from '@mui/icons-material/Edit';
-import { ProfileHeader, SectionCard, LabelText, ValueText, Badge, ActionButton } from './StudentProfile.styles';
+import { 
+  ProfileHeader, SectionCard, LabelText, ValueText, Badge, ActionButton 
+} from './StudentProfile.styles';
+
+import { getStudent } from '../../../api/apiFunctions'; // Assumed function name
+
+interface ISubject {
+  _id: string;
+  name: string;
+  stream: string;
+}
+
+interface IStudentProfile {
+  _id: string;
+  name: string;
+  dob: string;
+  phoneNumber: string;
+  parentPhoneNumber: string;
+  email: string;
+  currentClass: string;
+  stream: string;
+  targetExams: string[];
+  enrolledSubjects: ISubject[];
+  academicSession: string;
+  isActive: boolean;
+  admissionDate: string;
+}
 
 const StudentProfile: React.FC = () => {
-  // Mock Data (Mirroring IStudent interface)
-  const student = {
-    name: "Anjali Singh",
-    dob: "2006-08-15", // YYYY-MM-DD
-    phoneNumber: "9876543210",
-    parentPhoneNumber: "9123456789",
-    email: "anjali.s@example.com",
-    currentClass: "Class 12",
-    stream: "Science",
-    targetExams: ["NEET", "Boards"],
-    enrolledSubjects: ["Physics", "Chemistry", "Biology", "English"], // Mocked names from IDs
-    academicSession: "2024-2025",
-    admissionDate: "2024-04-01",
-    isActive: true
+  const [student, setStudent] = useState<IStudentProfile | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        const response = await getStudent(); 
+        if (response.data) {
+          setStudent(response.data);
+        } else {
+          setError("Failed to load profile data.");
+        }
+      } catch (err) {
+        console.error(err);
+        setError("An error occurred while fetching details.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-GB', {
+      day: 'numeric', month: 'short', year: 'numeric'
+    });
   };
 
-  // Derived Calculations
   const calculateAge = (dob: string) => {
+    if (!dob) return 0;
     const birthDate = new Date(dob);
     const ageDifMs = Date.now() - birthDate.getTime();
     const ageDate = new Date(ageDifMs);
@@ -31,6 +73,7 @@ const StudentProfile: React.FC = () => {
   };
 
   const calculateTenure = (admissionDate: string) => {
+    if (!admissionDate) return 0;
     const start = new Date(admissionDate);
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - start.getTime());
@@ -38,13 +81,29 @@ const StudentProfile: React.FC = () => {
     return diffDays;
   };
 
-  const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+        <CircularProgress color="primary" />
+      </Box>
+    );
+  }
+
+  if (error || !student) {
+    return (
+      <Box p={4}>
+        <Alert severity="error">{error || "No student data found."}</Alert>
+      </Box>
+    );
+  }
 
   return (
     <Box maxWidth="lg">
       <ProfileHeader>
-        <Avatar sx={{ width: 100, height: 100, fontSize: 40, bgcolor: 'primary.main', color: '#66bb6a', border: '2px solid #66bb6a' }}>
-          {student.name.charAt(0)}
+        <Avatar 
+            sx={{ width: 100, height: 100, fontSize: 40, bgcolor: 'primary.main', color: '#66bb6a', border: '2px solid #66bb6a' }}
+        >
+          {student.name ? student.name.charAt(0) : 'S'}
         </Avatar>
         <Box flex={1}>
           <Stack direction="row" alignItems="center" gap={2}>
@@ -67,7 +126,6 @@ const StudentProfile: React.FC = () => {
 
       <Box display="flex" flexDirection={{ xs: 'column', lg: 'row' }} gap={3}>
         
-        {/* Left Column: Full Details (Flex 2) */}
         <Box flex={2}>
           <SectionCard elevation={0}>
             <Typography variant="h6" fontWeight={700} mb={3} color="primary">Basic Identity</Typography>
@@ -90,7 +148,9 @@ const StudentProfile: React.FC = () => {
               </Box>
               <Box flex={1}>
                 <LabelText>Date of Birth</LabelText>
-                <ValueText>{student.dob} ({calculateAge(student.dob)} years)</ValueText>
+                <ValueText>
+                    {formatDate(student.dob)} ({calculateAge(student.dob)} years)
+                </ValueText>
               </Box>
             </Stack>
             
@@ -105,14 +165,14 @@ const StudentProfile: React.FC = () => {
               </Box>
                <Box flex={1}>
                 <LabelText>Admission Date</LabelText>
-                <ValueText>{student.admissionDate}</ValueText>
+                <ValueText>{formatDate(student.admissionDate)}</ValueText>
               </Box>
             </Stack>
 
             <Box mb={3}>
                 <LabelText>Target Exams</LabelText>
                 <Stack direction="row" gap={1}>
-                  {student.targetExams.map(ex => (
+                  {student.targetExams.map((ex) => (
                     <Chip key={ex} label={ex} color="primary" variant="outlined" />
                   ))}
                 </Stack>
@@ -121,8 +181,12 @@ const StudentProfile: React.FC = () => {
             <Box>
                 <LabelText>Enrolled Subjects</LabelText>
                 <Stack direction="row" gap={1} flexWrap="wrap">
-                  {student.enrolledSubjects.map(sub => (
-                    <Chip key={sub} label={sub} sx={{ bgcolor: '#e8f5e9', color: '#2e7d32', fontWeight: 600, border: '1px solid #c8e6c9' }} />
+                  {student.enrolledSubjects.map((sub) => (
+                    <Chip 
+                        key={sub._id} 
+                        label={sub.name} // Accessing .name from the object
+                        sx={{ bgcolor: '#e8f5e9', color: '#2e7d32', fontWeight: 600, border: '1px solid #c8e6c9' }} 
+                    />
                   ))}
                 </Stack>
             </Box>
@@ -130,7 +194,6 @@ const StudentProfile: React.FC = () => {
           </SectionCard>
         </Box>
 
-        {/* Right Column: Settings & Actions (Flex 1) */}
         <Box flex={1}>
           <SectionCard elevation={0}>
             <Stack direction="row" alignItems="center" gap={1} mb={2}>

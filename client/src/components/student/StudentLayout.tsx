@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Box, IconButton, List, ListItem, ListItemButton, 
-  ListItemIcon, ListItemText, Typography, Toolbar, Avatar, 
-  Stack, Button 
+import {
+  Box, IconButton, List, ListItem, ListItemButton,
+  ListItemIcon, ListItemText, Typography, Toolbar, Avatar,
+  Stack, Button
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -13,7 +13,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks'; // Added for Materials
 
 import { RootContainer, StyledDrawer, StyledAppBar, MainContent, LogoSection } from './StudentLayout.styles';
-import LogoImg from '../../assets/logo.jpeg'; 
+import LogoImg from '../../assets/logo.jpeg';
 
 const StudentLayout: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -43,7 +43,7 @@ const StudentLayout: React.FC = () => {
           const isActive = location.pathname === item.path;
           return (
             <ListItem key={item.text} disablePadding>
-              <ListItemButton 
+              <ListItemButton
                 onClick={() => { navigate(item.path); setMobileOpen(false); }}
                 sx={{
                   borderLeft: isActive ? '4px solid #4caf50' : '4px solid transparent', // Green accent
@@ -70,36 +70,43 @@ const StudentLayout: React.FC = () => {
           <IconButton color="inherit" edge="start" onClick={handleDrawerToggle} sx={{ mr: 2, display: { md: 'none' } }}>
             <MenuIcon />
           </IconButton>
-          
+
           <Box sx={{ flexGrow: 1 }} />
-          
+
           <Stack direction="row" spacing={2} alignItems="center">
-             {/* Profile Preview */}
+            {/* Profile Preview */}
             <Box display="flex" alignItems="center" gap={1} sx={{ display: { xs: 'none', sm: 'flex' } }}>
               <Box textAlign="right">
-                 <Typography variant="body2" fontWeight={600}>Anjali Singh</Typography>
-                 <Typography variant="caption" color="text.secondary">Class 12 - Science</Typography>
+                <Typography variant="body2" fontWeight={600}>Anjali Singh</Typography>
+                <Typography variant="caption" color="text.secondary">Class 12 - Science</Typography>
               </Box>
               <Avatar sx={{ bgcolor: 'secondary.main', color: 'primary.main', width: 36, height: 36, fontSize: '0.9rem' }}>AS</Avatar>
             </Box>
 
             {/* Logout Button (Directly in Navbar) */}
-            <Button 
-                variant="outlined" 
-                color="error" 
-                size="small" 
-                startIcon={<LogoutIcon />}
-                onClick={() => navigate('/login')}
-                sx={{ 
-                    borderRadius: 2, 
-                    textTransform: 'none', 
-                    borderColor: '#ffcdd2', 
-                    color: '#d32f2f',
-                    '&:hover': { borderColor: '#d32f2f', bgcolor: '#ffebee' } 
-                }}
+            <Button
+              variant="outlined"
+              color="error"
+              size="small"
+              startIcon={<LogoutIcon />}
+              onClick={() => {
+                window.localStorage.removeItem('authToken');
+                navigate('/login');
+              }}
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                borderColor: '#ffcdd2',
+                color: '#d32f2f',
+                '&:hover': {
+                  borderColor: '#d32f2f',
+                  bgcolor: '#ffebee',
+                },
+              }}
             >
-                Logout
+              Logout
             </Button>
+
           </Stack>
         </Toolbar>
       </StyledAppBar>

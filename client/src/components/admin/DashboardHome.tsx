@@ -1,24 +1,52 @@
 import React from 'react';
 import { Typography, Box } from '@mui/material';
 import PeopleIcon from '@mui/icons-material/People';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import SchoolIcon from '@mui/icons-material/School';
-import TrendingDownIcon from '@mui/icons-material/TrendingDown';
-import { 
-  DashboardContainer, 
-  StatsFlexContainer, 
-  StatCardWrapper, 
-  CardHeader, 
-  TrendBadge 
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import FlagIcon from '@mui/icons-material/Flag';
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
+
+import {
+  DashboardContainer,
+  StatsFlexContainer,
+  StatCardWrapper,
+  CardHeader,
 } from './DashboardHome.styles';
 
 const DashboardHome: React.FC = () => {
   const stats = [
-    { title: 'Total Students', value: '1,250', trend: '+12%', isPositive: true, icon: <PeopleIcon color="primary" /> },
-    { title: 'Total Revenue', value: '₹4.5L', trend: '+8%', isPositive: true, icon: <AttachMoneyIcon color="success" /> },
-    { title: 'Active Courses', value: '12', trend: '0%', isPositive: true, icon: <SchoolIcon color="warning" /> },
-    { title: 'Dropouts', value: '3', trend: '-2%', isPositive: false, icon: <TrendingDownIcon color="error" /> },
+    {
+      title: 'Total Students',
+      value: '1,250',
+      isPositive: true,
+      icon: <PeopleIcon color="primary" />,
+    },
+    {
+      title: 'Active Subjects',
+      value: '12',
+      isPositive: true,
+      icon: <MenuBookIcon color="success" />,
+    },
+    {
+      title: 'Active Streams',
+      value: '12',
+      isPositive: true,
+      icon: <AccountTreeIcon color="info" />,
+    },
+    {
+      title: 'Active Target Exams',
+      value: '12',
+      isPositive: true,
+      icon: <FlagIcon color="warning" />,
+    },
+    {
+      title: 'Current Session',
+      value: '2025–26',
+      isPositive: true,
+      icon: <EventAvailableIcon color="secondary" />,
+    },
   ];
+
 
   return (
     <DashboardContainer>
@@ -40,15 +68,13 @@ const DashboardHome: React.FC = () => {
               </Typography>
               {stat.icon}
             </CardHeader>
-            
+
             <Box>
               <Typography variant="h4" fontWeight="700" color="text.primary" sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
                 {stat.value}
               </Typography>
               <Box mt={2}>
-                <TrendBadge isPositive={stat.isPositive}>
-                  {stat.trend} {stat.isPositive ? 'Increase' : 'Decrease'}
-                </TrendBadge>
+
               </Box>
             </Box>
           </StatCardWrapper>
