@@ -23,7 +23,7 @@ export const ClickableCard = styled(StyledCard)({
   cursor: 'pointer',
 });
 
-export const IconWrapper = styled(Box)<{ itemType: string }>(({ theme, itemType }) => ({
+export const IconWrapper = styled(Box)<{ itemType: string }>(({ itemType }) => ({
   width: 56,
   height: 56,
   borderRadius: '12px',

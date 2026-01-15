@@ -899,7 +899,6 @@ import {
   Box,
   Typography,
   Button,
-  IconButton,
   Breadcrumbs,
   Dialog,
   DialogTitle,
@@ -1023,17 +1022,17 @@ const ShowSubnode: React.FC<ShowSubnodeProps> = ({
     }
   };
 
-  const handleBackClick = () => {
-    if (navigationStack.length > 1) {
-      const newStack = [...navigationStack];
-      newStack.pop();
-      const previousNodeId = newStack[newStack.length - 1];
-      setNavigationStack(newStack);
-      setCurrentNodeId(previousNodeId);
-    } else {
-      onBack();
-    }
-  };
+  // const handleBackClick = () => {
+  //   if (navigationStack.length > 1) {
+  //     const newStack = [...navigationStack];
+  //     newStack.pop();
+  //     const previousNodeId = newStack[newStack.length - 1];
+  //     setNavigationStack(newStack);
+  //     setCurrentNodeId(previousNodeId);
+  //   } else {
+  //     onBack();
+  //   }
+  // };
 
   const handleBreadcrumbClick = (nodeId: string) => {
     const nodeIndex = navigationStack.indexOf(nodeId);
