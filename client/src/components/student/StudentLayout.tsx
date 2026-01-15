@@ -25,7 +25,7 @@ const StudentLayout: React.FC = () => {
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/student/dashboard' },
     { text: 'My Profile', icon: <PersonIcon />, path: '/student/profile' },
-    { text: 'Study Materials', icon: <LibraryBooksIcon />, path: '/student/materials' }, // Placeholder for future
+    { text: 'Study Materials', icon: <LibraryBooksIcon />, path: '/student/material' },
     { text: 'Notice Board', icon: <NotificationsIcon />, path: '/student/notices' },
   ];
 
