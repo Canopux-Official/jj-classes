@@ -12,6 +12,7 @@ router.delete('/delete-sub-folder/:id', materialController.deleteSubFolder);
 router.patch('/update-sub-folder/:id', materialController.updateSubFolder);
 router.get('/get-all-classes', materialController.getAllClasses);
 router.post('/confirm-folder-deletion', materialController.confirmFolderDeletion)
+router.get('/files', materialController.getAllFiles)
 
 
 export default router;

@@ -20,6 +20,7 @@ const createClassId = async (req: Request, res: Response) => {
         else {
             const newClass = new Material({
                 heading: name,
+                class: name,
                 targetExam: targetExam,
                 stream,
                 parentId: null
@@ -39,6 +40,7 @@ const createClassId = async (req: Request, res: Response) => {
 const createSubFolder = async (req: Request, res: Response) => {
     try {
         const parentId = req.params.id;
+        const parent = await Material.findById(parentId)
         const { heading, description, fileDetails, referenceDetails, tags, lastDate, type,fileId } = req.body;
 
         if (!parentId) {
@@ -49,6 +51,9 @@ const createSubFolder = async (req: Request, res: Response) => {
         }
         const newSubMaterial = new Material({
             heading,
+            class: parent.class,
+            stream: parent.stream,
+            targetExam: parent.targetExam,
             description,
             fileDetails,
             referenceDetails,
@@ -305,6 +310,74 @@ const getAllClasses = async (req: Request, res: Response) => {
 }
 
 
+// for searching a file
+const getAllFiles = async (req: Request, res: Response) => {
+    try {
+        const { search } = req.query; // Optional search parameter
+
+        // Build query to find all materials that have fileDetails
+        let query: any = {
+            fileDetails: { $exists: true, $ne: [] }
+        };
+
+        // If search parameter is provided, add text search
+        if (search && typeof search === 'string') {
+            query.$or = [
+                { heading: { $regex: search, $options: 'i' } }, // Case-insensitive search in heading
+                { 'fileDetails.fileName': { $regex: search, $options: 'i' } }, // Search in file names
+                { tags: { $regex: search, $options: 'i' } } // Search in tags
+            ];
+        }
+
+        // Fetch all materials that match the query
+        const materials = await Material.find(query).select('fileDetails heading type');
+
+        // Use a Map to store unique files (key: uploadLink, value: file object)
+        const uniqueFilesMap = new Map<string, {
+            fileName: string;
+            uploadLink: string;
+            fileId?: string;
+            parentHeading: string;
+            parentId: string;
+        }>();
+
+        materials.forEach(material => {
+            if (material.fileDetails && Array.isArray(material.fileDetails)) {
+                material.fileDetails.forEach((file: any) => {
+                    if (file.fileName && file.uploadLink) {
+                        // Use uploadLink as unique key
+                        // If duplicate exists, keep the first occurrence
+                        if (!uniqueFilesMap.has(file.uploadLink)) {
+                            uniqueFilesMap.set(file.uploadLink, {
+                                fileName: file.fileName,
+                                uploadLink: file.uploadLink,
+                                fileId: file.fileId || undefined,
+                                parentHeading: material.heading,
+                                parentId: material._id.toString()
+                            });
+                        }
+                    }
+                });
+            }
+        });
+
+        // Convert Map values to array
+        const allFiles = Array.from(uniqueFilesMap.values());
+
+        return res.status(200).json({
+            message: 'Files fetched successfully',
+            success: true,
+            count: allFiles.length,
+            data: allFiles
+        });
+
+    } catch (error) {
+        console.log("Error in getAllFiles:", error);
+        res.status(500).json({ message: 'Server Error', success: false });
+    }
+};
 
 
-export default { createClassId, createSubFolder, findByParentId, deleteSubFolder, updateSubFolder, getAllClasses, confirmFolderDeletion };
+
+
+export default { createClassId, createSubFolder, findByParentId, deleteSubFolder, updateSubFolder, getAllClasses, confirmFolderDeletion, getAllFiles };

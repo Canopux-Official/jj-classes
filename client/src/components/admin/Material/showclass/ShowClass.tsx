@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Typography,
@@ -13,20 +14,21 @@ import {
   MenuItem,
   Snackbar,
   Alert,
+  Container,
+  Paper,
+  Fade,
   type SelectChangeEvent,
 } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
+import { Add as AddIcon, School, TrendingUp, Category, Warning } from '@mui/icons-material';
 import ClassCard from '../classcard/ClassCard';
 import ShowSubnode from '../showsubnode/ShowSubNode';
 
-import { MainContainer, PageHeader, ClassGrid } from './ShowClass.styles';
 import type { Node } from '../types/node';
 
 import { confirmFolderDeletion, createOrFetchClass, deleteSubFolder, getAllClasses, updateFolder } from '../services/FolderServiceApi';
 import { deleteFileFromDrive } from '../utils/googleDriveService';
 import { ClassCardSkeleton } from '../utils/CardSkeleton';
 import EditClassDialog from '../DialogForm/EditClassDialog';
-
 
 // Available class options
 const CLASS_OPTIONS = [
@@ -110,7 +112,6 @@ const ShowClass: React.FC = () => {
     setSelectedNodeId(null);
   };
 
-  // Open class selection dialog
   const handleOpenCreateDialog = () => {
     setOpenClassSelectionDialog(true);
     setSelectedClassType('');
@@ -148,7 +149,6 @@ const ShowClass: React.FC = () => {
   const handleConfirmCreateClass = async () => {
     if (!selectedClassType) return;
 
-    // Get the label for the selected class
     const selectedOption = CLASS_OPTIONS.find(opt => opt.value === selectedClassType);
     const selectedTargetExamOption = TARGET_EXAM_OPTIONS.find(opt => opt.value === selectedTargetExamType);
     const selectedStreamOption = STREAM_OPTINS.find(opt => opt.value === selectedStreamType);
@@ -158,7 +158,6 @@ const ShowClass: React.FC = () => {
 
     try {
       const response = await createOrFetchClass(className, targetExamName, streamName);
-      console.log(response)
 
       if (!response.success) {
         throw new Error(response.message || 'Failed to create class');
@@ -180,7 +179,6 @@ const ShowClass: React.FC = () => {
       setAllNodes([...allNodes, newNode]);
       handleCloseConfirmDialog();
 
-      // Show success message
       setSnackbar({
         open: true,
         message: response.message || 'Class created successfully',
@@ -257,18 +255,15 @@ const ShowClass: React.FC = () => {
     try {
       const result = await deleteSubFolder(deletingNodeId);
 
-      // Check if Drive deletion is required
       if (result.requiresDriveDeletion && result.driveFileIds) {
         handleCloseDeleteDialog();
 
-        // Show loading state
         setSnackbar({
           open: true,
           message: 'Deleting files from Google Drive...',
           severity: 'info',
         });
 
-        // Delete all files from Google Drive
         let deletedCount = 0;
         for (const fileId of result.driveFileIds) {
           try {
@@ -279,11 +274,9 @@ const ShowClass: React.FC = () => {
           }
         }
 
-        // Confirm deletion in backend
         const confirmData = await confirmFolderDeletion(result.folderId ? result.folderId : "");
 
         if (confirmData.success) {
-          // Update UI - delete node and children
           const updatedNodes = removeNodeAndChildren(deletingNodeId);
           setAllNodes(updatedNodes);
 
@@ -300,7 +293,6 @@ const ShowClass: React.FC = () => {
           });
         }
       } else if (result.success) {
-        // No Drive deletion needed, just update UI
         const updatedNodes = removeNodeAndChildren(deletingNodeId);
         setAllNodes(updatedNodes);
         handleCloseDeleteDialog();
@@ -311,7 +303,6 @@ const ShowClass: React.FC = () => {
           severity: 'success',
         });
       } else {
-        // Show error message
         handleCloseDeleteDialog();
         setSnackbar({
           open: true,
@@ -329,7 +320,6 @@ const ShowClass: React.FC = () => {
     }
   };
 
-  // Helper function to remove node and its children from local state
   const removeNodeAndChildren = (nodeId: string): typeof allNodes => {
     const deleteNodeAndChildren = (id: string): string[] => {
       const idsToDelete = [id];
@@ -352,7 +342,6 @@ const ShowClass: React.FC = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  // If inside a class/folder, show nested content
   if (selectedNodeId) {
     return (
       <ShowSubnode
@@ -364,11 +353,9 @@ const ShowClass: React.FC = () => {
     );
   }
 
-  // Main class list view
   const displayClasses = rootClasses.map((node) => ({
     id: node._id,
     name: node.heading,
-
     tags: node.tags || [],
     status: 'active' as const,
     description: node.description,
@@ -383,58 +370,188 @@ const ShowClass: React.FC = () => {
   }));
 
   return (
-    <MainContainer>
-      <PageHeader>
-        <Box>
-          <Typography
-            variant="h4"
-            sx={{
-              fontWeight: 700,
-              color: '#202124',
-              fontSize: { xs: '1.75rem', md: '2.125rem' },
-            }}
-          >
-            My Classes
-          </Typography>
-          <Typography variant="body1" sx={{ color: '#5f6368' }}>
-            Manage and view all your enrolled classes
-          </Typography>
-        </Box>
-
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleOpenCreateDialog}
-          disabled={isLoadingClasses}
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #fdfbf7 0%, #f5f5f5 100%)',
+        py: 4,
+      }}
+    >
+      <Container maxWidth="xl">
+        {/* Page Header with Gradient Background */}
+        <Paper
+          elevation={0}
           sx={{
-            backgroundColor: '#1976d2',
-            textTransform: 'none',
-            borderRadius: '8px',
-            px: 3,
-            py: 1.5,
-            fontWeight: 600,
+            background: 'linear-gradient(135deg, #152b2e 0%, #407872 100%)',
+            borderRadius: '16px',
+            p: 4,
+            mb: 4,
+            position: 'relative',
+            overflow: 'hidden',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              width: '300px',
+              height: '300px',
+              background: 'radial-gradient(circle, rgba(255,215,0,0.1) 0%, transparent 70%)',
+              borderRadius: '50%',
+            },
           }}
         >
-          Create Class
-        </Button>
-      </PageHeader>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 3,
+              position: 'relative',
+              zIndex: 1,
+            }}
+          >
+            <Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: '12px',
+                    background: 'rgba(255, 215, 0, 0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <School sx={{ color: '#ade0df', fontSize: 28 }} />
+                </Box>
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontFamily: '"Montserrat", sans-serif',
+                    fontWeight: 800,
+                    color: '#ffffff',
+                    fontSize: { xs: '1.75rem', md: '2.125rem' },
+                  }}
+                >
+                  My Classes
+                </Typography>
+              </Box>
+              <Typography
+                variant="body1"
+                sx={{
+                  color: 'rgba(255, 255, 255, 0.85)',
+                  ml: 8,
+                  fontSize: '1rem',
+                }}
+              >
+                Manage and view all your enrolled classes
+              </Typography>
+            </Box>
 
-      {/* Loading or Class Grid */}
-      {isLoadingClasses ? (
-        <ClassCardSkeleton count={6} />
-      ) : (
-        <ClassGrid>
-          {displayClasses.map((classItem) => (
-            <ClassCard
-              key={classItem.id}
-              {...classItem}
-              onClick={handleClassClick}
-              onEdit={handleEditClass}
-              onDelete={handleDeleteClass}
-            />
-          ))}
-        </ClassGrid>
-      )}
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleOpenCreateDialog}
+              disabled={isLoadingClasses}
+              sx={{
+                background: '#011816',
+                color: 'white',
+                textTransform: 'none',
+                borderRadius: '12px',
+                px: 3.5,
+                py: 1.5,
+                fontFamily: '"Montserrat", sans-serif',
+                fontWeight: 700,
+                fontSize: '1rem',
+                '&:hover': {
+                  background: '#01180b',
+                  transform: 'translateY(-2px)',
+                },
+                transition: 'all 0.3s ease',
+              }}
+            >
+              Create Class
+            </Button>
+          </Box>
+        </Paper>
+
+        {/* Loading or Class Grid */}
+        {isLoadingClasses ? (
+          <ClassCardSkeleton count={6} />
+        ) : (
+          <Fade in={!isLoadingClasses} timeout={500}>
+            <Box
+              display="grid"
+              gridTemplateColumns={{
+                xs: '1fr',
+                sm: 'repeat(2, 1fr)',
+                md: 'repeat(3, 1fr)',
+              }}
+              gap={2}
+            >
+              {displayClasses.map((classItem) => (
+                <Box key={classItem.id}>
+                  <ClassCard
+                    {...classItem}
+                    onClick={handleClassClick}
+                    onEdit={handleEditClass}
+                    onDelete={handleDeleteClass}
+                  />
+                </Box>
+              ))}
+            </Box>
+          </Fade>
+        )}
+
+        {/* Empty State */}
+        {!isLoadingClasses && displayClasses.length === 0 && (
+          <Paper
+            elevation={0}
+            sx={{
+              textAlign: 'center',
+              py: 8,
+              borderRadius: '16px',
+              border: '2px dashed rgba(11, 32, 33, 0.2)',
+              background: '#ffffff',
+            }}
+          >
+            <School sx={{ fontSize: 64, color: 'rgba(11, 32, 33, 0.3)', mb: 2 }} />
+            <Typography
+              variant="h6"
+              sx={{
+                fontFamily: '"Montserrat", sans-serif',
+                fontWeight: 600,
+                color: '#0F2027',
+                mb: 1,
+              }}
+            >
+              No Classes Yet
+            </Typography>
+            <Typography variant="body1" sx={{ color: '#546e7a', mb: 3 }}>
+              Get started by creating your first class
+            </Typography>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleOpenCreateDialog}
+              sx={{
+                background: 'linear-gradient(135deg, #0b2021 0%, #203A43 100%)',
+                color: '#FFD700',
+                fontFamily: '"Montserrat", sans-serif',
+                fontWeight: 600,
+                textTransform: 'none',
+                px: 3,
+                py: 1.25,
+                borderRadius: '10px',
+              }}
+            >
+              Create Your First Class
+            </Button>
+          </Paper>
+        )}
+      </Container>
 
       {/* Class Selection Dialog */}
       <Dialog
@@ -442,12 +559,40 @@ const ShowClass: React.FC = () => {
         onClose={handleCloseClassSelectionDialog}
         maxWidth="sm"
         fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: '16px',
+            boxShadow: '0 8px 32px rgba(15, 32, 39, 0.15)',
+          },
+        }}
       >
-        <DialogTitle sx={{ fontWeight: 600 }}>
-          Select Class Type
+        <DialogTitle
+          sx={{
+            fontFamily: '"Montserrat", sans-serif',
+            fontWeight: 700,
+            fontSize: '1.5rem',
+            color: '#0F2027',
+            borderBottom: '1px solid rgba(15, 32, 39, 0.1)',
+            pb: 2,
+          }}
+        >
+          Create New Class
         </DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
-          <FormControl fullWidth>
+          <FormControl
+            fullWidth
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '12px',
+                '&:hover fieldset': {
+                  borderColor: '#0b2021',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#0b2021',
+                },
+              },
+            }}
+          >
             <InputLabel id="class-type-label">Class</InputLabel>
             <Select
               labelId="class-type-label"
@@ -458,16 +603,31 @@ const ShowClass: React.FC = () => {
             >
               {CLASS_OPTIONS.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
-                  {option.label}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <School sx={{ fontSize: 20, color: '#0b2021' }} />
+                    {option.label}
+                  </Box>
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
 
-          {/* Added gap between the inputs */}
           <Box sx={{ mt: 3 }} />
 
-          <FormControl fullWidth>
+          <FormControl
+            fullWidth
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '12px',
+                '&:hover fieldset': {
+                  borderColor: '#0b2021',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#0b2021',
+                },
+              },
+            }}
+          >
             <InputLabel id="target-exam-label">Target Exam</InputLabel>
             <Select
               labelId="target-exam-label"
@@ -478,7 +638,10 @@ const ShowClass: React.FC = () => {
             >
               {TARGET_EXAM_OPTIONS.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
-                  {option.label}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <TrendingUp sx={{ fontSize: 20, color: '#0b2021' }} />
+                    {option.label}
+                  </Box>
                 </MenuItem>
               ))}
             </Select>
@@ -486,7 +649,20 @@ const ShowClass: React.FC = () => {
 
           <Box sx={{ mt: 3 }} />
 
-          <FormControl fullWidth>
+          <FormControl
+            fullWidth
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '12px',
+                '&:hover fieldset': {
+                  borderColor: '#0b2021',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#0b2021',
+                },
+              },
+            }}
+          >
             <InputLabel id="stream-label">Stream</InputLabel>
             <Select
               labelId="stream-label"
@@ -497,22 +673,61 @@ const ShowClass: React.FC = () => {
             >
               {STREAM_OPTINS.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
-                  {option.label}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Category sx={{ fontSize: 20, color: '#0b2021' }} />
+                    {option.label}
+                  </Box>
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
 
-          <Typography variant="body2" sx={{ mt: 2, color: '#5f6368' }}>
-            Select the class you want to create. This will set up the curriculum structure for the selected class.
-          </Typography>
+          <Box
+            sx={{
+              mt: 3,
+              p: 2,
+              background: 'rgba(255, 215, 0, 0.08)',
+              borderRadius: '12px',
+              border: '1px solid rgba(255, 215, 0, 0.2)',
+            }}
+          >
+            <Typography
+              variant="body2"
+              sx={{
+                color: '#0F2027',
+                lineHeight: 1.6,
+              }}
+            >
+              Select the class you want to create. This will set up the curriculum structure for the selected class.
+            </Typography>
+          </Box>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button onClick={handleCloseClassSelectionDialog}>Cancel</Button>
+        <DialogActions sx={{ px: 3, pb: 3, pt: 2 }}>
+          <Button
+            onClick={handleCloseClassSelectionDialog}
+            sx={{
+              fontFamily: '"Montserrat", sans-serif',
+              fontWeight: 600,
+              textTransform: 'none',
+              color: '#546e7a',
+              borderRadius: '10px',
+            }}
+          >
+            Cancel
+          </Button>
           <Button
             onClick={handleProceedToConfirm}
             variant="contained"
             disabled={!selectedClassType}
+            sx={{
+              background: 'linear-gradient(135deg, #0b2021 0%, #203A43 100%)',
+              fontFamily: '"Montserrat", sans-serif',
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: '10px',
+              color: "white",
+              px: 3,
+            }}
           >
             Continue
           </Button>
@@ -525,49 +740,99 @@ const ShowClass: React.FC = () => {
         onClose={handleCloseConfirmDialog}
         maxWidth="sm"
         fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: '16px',
+            boxShadow: '0 8px 32px rgba(15, 32, 39, 0.15)',
+          },
+        }}
       >
-        <DialogTitle sx={{ fontWeight: 600 }}>
+        <DialogTitle
+          sx={{
+            fontFamily: '"Montserrat", sans-serif',
+            fontWeight: 700,
+            fontSize: '1.5rem',
+            color: '#0F2027',
+            borderBottom: '1px solid rgba(15, 32, 39, 0.1)',
+            pb: 2,
+          }}
+        >
           Confirm Class Creation
         </DialogTitle>
-        <DialogContent>
-          <Typography variant="body1" sx={{ mb: 2 }}>
+        <DialogContent sx={{ pt: 3 }}>
+          <Typography variant="body1" sx={{ mb: 3, color: '#546e7a' }}>
             Are you sure you want to create the following class?
           </Typography>
-          <Box
+          <Paper
+            elevation={0}
             sx={{
-              p: 2,
-              bgcolor: '#f5f5f5',
-              borderRadius: 1,
-              border: '1px solid #e0e0e0',
+              p: 3,
+              background: 'linear-gradient(135deg, #0b2021 0%, #203A43 100%)',
+              borderRadius: '12px',
+              position: 'relative',
+              overflow: 'hidden',
             }}
           >
-            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1976d2' }}>
+            <Typography
+              variant="h6"
+              sx={{
+                fontFamily: '"Montserrat", sans-serif',
+                fontWeight: 700,
+                color: '#FFD700',
+                mb: 1,
+              }}
+            >
               {CLASS_OPTIONS.find(opt => opt.value === selectedClassType)?.label}
-              {' - '}
+              {' • '}
               {TARGET_EXAM_OPTIONS.find(opt => opt.value === selectedTargetExamType)?.label}
-              {' - '}
+              {' • '}
               {STREAM_OPTINS.find(opt => opt.value === selectedStreamType)?.label}
             </Typography>
-            <Typography variant="body2" sx={{ color: '#5f6368', mt: 0.5 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: 'rgba(255, 255, 255, 0.85)',
+              }}
+            >
               This will create a new class with default curriculum structure.
             </Typography>
-          </Box>
+          </Paper>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button onClick={handleCloseConfirmDialog}>Cancel</Button>
+        <DialogActions sx={{ px: 3, pb: 3, pt: 2 }}>
+          <Button
+            onClick={handleCloseConfirmDialog}
+            sx={{
+              fontFamily: '"Montserrat", sans-serif',
+              fontWeight: 600,
+              textTransform: 'none',
+              color: '#546e7a',
+              borderRadius: '10px',
+            }}
+          >
+            Cancel
+          </Button>
           <Button
             onClick={handleConfirmCreateClass}
             variant="contained"
-            color="primary"
+            sx={{
+              background: '#FFD700',
+              color: '#0b2021',
+              fontFamily: '"Montserrat", sans-serif',
+              fontWeight: 700,
+              textTransform: 'none',
+              borderRadius: '10px',
+              px: 3,
+              '&:hover': {
+                background: '#FFE57F',
+              },
+            }}
           >
             Create Class
           </Button>
         </DialogActions>
       </Dialog>
 
-
       {/* Edit Class Dialog */}
-      {/* Edit Class Dialog - REPLACED */}
       {editingNode && (
         <EditClassDialog
           open={openEditDialog}
@@ -580,19 +845,77 @@ const ShowClass: React.FC = () => {
       )}
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={openDeleteDialog} onClose={handleCloseDeleteDialog}>
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>
-          <Typography>
+      <Dialog
+        open={openDeleteDialog}
+        onClose={handleCloseDeleteDialog}
+        PaperProps={{
+          sx: {
+            borderRadius: '16px',
+            boxShadow: '0 8px 32px rgba(15, 32, 39, 0.15)',
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            fontFamily: '"Montserrat", sans-serif',
+            fontWeight: 700,
+            fontSize: '1.5rem',
+            color: '#d32f2f',
+            borderBottom: '1px solid rgba(211, 47, 47, 0.1)',
+            pb: 2,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Warning />
+            Confirm Delete
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
+          <Typography sx={{ mb: 2, color: '#546e7a' }}>
             Are you sure you want to delete this class? This action cannot be undone.
           </Typography>
-          <Typography sx={{ mt: 2, color: 'error.main', fontWeight: 600 }}>
-            Warning: This will also delete all folders, files, and content inside this class.
-          </Typography>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              background: 'rgba(211, 47, 47, 0.08)',
+              borderRadius: '12px',
+              border: '1px solid rgba(211, 47, 47, 0.2)',
+            }}
+          >
+            <Typography sx={{ color: '#d32f2f', fontWeight: 600 }}>
+              ⚠️ Warning: This will also delete all folders, files, and content inside this class.
+            </Typography>
+          </Paper>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDeleteDialog}>Cancel</Button>
-          <Button onClick={handleConfirmDelete} color="error" variant="contained">
+        <DialogActions sx={{ px: 3, pb: 3, pt: 2 }}>
+          <Button
+            onClick={handleCloseDeleteDialog}
+            sx={{
+              fontFamily: '"Montserrat", sans-serif',
+              fontWeight: 600,
+              textTransform: 'none',
+              color: '#546e7a',
+              borderRadius: '10px',
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            variant="contained"
+            sx={{
+              background: '#d32f2f',
+              fontFamily: '"Montserrat", sans-serif',
+              fontWeight: 700,
+              textTransform: 'none',
+              borderRadius: '10px',
+              px: 3,
+              '&:hover': {
+                background: '#c62828',
+              },
+            }}
+          >
             Delete
           </Button>
         </DialogActions>
@@ -608,13 +931,18 @@ const ShowClass: React.FC = () => {
         <Alert
           onClose={handleCloseSnackbar}
           severity={snackbar.severity}
-          sx={{ width: '100%' }}
+          sx={{
+            width: '100%',
+            borderRadius: '12px',
+            fontFamily: '"Montserrat", sans-serif',
+            fontWeight: 600,
+          }}
           variant="filled"
         >
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </MainContainer>
+    </Box>
   );
 };
 

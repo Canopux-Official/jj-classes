@@ -1,4 +1,3 @@
-
 // components/SubnodeCard/SubnodeCard.tsx
 import React from 'react';
 import {
@@ -12,6 +11,7 @@ import {
   Link,
   Divider,
   Tooltip,
+  Paper,
 } from '@mui/material';
 import {
   Folder as FolderIcon,
@@ -24,8 +24,8 @@ import {
   AttachFile as AttachFileIcon,
   Link as LinkIcon,
   InsertDriveFile as DriveFileIcon,
+  AccessTime as AccessTimeIcon,
 } from '@mui/icons-material';
-import { StyledCard, CardHeader, IconWrapper } from './SubNode.styles';
 import type { Node } from '../types/node';
 
 export interface SubnodeCardProps {
@@ -56,13 +56,9 @@ const SubnodeCard: React.FC<SubnodeCardProps> = ({
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
 
-  const getIcon = () => {
-    return type === 'folder' ? <FolderIcon /> : <FileIcon />;
-  };
-
-  const getTypeColor = () => {
-    return type === 'folder' ? '#1976d2' : '#4caf50';
-  };
+  // const getIcon = () => {
+  //   return type === 'folder' ? <FolderIcon /> : <FileIcon />;
+  // };
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return null;
@@ -110,82 +106,100 @@ const SubnodeCard: React.FC<SubnodeCardProps> = ({
     event.stopPropagation();
   };
 
+  const isFolder = type === 'folder';
+
   return (
-    <StyledCard
+    <Paper
       onClick={handleCardClick}
+      elevation={0}
       sx={{
-        cursor: type === 'folder' ? 'pointer' : 'default',
+        position: 'relative',
+        cursor: isFolder ? 'pointer' : 'default',
         height: '100%',
-        width: "15rem",
         display: 'flex',
         flexDirection: 'column',
-        transition: 'all 0.2s ease-in-out',
+        borderRadius: '12px',
+        overflow: 'hidden',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        border: '1px solid #e0e0e0',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+        background: '#ffffff',
         '&:hover': {
-          transform: type === 'folder' ? 'translateY(-4px)' : 'none',
-          boxShadow: type === 'folder' ? '0 8px 24px rgba(0,0,0,0.12)' : '0 2px 8px rgba(0,0,0,0.08)',
+          transform: isFolder ? 'translateY(-4px)' : 'none',
+          boxShadow: isFolder ? '0 4px 12px rgba(0, 0, 0, 0.1)' : '0 1px 3px rgba(0, 0, 0, 0.05)',
+          borderColor: isFolder ? '#bdbdbd' : '#e0e0e0',
         },
       }}
     >
-      <CardContent 
-        sx={{ 
-          flexGrow: 1, 
-          p: { xs: 2, sm: 2.5, md: 3 },
+      <CardContent
+        sx={{
+          flexGrow: 1,
+          p: 3,
           display: 'flex',
           flexDirection: 'column',
-          '&:last-child': { pb: { xs: 2, sm: 2.5, md: 3 } },
+          '&:last-child': { pb: 3 },
         }}
       >
         {/* Header Section */}
-        <CardHeader sx={{ mb: 1.5 }}>
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', flex: 1, minWidth: 0 }}>
-            <IconWrapper
-              type={type}
-              sx={{
-                backgroundColor: getTypeColor() + '15',
-                color: getTypeColor(),
-                flexShrink: 0,
-                width: { xs: 36, sm: 40 },
-                height: { xs: 36, sm: 40 },
-              }}
-            >
-              {getIcon()}
-            </IconWrapper>
-            <Box sx={{ flex: 1, ml: { xs: 1.5, sm: 2 }, minWidth: 0 }}>
-              <Tooltip title={heading.length > 40 ? heading : ''} arrow placement="top">
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 600,
-                    color: '#202124',
-                    mb: 0.5,
-                    fontSize: { xs: '0.95rem', sm: '1rem', md: '1.1rem' },
-                    lineHeight: 1.3,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    wordBreak: 'break-word',
-                  }}
-                >
-                  {heading}
-                </Typography>
-              </Tooltip>
-              <Chip
-                label={type === 'folder' ? 'Folder' : 'File'}
-                size="small"
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+          {/* Icon */}
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: '8px',
+              background: '#0F2027',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            {isFolder ? (
+              <FolderIcon sx={{ color: 'white', fontSize: 24 }} />
+            ) : (
+              <FileIcon sx={{ color: '#ffffff', fontSize: 24 }} />
+            )}
+          </Box>
+
+          {/* Title and Badge */}
+          <Box sx={{ flex: 1, ml: 1.5, minWidth: 0 }}>
+            <Tooltip title={heading.length > 35 ? heading : ''} arrow placement="top">
+              <Typography
+                variant="h6"
                 sx={{
-                  height: 20,
-                  fontSize: '0.7rem',
+                  fontFamily: '"Montserrat", sans-serif',
                   fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  backgroundColor: getTypeColor() + '15',
-                  color: getTypeColor(),
-                  border: `1px solid ${getTypeColor()}30`,
+                  color: '#0F2027',
+                  mb: 0.5,
+                  fontSize: '0.95rem',
+                  lineHeight: 1.4,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  wordBreak: 'break-word',
                 }}
-              />
-            </Box>
+              >
+                {heading}
+              </Typography>
+            </Tooltip>
+            <Chip
+              label={type === 'folder' ? 'Folder' : 'File'}
+              size="small"
+              sx={{
+                height: 20,
+                fontSize: '0.65rem',
+                fontFamily: '"Montserrat", sans-serif',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                background: '#f5f5f5',
+                color: '#616161',
+                border: '1px solid #e0e0e0',
+              }}
+            />
           </Box>
 
           {/* More Options Menu */}
@@ -193,12 +207,11 @@ const SubnodeCard: React.FC<SubnodeCardProps> = ({
             size="small"
             onClick={handleMenuClick}
             sx={{
-              opacity: 0.6,
               flexShrink: 0,
-              ml: 1,
+              color: '#9e9e9e',
               '&:hover': {
-                opacity: 1,
-                backgroundColor: 'rgba(0,0,0,0.04)',
+                backgroundColor: '#f5f5f5',
+                color: '#616161',
               },
             }}
           >
@@ -214,7 +227,7 @@ const SubnodeCard: React.FC<SubnodeCardProps> = ({
             }}
             PaperProps={{
               sx: {
-                boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
                 borderRadius: '8px',
                 mt: 0.5,
               },
@@ -223,23 +236,27 @@ const SubnodeCard: React.FC<SubnodeCardProps> = ({
             <MenuItem
               onClick={handleEdit}
               sx={{
+                fontFamily: '"Montserrat", sans-serif',
                 fontSize: '0.875rem',
+                fontWeight: 500,
                 py: 1,
                 px: 2,
-                '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.08)' },
+                '&:hover': { backgroundColor: '#f5f5f5' },
               }}
             >
-              <EditIcon fontSize="small" sx={{ mr: 1.5, color: '#1976d2' }} />
+              <EditIcon fontSize="small" sx={{ mr: 1.5, color: '#616161' }} />
               Edit
             </MenuItem>
             <Divider sx={{ my: 0.5 }} />
             <MenuItem
               onClick={handleDelete}
               sx={{
+                fontFamily: '"Montserrat", sans-serif',
                 fontSize: '0.875rem',
+                fontWeight: 500,
                 py: 1,
                 px: 2,
-                color: 'error.main',
+                color: '#d32f2f',
                 '&:hover': { backgroundColor: 'rgba(211, 47, 47, 0.08)' },
               }}
             >
@@ -247,17 +264,18 @@ const SubnodeCard: React.FC<SubnodeCardProps> = ({
               Delete
             </MenuItem>
           </Menu>
-        </CardHeader>
+        </Box>
 
         {/* Description */}
         {description && (
           <Typography
             variant="body2"
             sx={{
-              color: '#5f6368',
+              fontFamily: '"Open Sans", sans-serif',
+              color: '#757575',
               mb: 2,
               lineHeight: 1.6,
-              fontSize: { xs: '0.813rem', sm: '0.875rem' },
+              fontSize: '0.875rem',
               display: '-webkit-box',
               WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical',
@@ -272,20 +290,21 @@ const SubnodeCard: React.FC<SubnodeCardProps> = ({
 
         {/* Tags */}
         {tags.length > 0 && (
-          <Box sx={{ mb: 2, display: 'flex', flexWrap: 'wrap', gap: 0.5, alignItems: 'center' }}>
+          <Box sx={{ mb: 2, display: 'flex', flexWrap: 'wrap', gap: 0.75, alignItems: 'center' }}>
             <TagIcon sx={{ fontSize: 14, color: '#9e9e9e', flexShrink: 0 }} />
             {tags.slice(0, 3).map((tag, index) => (
-              <Tooltip key={index} title={tag.length > 15 ? tag : ''} arrow>
+              <Tooltip key={index} title={tag.length > 12 ? tag : ''} arrow>
                 <Chip
-                  label={truncateText(tag, 15)}
+                  label={truncateText(tag, 12)}
                   size="small"
-                  variant="outlined"
                   sx={{
                     fontSize: '0.7rem',
                     height: 22,
-                    maxWidth: '120px',
-                    borderColor: '#e0e0e0',
-                    color: '#5f6368',
+                    maxWidth: '100px',
+                    background: '#fafafa',
+                    color: '#616161',
+                    border: '1px solid #e0e0e0',
+                    fontWeight: 500,
                     '& .MuiChip-label': {
                       px: 1,
                       overflow: 'hidden',
@@ -302,9 +321,9 @@ const SubnodeCard: React.FC<SubnodeCardProps> = ({
                 sx={{
                   fontSize: '0.7rem',
                   height: 22,
-                  backgroundColor: '#f5f5f5',
-                  color: '#5f6368',
-                  fontWeight: 500,
+                  background: '#f5f5f5',
+                  color: '#757575',
+                  fontWeight: 600,
                 }}
               />
             )}
@@ -314,33 +333,32 @@ const SubnodeCard: React.FC<SubnodeCardProps> = ({
         {/* File Details Section */}
         {fileDetails.length > 0 && (
           <Box sx={{ mb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
-              <AttachFileIcon sx={{ fontSize: 16, color: '#4caf50', flexShrink: 0 }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
+              <AttachFileIcon sx={{ fontSize: 16, color: '#FFD700', flexShrink: 0 }} />
               <Typography
                 variant="caption"
                 sx={{
+                  fontFamily: '"Montserrat", sans-serif',
                   fontWeight: 600,
-                  color: '#4caf50',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
+                  color: '#424242',
                   fontSize: '0.7rem',
                 }}
               >
-                Attached Files ({fileDetails.length})
+                Files ({fileDetails.length})
               </Typography>
             </Box>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, ml: 3 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, pl: 2 }}>
               {fileDetails.slice(0, 2).map((file, index) => (
                 <Box
                   key={index}
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 0.5,
+                    gap: 0.75,
                     minWidth: 0,
                   }}
                 >
-                  <DriveFileIcon sx={{ fontSize: 14, color: '#5f6368', flexShrink: 0 }} />
+                  <DriveFileIcon sx={{ fontSize: 14, color: '#9e9e9e', flexShrink: 0 }} />
                   <Tooltip title={file.fileName} arrow placement="top">
                     <Link
                       href={file.uploadLink}
@@ -348,8 +366,9 @@ const SubnodeCard: React.FC<SubnodeCardProps> = ({
                       rel="noopener noreferrer"
                       onClick={handleLinkClick}
                       sx={{
+                        fontFamily: '"Open Sans", sans-serif',
                         fontSize: '0.75rem',
-                        color: '#1976d2',
+                        color: '#424242',
                         textDecoration: 'none',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -357,11 +376,12 @@ const SubnodeCard: React.FC<SubnodeCardProps> = ({
                         flex: 1,
                         minWidth: 0,
                         '&:hover': {
+                          color: '#0F2027',
                           textDecoration: 'underline',
                         },
                       }}
                     >
-                      {truncateText(file.fileName, 30)}
+                      {truncateText(file.fileName, 25)}
                     </Link>
                   </Tooltip>
                 </Box>
@@ -370,13 +390,13 @@ const SubnodeCard: React.FC<SubnodeCardProps> = ({
                 <Typography
                   variant="caption"
                   sx={{
-                    color: '#5f6368',
+                    color: '#9e9e9e',
                     fontSize: '0.7rem',
-                    ml: 2.5,
+                    pl: 1,
                     fontStyle: 'italic',
                   }}
                 >
-                  +{fileDetails.length - 2} more file{fileDetails.length - 2 > 1 ? 's' : ''}
+                  +{fileDetails.length - 2} more
                 </Typography>
               )}
             </Box>
@@ -386,33 +406,32 @@ const SubnodeCard: React.FC<SubnodeCardProps> = ({
         {/* Reference Details Section */}
         {referenceDetails.length > 0 && (
           <Box sx={{ mb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
-              <LinkIcon sx={{ fontSize: 16, color: '#ff9800', flexShrink: 0 }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
+              <LinkIcon sx={{ fontSize: 16, color: '#FFD700', flexShrink: 0 }} />
               <Typography
                 variant="caption"
                 sx={{
+                  fontFamily: '"Montserrat", sans-serif',
                   fontWeight: 600,
-                  color: '#ff9800',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
+                  color: '#424242',
                   fontSize: '0.7rem',
                 }}
               >
-                References ({referenceDetails.length})
+                Links ({referenceDetails.length})
               </Typography>
             </Box>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, ml: 3 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, pl: 2 }}>
               {referenceDetails.slice(0, 2).map((ref, index) => (
                 <Box
                   key={index}
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 0.5,
+                    gap: 0.75,
                     minWidth: 0,
                   }}
                 >
-                  <LinkIcon sx={{ fontSize: 14, color: '#5f6368', flexShrink: 0 }} />
+                  <LinkIcon sx={{ fontSize: 14, color: '#9e9e9e', flexShrink: 0 }} />
                   <Tooltip title={ref.fileName} arrow placement="top">
                     <Link
                       href={ref.referenceLink}
@@ -420,8 +439,9 @@ const SubnodeCard: React.FC<SubnodeCardProps> = ({
                       rel="noopener noreferrer"
                       onClick={handleLinkClick}
                       sx={{
+                        fontFamily: '"Open Sans", sans-serif',
                         fontSize: '0.75rem',
-                        color: '#1976d2',
+                        color: '#424242',
                         textDecoration: 'none',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -429,11 +449,12 @@ const SubnodeCard: React.FC<SubnodeCardProps> = ({
                         flex: 1,
                         minWidth: 0,
                         '&:hover': {
+                          color: '#0F2027',
                           textDecoration: 'underline',
                         },
                       }}
                     >
-                      {truncateText(ref.fileName, 30)}
+                      {truncateText(ref.fileName, 25)}
                     </Link>
                   </Tooltip>
                 </Box>
@@ -442,55 +463,14 @@ const SubnodeCard: React.FC<SubnodeCardProps> = ({
                 <Typography
                   variant="caption"
                   sx={{
-                    color: '#5f6368',
+                    color: '#9e9e9e',
                     fontSize: '0.7rem',
-                    ml: 2.5,
+                    pl: 1,
                     fontStyle: 'italic',
                   }}
                 >
-                  +{referenceDetails.length - 2} more reference{referenceDetails.length - 2 > 1 ? 's' : ''}
+                  +{referenceDetails.length - 2} more
                 </Typography>
-              )}
-            </Box>
-          </Box>
-        )}
-
-        {/* Summary Chips */}
-        {(fileDetails.length > 0 || referenceDetails.length > 0) && (
-          <Box sx={{ mb: 2 }}>
-            <Divider sx={{ mb: 1.5 }} />
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              {fileDetails.length > 0 && (
-                <Chip
-                  icon={<AttachFileIcon sx={{ fontSize: '0.9rem !important' }} />}
-                  label={`${fileDetails.length} File${fileDetails.length > 1 ? 's' : ''}`}
-                  size="small"
-                  sx={{
-                    height: 26,
-                    fontSize: '0.75rem',
-                    backgroundColor: '#e8f5e9',
-                    color: '#2e7d32',
-                    fontWeight: 600,
-                    border: '1px solid #a5d6a7',
-                    '& .MuiChip-icon': { color: '#2e7d32' },
-                  }}
-                />
-              )}
-              {referenceDetails.length > 0 && (
-                <Chip
-                  icon={<LinkIcon sx={{ fontSize: '0.9rem !important' }} />}
-                  label={`${referenceDetails.length} Link${referenceDetails.length > 1 ? 's' : ''}`}
-                  size="small"
-                  sx={{
-                    height: 26,
-                    fontSize: '0.75rem',
-                    backgroundColor: '#fff3e0',
-                    color: '#e65100',
-                    fontWeight: 600,
-                    border: '1px solid #ffcc80',
-                    '& .MuiChip-icon': { color: '#e65100' },
-                  }}
-                />
               )}
             </Box>
           </Box>
@@ -519,6 +499,7 @@ const SubnodeCard: React.FC<SubnodeCardProps> = ({
                 <Typography
                   variant="caption"
                   sx={{
+                    fontFamily: '"Open Sans", sans-serif',
                     color: '#d32f2f',
                     fontWeight: 600,
                     fontSize: '0.7rem',
@@ -531,11 +512,12 @@ const SubnodeCard: React.FC<SubnodeCardProps> = ({
             )}
             {createdAt && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <CalendarIcon sx={{ fontSize: 14, color: '#5f6368', flexShrink: 0 }} />
+                <AccessTimeIcon sx={{ fontSize: 14, color: '#9e9e9e', flexShrink: 0 }} />
                 <Typography
                   variant="caption"
                   sx={{
-                    color: '#5f6368',
+                    fontFamily: '"Open Sans", sans-serif',
+                    color: '#757575',
                     fontSize: '0.7rem',
                     whiteSpace: 'nowrap',
                   }}
@@ -547,7 +529,7 @@ const SubnodeCard: React.FC<SubnodeCardProps> = ({
           </Box>
         )}
       </CardContent>
-    </StyledCard>
+    </Paper>
   );
 };
 
