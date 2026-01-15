@@ -3,6 +3,14 @@ import Student from "../models/Student";
 import Subject from "../models/Subject";
 import bcrypt from 'bcryptjs';
 
+declare global {
+  namespace Express {
+    interface Request {
+      user?: { id: string };
+    }
+  }
+}
+
 // Helper to hash passwords
 const hashPassword = async (password: string) => {
     return await bcrypt.hash(password, 10);
@@ -45,7 +53,7 @@ export const getAllStudents = async (req: Request, res: Response) => {
 
 export const getStudentById = async (req: Request, res: Response) => {
     try {
-        const student = await Student.findById(req.params.id).populate('enrolledSubjects', 'name stream');
+        const student = await Student.findById(req.user.id).populate('enrolledSubjects', 'name stream');
         if (!student) return res.status(404).json({ message: 'Student not found' });
         res.status(200).json(student);
     } catch {

@@ -11,7 +11,6 @@ const jwt_secret = process.env.JWT_SECRET;
 
 router.post('/getLoggedInUser', async (req, res): Promise<any> => {
     const { name, dob, phoneNumber, currentClass, password } = req.body;
-    console.log(jwt_secret)
 
     if (!jwt_secret) {
         return res.status(500).json({ success: false, message: 'Server Config Error: JWT_SECRET missing error here' });
