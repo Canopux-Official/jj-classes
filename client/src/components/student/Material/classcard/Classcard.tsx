@@ -1,58 +1,82 @@
-
-// Imports
-import React from 'react';
+import React from "react";
 import {
+  Card,
   CardContent,
   Typography,
   Box,
   Chip,
-} from '@mui/material';
-import {
-  Folder,
-} from '@mui/icons-material';
-import type { Node } from '../../../admin/Material/types/node';
-import { ClickableCard, IconWrapper } from '../theme/material.styles';
+  IconButton,
+} from "@mui/material";
+import { Folder, MoreVert } from "@mui/icons-material";
+import type { Node } from "../../../admin/Material/types/node";
 
+export const ClassCard: React.FC<{
+  node: Node;
+  onClick: () => void;
+}> = ({ node, onClick }) => {
+  const createdDate = node.createdAt
+    ? new Date(node.createdAt).toLocaleDateString("en-US", {
+        month: "short",
+        day: "2-digit",
+        year: "numeric",
+      })
+    : null;
 
-export const ClassCard: React.FC<{ node: Node; onClick: () => void }> = ({ node, onClick }) => {
   return (
-    <ClickableCard onClick={onClick}>
-      <CardContent sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-          <IconWrapper itemType={node.type}>
-            <Folder sx={{ fontSize: 32 }} />
-          </IconWrapper>
-          <Box sx={{ ml: 2, flex: 1 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
+    <Card
+      onClick={onClick}
+      sx={{
+        borderRadius: 2,
+        cursor: "pointer",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.12)",
+        "&:hover": {
+          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+        },
+      }}
+    >
+      <CardContent sx={{ p: 2.5 }}>
+        {/* Top Row */}
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Folder sx={{ fontSize: 28, color: "#0F6F5C" }} />
+
+          <Box sx={{ ml: 2, flexGrow: 1 }}>
+            <Typography variant="subtitle1" fontWeight={600}>
               {node.heading}
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            <Typography variant="body2" color="text.secondary">
               {node.targetExam}
             </Typography>
           </Box>
+
+          <IconButton size="small">
+            <MoreVert />
+          </IconButton>
         </Box>
-        {node.description && (
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {node.description}
-          </Typography>
-        )}
-        {node.tags && node.tags.length > 0 && (
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-            {node.tags.map((tag, index) => (
-              <Chip
-                key={index}
-                label={tag}
-                size="small"
-                sx={{
-                  backgroundColor: '#f5f5f5',
-                  fontSize: '0.75rem',
-                  height: '24px',
-                }}
-              />
-            ))}
-          </Box>
-        )}
+
+        {/* Divider */}
+        <Box sx={{ borderTop: "1px solid #eee", my: 2 }} />
+
+        {/* Bottom Row */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {node.stream && (
+            <Chip
+              label={node.stream}
+              size="small"
+              sx={{
+                backgroundColor: "#f1f3f4",
+                fontSize: "0.75rem",
+                height: 24,
+              }}
+            />
+          )}
+
+          {createdDate && (
+            <Typography variant="caption" color="text.secondary">
+              Created {createdDate}
+            </Typography>
+          )}
+        </Box>
       </CardContent>
-    </ClickableCard>
+    </Card>
   );
 };

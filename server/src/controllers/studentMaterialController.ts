@@ -5,7 +5,7 @@ import Material from '../models/Material';
 
 const showClass = async(req:Request,res: Response) => {
     try {
-        const {studentId} = req.body;
+        const studentId = req.user.id;
         const student = await Student.findById(studentId);
 
         if (!student){

@@ -7,10 +7,7 @@ import Material from '../models/Material';
 const createClassId = async (req: Request, res: Response) => {
     try {
         const {name,targetExam,stream} = req.body;
-
-        console.log('Received payload:', req.body);
-        console.log('Stream value:', stream);
-        console.log('Stream type:', typeof stream);
+        
 
         const findExisting = await Material.findOne({ heading: name,targetExam: targetExam,stream: stream });
         if (findExisting) {
@@ -268,7 +265,7 @@ const updateSubFolder = async (req: Request, res: Response) => {
         }
 
         // Get updated values from the request body
-        const { heading, description, fileDetails, referenceDetails, tags, lastDate, type, fileId,targetExam,stream } = req.body;
+        const { heading, description, fileDetails, referenceDetails, tags, lastDate, type,targetExam,stream } = req.body;
 
         // Update fields with new values, keeping the existing ones if not provided
         folder.heading = heading || "";
@@ -280,6 +277,14 @@ const updateSubFolder = async (req: Request, res: Response) => {
         folder.tags = tags || [];
         folder.lastDate = lastDate || "";
         folder.type = type || "";
+
+        const existingFile = await Material.find({heading, description, fileDetails, referenceDetails, tags, lastDate, type,targetExam,stream});
+
+        if (existingFile) {
+            // here i need to show all the details of the existing class
+            return res.status(500).json({ message: 'Already Exists', success: false, data: existingFile });
+        }
+
 
         // Save the updated folder
         const updatedFolder = await folder.save();

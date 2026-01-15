@@ -1,36 +1,349 @@
-import { useState } from "react";
+// import { useState } from "react";
+// import type { Node } from "../../../admin/Material/types/node";
+// import { Box, Container } from "@mui/system";
+// import { Breadcrumbs, Link, Typography, Paper, Chip } from "@mui/material";
+// import { Home, NavigateNext, FolderOpen } from "@mui/icons-material";
+// import { SubfolderCard } from "../subfolder/Subfolder";
+// import { ClassCard } from "../classcard/Classcard";
+// import { mockNodes } from "../demodata";
+
+// // Main App Component
+// const StudentFolderStructure: React.FC = () => {
+//     const [currentPath, setCurrentPath] = useState<Node[]>([]);
+//     const [currentItems, setCurrentItems] = useState<Node[]>(
+//         mockNodes.filter((node) => node.parentId === null)
+//     );
+    
+//     const handleFolderClick = (node: Node) => {
+//         if (node.type === 'folder') {
+//             setCurrentPath([...currentPath, node]);
+//             setCurrentItems(mockNodes.filter((item) => item.parentId === node._id));
+//         }
+//     };
+    
+//     const handleBreadcrumbClick = (index: number) => {
+//         if (index === -1) {
+//             setCurrentPath([]);
+//             setCurrentItems(mockNodes.filter((node) => node.parentId === null));
+//         } else {
+//             const newPath = currentPath.slice(0, index + 1);
+//             setCurrentPath(newPath);
+//             const parentId = newPath[newPath.length - 1]._id;
+//             setCurrentItems(mockNodes.filter((node) => node.parentId === parentId));
+//         }
+//     };
+    
+//     const isRootLevel = currentPath.length === 0;
+    
+//     return (
+//         <Box 
+//             sx={{ 
+//                 minHeight: '100vh',
+//                 background: 'linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%)',
+//                 pb: 6
+//             }}
+//         >
+//             <Container maxWidth="lg" sx={{ pt: 4, pb: 2 }}>
+//                 {/* Header Section */}
+//                 <Box 
+//                     sx={{ 
+//                         mb: 4,
+//                         pb: 3,
+//                         borderBottom: '2px solid',
+//                         borderColor: 'divider'
+//                     }}
+//                 >
+//                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+//                         <Box
+//                             sx={{
+//                                 width: 48,
+//                                 height: 48,
+//                                 borderRadius: '12px',
+//                                 background: 'linear-gradient(135deg, #06444a 0%, #1d3e46 100%)',
+//                                 display: 'flex',
+//                                 alignItems: 'center',
+//                                 justifyContent: 'center',
+//                                 mr: 2,
+//                                 boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+//                             }}
+//                         >
+//                             <FolderOpen sx={{ color: 'white', fontSize: 28 }} />
+//                         </Box>
+//                         <Typography 
+//                             variant="h4" 
+//                             sx={{ 
+//                                 fontWeight: 700,
+//                                 background: 'linear-gradient(135deg, #042f1b 0%, #083542 100%)',
+//                                 backgroundClip: 'text',
+//                                 WebkitBackgroundClip: 'text',
+//                                 WebkitTextFillColor: 'transparent',
+//                             }}
+//                         >
+//                             My Classes
+//                         </Typography>
+//                     </Box>
+
+//                     {/* Enhanced Breadcrumbs */}
+//                     <Paper
+//                         elevation={0}
+//                         sx={{
+//                             p: 2,
+//                             backgroundColor: '#ffffff',
+//                             borderRadius: '12px',
+//                             border: '1px solid #e0e0e0',
+//                             boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+//                         }}
+//                     >
+//                         <Breadcrumbs 
+//                             separator={
+//                                 <NavigateNext 
+//                                     fontSize="small" 
+//                                     sx={{ color: '#9e9e9e' }} 
+//                                 />
+//                             }
+//                         >
+//                             <Link
+//                                 component="button"
+//                                 underline="none"
+//                                 onClick={() => handleBreadcrumbClick(-1)}
+//                                 sx={{
+//                                     display: 'flex',
+//                                     alignItems: 'center',
+//                                     cursor: 'pointer',
+//                                     px: 1.5,
+//                                     py: 0.75,
+//                                     borderRadius: '8px',
+//                                     fontWeight: isRootLevel ? 600 : 500,
+//                                     color: isRootLevel ? '#114a50' : '#0b3c54',
+//                                     backgroundColor: isRootLevel ? '#e2f6f6' : 'transparent',
+//                                     transition: 'all 0.2s ease',
+//                                     '&:hover': {
+//                                         backgroundColor: isRootLevel ? '#e3fffd' : '#def3f6',
+//                                         transform: 'translateY(-1px)',
+//                                     },
+//                                 }}
+//                             >
+//                                 <Home sx={{ mr: 0.5, fontSize: 18 }} />
+//                                 Home
+//                             </Link>
+//                             {currentPath.map((node, index) => {
+//                                 const isLast = index === currentPath.length - 1;
+//                                 return (
+//                                     <Link
+//                                         key={node._id}
+//                                         component="button"
+//                                         underline="none"
+//                                         onClick={() => handleBreadcrumbClick(index)}
+//                                         sx={{
+//                                             cursor: 'pointer',
+//                                             px: 1.5,
+//                                             py: 0.75,
+//                                             borderRadius: '8px',
+//                                             fontWeight: isLast ? 600 : 500,
+//                                             color: isLast ? '#105d65' : '#616161',
+//                                             backgroundColor: isLast ? '#f0fffa' : 'transparent',
+//                                             transition: 'all 0.2s ease',
+//                                             maxWidth: '200px',
+//                                             overflow: 'hidden',
+//                                             textOverflow: 'ellipsis',
+//                                             whiteSpace: 'nowrap',
+//                                             '&:hover': {
+//                                                 backgroundColor: isLast ? '#e3ebff' : '#f5f5f5',
+//                                                 transform: 'translateY(-1px)',
+//                                             },
+//                                         }}
+//                                     >
+//                                         {node.heading}
+//                                     </Link>
+//                                 );
+//                             })}
+//                         </Breadcrumbs>
+//                     </Paper>
+
+//                     {/* Path Info Chip */}
+//                     {!isRootLevel && (
+//                         <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+//                             <Chip
+//                                 label={`${currentItems.length} ${currentItems.length === 1 ? 'item' : 'items'}`}
+//                                 size="small"
+//                                 sx={{
+//                                     backgroundColor: '#e8eaf6',
+//                                     color: '#5c6bc0',
+//                                     fontWeight: 600,
+//                                     fontSize: '0.75rem',
+//                                 }}
+//                             />
+//                         </Box>
+//                     )}
+//                 </Box>
+
+//                 {/* Content Display using Flexbox */}
+//                 {currentItems.length === 0 ? (
+//                     <Paper
+//                         elevation={0}
+//                         sx={{
+//                             textAlign: 'center',
+//                             py: 8,
+//                             borderRadius: '16px',
+//                             border: '2px dashed #e0e0e0',
+//                             backgroundColor: '#fafafa',
+//                         }}
+//                     >
+//                         <FolderOpen 
+//                             sx={{ 
+//                                 fontSize: 64, 
+//                                 color: '#bdbdbd',
+//                                 mb: 2 
+//                             }} 
+//                         />
+//                         <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 500 }}>
+//                             No items found
+//                         </Typography>
+//                         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+//                             This folder is empty
+//                         </Typography>
+//                     </Paper>
+//                 ) : (
+//                     <Box
+//                         sx={{
+//                             display: 'flex',
+//                             flexWrap: 'wrap',
+//                             gap: 3,
+//                             '& > *': {
+//                                 flexBasis: {
+//                                     xs: '100%',
+//                                     sm: isRootLevel ? 'calc(50% - 12px)' : 'calc(50% - 12px)',
+//                                     md: isRootLevel ? 'calc(50% - 12px)' : 'calc(33.333% - 16px)',
+//                                 },
+//                                 flexGrow: 0,
+//                                 flexShrink: 0,
+//                             },
+//                         }}
+//                     >
+//                         {currentItems.map((node) => (
+//                             <Box key={node._id}>
+//                                 {isRootLevel ? (
+//                                     <ClassCard node={node} onClick={() => handleFolderClick(node)} />
+//                                 ) : (
+//                                     <SubfolderCard
+//                                         node={node}
+//                                         onClick={node.type === 'folder' ? () => handleFolderClick(node) : undefined}
+//                                     />
+//                                 )}
+//                             </Box>
+//                         ))}
+//                     </Box>
+//                 )}
+//             </Container>
+//         </Box>
+//     );
+// };
+
+// export default StudentFolderStructure;
+
+
+import { useState, useEffect } from "react";
 import type { Node } from "../../../admin/Material/types/node";
-import { Box, Container } from "@mui/system";
+import { Box, Container, CircularProgress, Snackbar, Alert } from "@mui/material";
 import { Breadcrumbs, Link, Typography, Paper, Chip } from "@mui/material";
 import { Home, NavigateNext, FolderOpen } from "@mui/icons-material";
 import { SubfolderCard } from "../subfolder/Subfolder";
 import { ClassCard } from "../classcard/Classcard";
-import { mockNodes } from "../demodata";
+import { fetchNodesByParentId, fetchStudentClasses } from "../services/StudentAccessMateral.services";
+
+
+interface SnackbarState {
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error' | 'info' | 'warning';
+}
 
 // Main App Component
 const StudentFolderStructure: React.FC = () => {
     const [currentPath, setCurrentPath] = useState<Node[]>([]);
-    const [currentItems, setCurrentItems] = useState<Node[]>(
-        mockNodes.filter((node) => node.parentId === null)
-    );
-    
-    const handleFolderClick = (node: Node) => {
-        if (node.type === 'folder') {
-            setCurrentPath([...currentPath, node]);
-            setCurrentItems(mockNodes.filter((item) => item.parentId === node._id));
+    const [currentItems, setCurrentItems] = useState<Node[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [snackbar, setSnackbar] = useState<SnackbarState>({
+        open: false,
+        message: '',
+        severity: 'info'
+    });
+
+    // Fetch root level classes on component mount
+    useEffect(() => {
+        loadRootClasses();
+    }, []);
+
+    const loadRootClasses = async () => {
+        setLoading(true);
+        try {
+            const classes = await fetchStudentClasses();
+            console.log(classes)
+            setCurrentItems(classes);
+            setSnackbar({
+                open: true,
+                message: `Loaded ${classes.length} classes successfully`,
+                severity: 'success'
+            });
+        } catch (error) {
+            setSnackbar({
+                open: true,
+                message: 'Failed to load classes. Please try again.',
+                severity: 'error'
+            });
+            setCurrentItems([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const loadFolderContents = async (parentId: string) => {
+        setLoading(true);
+        try {
+            const items = await fetchNodesByParentId(parentId);
+            setCurrentItems(items);
+            if (items.length === 0) {
+                setSnackbar({
+                    open: true,
+                    message: 'This folder is empty',
+                    severity: 'info'
+                });
+            }
+        } catch (error) {
+            setSnackbar({
+                open: true,
+                message: 'Failed to load folder contents. Please try again.',
+                severity: 'error'
+            });
+            setCurrentItems([]);
+        } finally {
+            setLoading(false);
         }
     };
     
-    const handleBreadcrumbClick = (index: number) => {
+    const handleFolderClick = async (node: Node) => {
+        if (node.type === 'folder') {
+            setCurrentPath([...currentPath, node]);
+            await loadFolderContents(node._id);
+        }
+    };
+    
+    const handleBreadcrumbClick = async (index: number) => {
         if (index === -1) {
+            // Go back to root
             setCurrentPath([]);
-            setCurrentItems(mockNodes.filter((node) => node.parentId === null));
+            await loadRootClasses();
         } else {
+            // Go to specific breadcrumb level
             const newPath = currentPath.slice(0, index + 1);
             setCurrentPath(newPath);
             const parentId = newPath[newPath.length - 1]._id;
-            setCurrentItems(mockNodes.filter((node) => node.parentId === parentId));
+            await loadFolderContents(parentId);
         }
+    };
+
+    const handleCloseSnackbar = () => {
+        setSnackbar({ ...snackbar, open: false });
     };
     
     const isRootLevel = currentPath.length === 0;
@@ -106,10 +419,11 @@ const StudentFolderStructure: React.FC = () => {
                                 component="button"
                                 underline="none"
                                 onClick={() => handleBreadcrumbClick(-1)}
+                                disabled={loading}
                                 sx={{
                                     display: 'flex',
                                     alignItems: 'center',
-                                    cursor: 'pointer',
+                                    cursor: loading ? 'not-allowed' : 'pointer',
                                     px: 1.5,
                                     py: 0.75,
                                     borderRadius: '8px',
@@ -117,9 +431,10 @@ const StudentFolderStructure: React.FC = () => {
                                     color: isRootLevel ? '#114a50' : '#0b3c54',
                                     backgroundColor: isRootLevel ? '#e2f6f6' : 'transparent',
                                     transition: 'all 0.2s ease',
+                                    opacity: loading ? 0.6 : 1,
                                     '&:hover': {
-                                        backgroundColor: isRootLevel ? '#e3fffd' : '#def3f6',
-                                        transform: 'translateY(-1px)',
+                                        backgroundColor: loading ? undefined : (isRootLevel ? '#e3fffd' : '#def3f6'),
+                                        transform: loading ? undefined : 'translateY(-1px)',
                                     },
                                 }}
                             >
@@ -134,8 +449,9 @@ const StudentFolderStructure: React.FC = () => {
                                         component="button"
                                         underline="none"
                                         onClick={() => handleBreadcrumbClick(index)}
+                                        disabled={loading}
                                         sx={{
-                                            cursor: 'pointer',
+                                            cursor: loading ? 'not-allowed' : 'pointer',
                                             px: 1.5,
                                             py: 0.75,
                                             borderRadius: '8px',
@@ -147,9 +463,10 @@ const StudentFolderStructure: React.FC = () => {
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
                                             whiteSpace: 'nowrap',
+                                            opacity: loading ? 0.6 : 1,
                                             '&:hover': {
-                                                backgroundColor: isLast ? '#e3ebff' : '#f5f5f5',
-                                                transform: 'translateY(-1px)',
+                                                backgroundColor: loading ? undefined : (isLast ? '#e3ebff' : '#f5f5f5'),
+                                                transform: loading ? undefined : 'translateY(-1px)',
                                             },
                                         }}
                                     >
@@ -161,7 +478,7 @@ const StudentFolderStructure: React.FC = () => {
                     </Paper>
 
                     {/* Path Info Chip */}
-                    {!isRootLevel && (
+                    {!isRootLevel && !loading && (
                         <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Chip
                                 label={`${currentItems.length} ${currentItems.length === 1 ? 'item' : 'items'}`}
@@ -177,8 +494,24 @@ const StudentFolderStructure: React.FC = () => {
                     )}
                 </Box>
 
-                {/* Content Display using Flexbox */}
-                {currentItems.length === 0 ? (
+                {/* Loading State */}
+                {loading ? (
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            py: 8,
+                        }}
+                    >
+                        <CircularProgress size={60} sx={{ mb: 2 }} />
+                        <Typography variant="body1" color="text.secondary">
+                            Loading...
+                        </Typography>
+                    </Box>
+                ) : currentItems.length === 0 ? (
+                    /* Empty State */
                     <Paper
                         elevation={0}
                         sx={{
@@ -204,6 +537,7 @@ const StudentFolderStructure: React.FC = () => {
                         </Typography>
                     </Paper>
                 ) : (
+                    /* Content Display using Flexbox */
                     <Box
                         sx={{
                             display: 'flex',
@@ -221,7 +555,7 @@ const StudentFolderStructure: React.FC = () => {
                         }}
                     >
                         {currentItems.map((node) => (
-                            <Box key={node._id}>
+                            <Box key={node?._id}>
                                 {isRootLevel ? (
                                     <ClassCard node={node} onClick={() => handleFolderClick(node)} />
                                 ) : (
@@ -235,6 +569,23 @@ const StudentFolderStructure: React.FC = () => {
                     </Box>
                 )}
             </Container>
+
+            {/* Snackbar for notifications */}
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={4000}
+                onClose={handleCloseSnackbar}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            >
+                <Alert 
+                    onClose={handleCloseSnackbar} 
+                    severity={snackbar.severity}
+                    variant="filled"
+                    sx={{ width: '100%' }}
+                >
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 };

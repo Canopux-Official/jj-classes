@@ -1190,7 +1190,7 @@ const ShowClass: React.FC = () => {
       console.error('Error updating class:', error);
       setSnackbar({
         open: true,
-        message: error instanceof Error ? error.message : 'Error updating class',
+        message:'Error updating class',
         severity: 'error',
       });
     }
