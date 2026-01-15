@@ -1,14 +1,17 @@
 import React from 'react';
-import { Typography, IconButton, Avatar, Box, Badge } from '@mui/material';
+import { Typography, IconButton, Avatar, Box, Badge, Button } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
+import LogoutIcon from '@mui/icons-material/Logout';
 import { StyledAppBar, HeaderContent, ProfileSection } from './AdminHeader.styles';
+import { useNavigate } from 'react-router-dom';
 
 interface AdminHeaderProps {
   handleDrawerToggle: () => void;
 }
 
 const AdminHeader: React.FC<AdminHeaderProps> = ({ handleDrawerToggle }) => {
+  const navigate = useNavigate();
   return (
     <StyledAppBar position="sticky" elevation={0}>
       <HeaderContent>
@@ -22,30 +25,53 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ handleDrawerToggle }) => {
           >
             <MenuIcon />
           </IconButton>
-          
+
           <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 700, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
             Dashboard
           </Typography>
         </Box>
-
+        
         <Box display="flex" alignItems="center" gap={{ xs: 1, sm: 2 }}>
           <IconButton color="inherit">
             <Badge badgeContent={4} color="error">
               <NotificationsNoneIcon />
             </Badge>
           </IconButton>
-          
+          <Button
+              variant="outlined"
+              color="error"
+              size="small"
+              startIcon={<LogoutIcon />}
+              onClick={() => {
+                window.localStorage.removeItem('authToken');
+                navigate('/login');
+              }}
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                borderColor: '#ffcdd2',
+                color: '#d32f2f',
+                '&:hover': {
+                  borderColor: '#d32f2f',
+                  bgcolor: '#ffebee',
+                },
+              }}
+            >
+              Logout
+            </Button>
           <ProfileSection>
             {/* Hide text on mobile to save space */}
             <Box textAlign="right" sx={{ display: { xs: 'none', sm: 'block' } }}>
               <Typography variant="subtitle2" fontWeight="700">Admin User</Typography>
               <Typography variant="caption" color="text.secondary">JJ Institue Of Science</Typography>
             </Box>
-            <Avatar 
-              sx={{ 
-                bgcolor: 'secondary.main', 
-                color: 'secondary.contrastText', 
-                width: { xs: 32, sm: 40 }, 
+            
+
+            <Avatar
+              sx={{
+                bgcolor: 'secondary.main',
+                color: 'secondary.contrastText',
+                width: { xs: 32, sm: 40 },
                 height: { xs: 32, sm: 40 },
                 fontSize: { xs: '0.9rem', sm: '1.2rem' }
               }}
