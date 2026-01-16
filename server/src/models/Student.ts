@@ -8,8 +8,8 @@ export interface IStudent extends Document {
   email: string;
   currentClass: string;
   password: string;
-  stream?: string;
-  targetExams: string[];
+  stream?: mongoose.Types.ObjectId; // Reference
+  targetExams: mongoose.Types.ObjectId[]; // Array of References
   enrolledSubjects: mongoose.Types.ObjectId[];
   academicSession: string;
   admissionDate: Date;
@@ -18,99 +18,47 @@ export interface IStudent extends Document {
 
 const StudentSchema: Schema = new Schema({
   // Basic Identity
-  name: { 
-    type: String, 
-    required: true,
-    // Comment: Full legal name of the student for records.
-  },
+  name: { type: String, required: true },
+  dob: { type: Date, required: true },
+  phoneNumber: { type: String, required: true, unique: true, index: true },
+  parentPhoneNumber: { type: String },
+  email: { type: String, index: true },
+  password: { type: String, required: true },
 
-  dob: { 
-    type: Date, 
-    required: true,
-    // Comment: Date of Birth. Used for verification and potential age eligibility checks.
-  },
-
-  // Authentication Key
-  phoneNumber: { 
-    type: String, 
-    required: true, 
-    unique: true, 
-    index: true,
-    // Comment: This is the PRIMARY USERNAME. Used to send OTP and identify the user during login. 
-    // Must be unique across the entire database.
-  },
-
-  parentPhoneNumber: { 
-    type: String,
-    // Comment: Stored for emergency contact or sending performance reports/absenteeism alerts.
-  },
-  email: { 
-    type: String, 
-    index: true,
-    // Comment: Used for sending newsletters, performance reports, and important announcements.
-  },
   // Academic Standing
   currentClass: { 
     type: String, 
     required: true,
-    // Comment: Defines the primary bucket for content (e.g., "9", "10", "11", "12"). 
-    // A Class 11 student will never see Class 12 content.
+    enum: ['9', '10', '11', '12', 'dropper-1', 'dropper-2'] 
   },
 
   stream: { 
-    type: String,
-    default: 'N/A'
-    // Comment: Relevant for 11th/12th (e.g., "Science", "Commerce"). 
-    // Can be 'N/A' for 9th/10th. Helps in filtering subjects.
+    type: Schema.Types.ObjectId, 
+    ref: 'Stream',
+    default: null
+    // Comment: Dynamic reference to Stream model.
   },
 
   // *** CRITICAL ACCESS CONTROL ***
-  targetExams: {
-    type: [String],
-    enum: ['JEE', 'NEET', 'Boards', 'Foundation', 'Olympiad', 'Other'],
-    default: [],
-    required: true,
-    // Comment: The specific goals of the student. 
-    // If a student has ['JEE'], they will see content tagged 'JEE'.
-    // If they have ['JEE', 'Boards'], they see both. 
-    // If empty, they might only see general content.
-  },
+  targetExams: [{
+    type: Schema.Types.ObjectId,
+    ref: 'TargetExam',
+    required: true
+    // Comment: Dynamic reference to TargetExam model.
+  }],
 
   // Granular Access
   enrolledSubjects: [{ 
     type: Schema.Types.ObjectId, 
     ref: 'Subject',
-    required: true,
-    // Comment: Array of Subject IDs (e.g., Physics ID, Math ID). 
-    // Allows you to restrict a student who hasn't paid for "Math" from seeing Math content, 
-    // even if they are in the correct class.
+    required: true
   }], 
 
   // Administrative
-  academicSession: { 
-    type: String, 
-    required: true,
-    // Comment: The year they belong to (e.g., "2024-2025"). 
-    // Essential for promoting students or archiving old batches.
-  },
+  academicSession: { type: String, required: true },
+  admissionDate: { type: Date, default: Date.now },
+  isActive: { type: Boolean, default: true },
 
-  admissionDate: { 
-    type: Date, 
-    default: Date.now,
-    // Comment: Tracks when they joined. Useful for calculating pro-rata fees if needed later.
-  },
-
-  isActive: { 
-    type: Boolean, 
-    default: true,
-    // Comment: "Soft Delete" flag. If a student leaves mid-session, set this to false. 
-    // They can no longer log in, but their data remains for analytics.
-  },
-  password: {
-    type: String,
-    required: true,
-    // Comment: Hashed password for student authentication.
-  }
-}, { timestamps: true }); // Automatically adds createdAt and updatedAt
+}, { timestamps: true });
 
 export default mongoose.model<IStudent>('Student', StudentSchema);
