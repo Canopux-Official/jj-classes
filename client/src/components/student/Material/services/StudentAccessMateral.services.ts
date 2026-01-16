@@ -16,6 +16,7 @@ function getAuthHeaders() {
     },
   };
 }
+
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -28,8 +29,21 @@ export const fetchStudentClasses = async (): Promise<Node[]> => {
       "/api/student/getClasses",
       getAuthHeaders()
     );
-    console.log(res.data.data)
-    return res.data.data;
+
+    // The backend returns data with populated targetExam and stream objects
+    // We need to transform them to match the Node interface expectations
+    const classes = res.data.data;
+
+    // Transform the data to ensure targetExam and stream are strings (IDs)
+    const transformedClasses = classes.map((classItem: any) => ({
+      ...classItem,
+      // Extract the ID if targetExam is an object, otherwise keep as is
+      targetExam: classItem.targetExam.name,
+      // Extract the ID if stream is an object, otherwise keep as is
+      stream: classItem.stream.name,
+    }));
+
+    return transformedClasses;
   } catch (error) {
     handleApiError(error);
     throw error; // ✅ ensures Promise<Node[]>

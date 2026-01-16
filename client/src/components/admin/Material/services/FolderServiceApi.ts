@@ -225,7 +225,7 @@ export const createOrFetchClass = async (className: string, targetExam: string, 
   try {
     const response = await axios.post(
       `${host}/api/material/create-class`,
-      { name: className, targetExam: targetExam, stream: stream },
+      { className: className, targetExam: targetExam, stream: stream },
       { headers: getAuthHeaders() }
     );
 

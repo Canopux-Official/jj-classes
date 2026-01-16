@@ -8,6 +8,7 @@ export interface Node {
   stream: string;
   type: 'folder' | 'file';
   parentId: string | null;
+  classType: string,
   description?: string;
   tags?: string[];
   lastDate?: string;

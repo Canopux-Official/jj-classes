@@ -346,6 +346,7 @@ export interface ClassCardProps {
   description?: string;
   fileDetails?: unknown[];
   targetExam: string;
+  classType: string;
   stream: string;
   referenceDetails?: unknown[];
   createdAt?: string;
@@ -359,7 +360,7 @@ export interface ClassCardProps {
 
 const ClassCard: React.FC<ClassCardProps> = ({
   id,
-  name,
+  classType,
   targetExam,
   stream,
   description,
@@ -466,7 +467,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
                 letterSpacing: '-0.01em',
               }}
             >
-              {name}
+              {`Class ${classType}`}
             </Typography>
 
             {/* Target Exam Badge */}
