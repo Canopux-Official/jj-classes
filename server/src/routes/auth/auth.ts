@@ -4,6 +4,7 @@ import Student from '../../models/Student';
 import Admin from '../../models/Admin';
 // Added resendOtp to imports
 import { sendOtp, verifyOtp, resendOtp } from '../../controllers/otpController';
+import { changePassword } from '../../controllers/studentController';
 import verifyAuth, { AuthRequest } from '../../middlewares/verifyAuth';
 
 const router = express.Router();
@@ -205,5 +206,5 @@ router.get('/verifyToken', verifyAuth, async (req: AuthRequest, res): Promise<an
         return res.status(500).json({ success: false, message: 'Server Error during verification' });
     }
 });
-
+router.post('/changePassword', verifyAuth, changePassword);
 export default router;

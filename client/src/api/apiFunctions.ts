@@ -330,3 +330,20 @@ export const addSubject = (data: unknown) => crudRequest('post', '/admin/subject
 export const updateSubject = (id: string, data: unknown) => crudRequest('put', `/admin/subjectControl/update/${id}`, data);
 export const deleteSubject = (id: string) => crudRequest('delete', `/admin/subjectControl/delete/${id}`);
 export const getActiveSubjects = () => crudRequest('get', '/admin/subjectControl/getActiveSubjects');
+
+export async function changePassword(passwordData: { current: string, new: string }): Promise<ApiResponse> {
+  try {
+    const config: AxiosRequestConfig = {
+      method: "post",
+      url: `${import.meta.env.VITE_SERVER_LINK}/auth/changePassword`, // You need to create this route in backend
+      data: passwordData,
+      headers: getAuthHeaders()
+    };
+    const response = await axios(config);
+    return { success: true, data: response.data, status: response.status };
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    // @ts-expect-error response.data is not typed
+    return { success: false, message: axiosError.response?.data?.message || "Failed to update password" };
+  }
+}

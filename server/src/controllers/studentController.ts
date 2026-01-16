@@ -460,3 +460,47 @@ export const getAllActiveStudents = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Error fetching students' });
     }
 }
+
+
+export const changePassword = async (req: Request, res: Response) => {
+    try {
+        const { current, new: newPassword } = req.body;
+        const userId = req.user?.id; 
+
+        if (!userId) {
+            return res.status(401).json({ message: "Unauthorized: User not found." });
+        }
+
+        if (!current || !newPassword) {
+            return res.status(400).json({ message: "Please provide both current and new passwords." });
+        }
+
+        const student = await Student.findById(userId);
+
+        if (!student) {
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        const isMatch = await bcrypt.compare(current, student.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: "Incorrect current password." });
+        }
+
+        const hashedPassword = await hashPassword(newPassword);
+
+        student.password = hashedPassword;
+        await student.save();
+
+        return res.status(200).json({ 
+            success: true, 
+            message: "Password updated successfully." 
+        });
+
+    } catch (error) {
+        console.error("Change Password Error:", error);
+        return res.status(500).json({ 
+            success: false, 
+            message: "Server error while updating password." 
+        });
+    }
+};
