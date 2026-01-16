@@ -7,5 +7,5 @@ router.get('/all', verifyAuth, getAllExams);
 router.post('/add', verifyAuth,addExam);
 router.put('/update/:id', verifyAuth, updateExam);
 router.delete('/delete/:id', verifyAuth, deleteExam);
-router.get('/getAllActiveTargetExams', verifyAuth, getAllActiveExams);
+router.get('/getActiveTargetExams', verifyAuth, getAllActiveExams);
 export default router;
