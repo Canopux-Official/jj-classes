@@ -5,9 +5,9 @@ import {
     updateStudent, 
     toggleStudentStatus, 
     bulkAddStudents, 
-    deleteStudent
+    deleteStudent, 
+    getAllActiveStudents
 } from '../../controllers/studentController';
-import { getAllSubjects } from '../../controllers/subjectController';
 import verifyAuth from '../../middlewares/verifyAuth';
 
 const router = express.Router();
@@ -17,7 +17,7 @@ router.post('/add',  verifyAuth, addStudent);
 router.post('/bulk-add',  verifyAuth,  bulkAddStudents);
 router.put('/update/:id',  verifyAuth, updateStudent);
 router.put('/toggle-status/:id',  verifyAuth, toggleStudentStatus);
-router.get('/getAllSubjects',  verifyAuth, getAllSubjects);
 router.delete('/deleteStudent/:id',  verifyAuth, deleteStudent);
+router.get('/getAllActiveStudent', verifyAuth, getAllActiveStudents);
 
 export default router;

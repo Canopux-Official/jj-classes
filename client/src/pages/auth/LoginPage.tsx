@@ -346,7 +346,7 @@ const LoginPage = () => {
                         ),
                       }}
                     >
-                      {['9', '10', '11', '12', 'JEE Mains', 'JEE Advanced'].map((option) => (
+                      {['9', '10', '11', '12', 'dropper-1', 'dropper-2'].map((option) => (
                         <MenuItem key={option} value={option}>
                           {option}
                         </MenuItem>

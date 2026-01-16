@@ -1,57 +1,72 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Typography, Button, Box, IconButton, Switch, 
   Dialog, DialogTitle, DialogContent, DialogActions, 
-  TextField, FormControlLabel, Tooltip, Stack, Divider,
-  InputAdornment
+  TextField, FormControlLabel, Stack, Divider,
+  InputAdornment, CircularProgress
 } from '@mui/material';
-
-// Icons
 import AddIcon from '@mui/icons-material/Add';
 import SchoolIcon from '@mui/icons-material/School';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever'; 
 import EditIcon from '@mui/icons-material/Edit';
 import SearchIcon from '@mui/icons-material/Search';
-
-// Styles
 import { StreamContainer, StreamHeader, StreamGrid, StreamCard } from './StreamPage.styles';
 
+// Import API functions
+import { getStreams, addStream, updateStream, deleteStream } from '../../api/apiFunctions';
+
 interface IStreamUI {
-  id: string;
+  _id: string; // MongoDB uses _id
   name: string;
   isActive: boolean;
 }
 
-const INITIAL_STREAMS: IStreamUI[] = [
-  { id: '1', name: 'Science', isActive: true },
-  { id: '2', name: 'Commerce', isActive: true },
-  { id: '3', name: 'Arts', isActive: true },
-  { id: '4', name: 'Vocational', isActive: false },
-];
-
 const StreamPage: React.FC = () => {
-  const [streams, setStreams] = useState<IStreamUI[]>(INITIAL_STREAMS);
+  const [streams, setStreams] = useState<IStreamUI[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: '', isActive: true });
 
-  // --- Handlers ---
-  const handleToggleActive = (id: string) => {
-    setStreams(prev => prev.map(item => 
-        item.id === id ? { ...item, isActive: !item.isActive } : item
-    ));
+  // Fetch Data
+  const fetchStreams = async () => {
+    const res = await getStreams();
+    if (res.success && Array.isArray(res.data)) {
+        setStreams(res.data);
+    }
+    setLoading(false);
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('⚠️ WARNING: Deleting a Stream will remove it from selection lists.\n\nAre you sure?')) {
-      setStreams(prev => prev.filter(item => item.id !== id));
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      await fetchStreams();
+    })();
+  }, []);
+
+  // --- Handlers ---
+  const handleToggleActive = async (id: string, currentStatus: boolean) => {
+    // Optimistic UI update
+    setStreams(prev => prev.map(item => item._id === id ? { ...item, isActive: !currentStatus } : item));
+    await updateStream(id, { isActive: !currentStatus });
+    fetchStreams(); // Sync with server
+  };
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm('⚠️ Are you sure you want to delete this stream?')) {
+      const res = await deleteStream(id);
+      if (res.success) {
+          setStreams(prev => prev.filter(item => item._id !== id));
+      } else {
+          alert("Failed to delete stream");
+      }
     }
   };
 
   const handleOpenDialog = (stream?: IStreamUI) => {
       if (stream) {
-          setEditingId(stream.id);
+          setEditingId(stream._id);
           setFormData({ name: stream.name, isActive: stream.isActive });
       } else {
           setEditingId(null);
@@ -60,19 +75,16 @@ const StreamPage: React.FC = () => {
       setOpenDialog(true);
   };
 
-  const handleSave = () => {
-    if (!formData.name.trim()) {
-        alert("Stream Name is required");
-        return;
-    }
+  const handleSave = async () => {
+    if (!formData.name.trim()) return alert("Stream Name is required");
+
     if (editingId) {
-        setStreams(prev => prev.map(item => 
-            item.id === editingId ? { ...item, ...formData } : item
-        ));
+        await updateStream(editingId, formData);
     } else {
-        setStreams([...streams, { id: Date.now().toString(), ...formData }]);
+        await addStream(formData);
     }
     setOpenDialog(false);
+    fetchStreams();
   };
 
   const filteredStreams = streams.filter(item => 
@@ -84,82 +96,52 @@ const StreamPage: React.FC = () => {
       <StreamHeader>
         <Box>
           <Typography variant="h5" fontWeight="700">Stream Management</Typography>
-          <Typography variant="body2" color="text.secondary">Manage academic streams (Science, Commerce, etc).</Typography>
+          <Typography variant="body2" color="text.secondary">Manage academic streams.</Typography>
         </Box>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} width={{ xs: '100%', sm: 'auto' }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <TextField
-                size="small"
-                placeholder="Search Streams..."
-                value={searchTerm}
+                size="small" placeholder="Search..." value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                InputProps={{
-                    startAdornment: (<InputAdornment position="start"><SearchIcon color="action" /></InputAdornment>),
-                }}
-                sx={{ bgcolor: 'white', width: { xs: '100%', sm: 220 } }}
+                InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>) }}
+                sx={{ bgcolor: 'white' }}
             />
-            <Button 
-                variant="contained" 
-                startIcon={<AddIcon />} 
-                onClick={() => handleOpenDialog()}
-                sx={{ bgcolor: 'primary.main', whiteSpace: 'nowrap' }}
-            >
-                Add Stream
-            </Button>
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenDialog()}>Add Stream</Button>
         </Stack>
       </StreamHeader>
 
-      <StreamGrid>
-        {filteredStreams.length > 0 ? (
-            filteredStreams.map((stream) => (
-            <StreamCard key={stream.id} elevation={0} sx={{ opacity: stream.isActive ? 1 : 0.7 }}>
-                <Box p={2} flexGrow={1}>
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
-                        <Box display="flex" alignItems="center" gap={1.5}>
-                            <SchoolIcon color={stream.isActive ? "primary" : "disabled"} />
-                            <Typography variant="h6" fontWeight="600" color={stream.isActive ? "text.primary" : "text.secondary"}>
-                                {stream.name}
-                            </Typography>
-                        </Box>
-                        <Tooltip title={stream.isActive ? "Deactivate" : "Activate"}>
-                            <Switch size="small" checked={stream.isActive} onChange={() => handleToggleActive(stream.id)} color="success" />
-                        </Tooltip>
-                    </Box>
+      {loading ? <CircularProgress sx={{ mt: 4, mx: 'auto', display: 'block' }} /> : (
+        <StreamGrid>
+            {filteredStreams.map((stream) => (
+            <StreamCard key={stream._id} elevation={0} sx={{ opacity: stream.isActive ? 1 : 0.7 }}>
+                <Box p={2} flexGrow={1} display="flex" alignItems="center" gap={2}>
+                    <SchoolIcon color={stream.isActive ? "primary" : "disabled"} />
+                    <Typography variant="h6">{stream.name}</Typography>
                 </Box>
                 <Divider />
-                <Box display="flex" justifyContent="space-between" alignItems="center" p={1} bgcolor="#f8fafc">
+                <Box display="flex" justifyContent="space-between" p={1} bgcolor="#f8fafc">
                     <Button size="small" startIcon={<EditIcon />} onClick={() => handleOpenDialog(stream)}>Edit</Button>
-                    <Tooltip title="Delete Permanently">
-                        <IconButton size="small" onClick={() => handleDelete(stream.id)}>
-                            <DeleteForeverIcon fontSize="small" color="error" />
-                        </IconButton>
-                    </Tooltip>
+                    <Box>
+                        <Switch size="small" checked={stream.isActive} onChange={() => handleToggleActive(stream._id, stream.isActive)} color="success" />
+                        <IconButton size="small" onClick={() => handleDelete(stream._id)}><DeleteForeverIcon fontSize="small" color="error" /></IconButton>
+                    </Box>
                 </Box>
             </StreamCard>
-            ))
-        ) : (
-            <Box gridColumn="1 / -1" textAlign="center" py={4}>
-                <Typography variant="body1" color="text.secondary">No streams found.</Typography>
-            </Box>
-        )}
-      </StreamGrid>
+            ))}
+        </StreamGrid>
+      )}
 
+      {/* Dialog Code (Same as before) */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>{editingId ? 'Edit Stream' : 'Add New Stream'}</DialogTitle>
         <DialogContent dividers>
           <Stack spacing={3} pt={1}>
-            <TextField label="Stream Name" fullWidth required variant="outlined" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
-            <Box p={2} border="1px solid #e0e0e0" borderRadius={1} display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                    <Typography variant="subtitle2" fontWeight={600}>Status</Typography>
-                    <Typography variant="caption" color="text.secondary">{formData.isActive ? "Visible in forms." : "Hidden from forms."}</Typography>
-                </Box>
-                <FormControlLabel control={<Switch checked={formData.isActive} onChange={(e) => setFormData({...formData, isActive: e.target.checked})} color="success" />} label={formData.isActive ? "Active" : "Hidden"} labelPlacement="start" />
-            </Box>
+            <TextField label="Name" fullWidth value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+            <FormControlLabel control={<Switch checked={formData.isActive} onChange={(e) => setFormData({...formData, isActive: e.target.checked})} color="success" />} label="Active Status" />
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={() => setOpenDialog(false)} color="inherit">Cancel</Button>
-          <Button variant="contained" onClick={handleSave} disableElevation>{editingId ? 'Update' : 'Add'}</Button>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleSave}>{editingId ? 'Update' : 'Add'}</Button>
         </DialogActions>
       </Dialog>
     </StreamContainer>

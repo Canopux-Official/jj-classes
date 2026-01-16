@@ -168,7 +168,7 @@ export async function getStudents(): Promise<ApiResponse> {
   try {
     const config: AxiosRequestConfig = {
       method: "get",
-      url: `${import.meta.env.VITE_SERVER_LINK}/admin/getAllStudents`,
+      url: `${import.meta.env.VITE_SERVER_LINK}/admin/studentControl/getAllStudents`,
       headers: getAuthHeaders()
     };
     const response = await axios(config);
@@ -196,7 +196,7 @@ export async function addStudent(studentData: unknown): Promise<ApiResponse> {
   try {
     const config: AxiosRequestConfig = {
       method: "post",
-      url: `${import.meta.env.VITE_SERVER_LINK}/admin/add`,
+      url: `${import.meta.env.VITE_SERVER_LINK}/admin/studentControl/add`,
       data: studentData,
       headers: getAuthHeaders()
     };
@@ -213,7 +213,7 @@ export async function updateStudent(id: string, studentData: unknown): Promise<A
   try {
     const config: AxiosRequestConfig = {
       method: "put",
-      url: `${import.meta.env.VITE_SERVER_LINK}/admin/update/${id}`,
+      url: `${import.meta.env.VITE_SERVER_LINK}/admin/studentControl/update/${id}`,
       data: studentData,
       headers: getAuthHeaders()
     };
@@ -230,7 +230,7 @@ export async function toggleStudentStatus(id: string): Promise<ApiResponse> {
   try {
     const config: AxiosRequestConfig = {
       method: "put",
-      url: `${import.meta.env.VITE_SERVER_LINK}/admin/toggle-status/${id}`,
+      url: `${import.meta.env.VITE_SERVER_LINK}/admin/studentControl/toggle-status/${id}`,
       headers: getAuthHeaders()
     };
     const response = await axios(config);
@@ -246,7 +246,7 @@ export async function bulkImportStudents(studentsArray: unknown[]): Promise<ApiR
   try {
     const config: AxiosRequestConfig = {
       method: "post",
-      url: `${import.meta.env.VITE_SERVER_LINK}/admin/bulk-add`,
+      url: `${import.meta.env.VITE_SERVER_LINK}/admin/studentControl/bulk-add`,
       data: { students: studentsArray },
       headers: getAuthHeaders()
     };
@@ -258,38 +258,12 @@ export async function bulkImportStudents(studentsArray: unknown[]): Promise<ApiR
     return { success: false, message: axiosError.response?.data?.message || "Import failed" };
   }
 }
-export async function getSubjects(): Promise<ApiResponse> {
-  try {
-    const config: AxiosRequestConfig = {
-      method: "get",
-      url: `${import.meta.env.VITE_SERVER_LINK}/admin/getAllSubjects`,
-      headers: getAuthHeaders()
-    };
-    const response = await axios(config); 
-    if (response.status === 200) {
-      return {
-        success: true,
-        data: response.data,
-        status: response.status
-      };
-    }
-    return { success: false, status: response.status };
-  } catch (error) {
-    const axiosError = error as AxiosError;
-    // @ts-expect-error response.data is not typed in AxiosError
-    const msg = axiosError.response?.data?.message || axiosError.message;
-    return {
-      success: false,
-      status: axiosError.response ? axiosError.response.status : 500,
-      message: msg
-    };
-  }
-}
+
 export async function deleteStudent(id: string): Promise<ApiResponse> {
   try {
     const config: AxiosRequestConfig = {
       method: "delete",
-      url: `${import.meta.env.VITE_SERVER_LINK}/admin/deleteStudent/${id}`,
+      url: `${import.meta.env.VITE_SERVER_LINK}/admin/studentControl/deleteStudent/${id}`,
       headers: getAuthHeaders()
     };
     const response = await axios(config);
@@ -305,7 +279,7 @@ export async function getStudent(){
   try{
     const config: AxiosRequestConfig ={
       method: "get",
-      url: `${import.meta.env.VITE_SERVER_LINK}/api/studentProfile/getStudent`,
+      url: `${import.meta.env.VITE_SERVER_LINK}/student/studentProfile/getStudent`,
       headers: getAuthHeaders()
     };
     const response = await axios(config);
@@ -316,3 +290,43 @@ export async function getStudent(){
     return {success: false, message: axiosError.response?.data?.message || "Failed to fetch student details"};
   }
 }
+
+
+async function crudRequest(method: 'get' | 'post' | 'put' | 'delete', endpoint: string, data?: unknown): Promise<ApiResponse> {
+  try {
+    const config: AxiosRequestConfig = {
+      method,
+      url: `${import.meta.env.VITE_SERVER_LINK}${endpoint}`,
+      data,
+      headers: getAuthHeaders()
+    };
+    const response = await axios(config);
+    return { success: true, data: response.data, status: response.status };
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    // @ts-expect-error response.data is not typed in AxiosError
+    return { success: false, message: axiosError.response?.data?.message || "Operation failed" };
+  }
+}
+
+// --- STREAMS ---
+export const getStreams = () => crudRequest('get', '/admin/streamControl/all');
+export const addStream = (data: unknown) => crudRequest('post', '/admin/streamControl/add', data);
+export const updateStream = (id: string, data: unknown) => crudRequest('put', `/admin/streamControl/update/${id}`, data);
+export const deleteStream = (id: string) => crudRequest('delete', `/admin/streamControl/delete/${id}`);
+export const getActiveStreams = () => crudRequest('get', '/admin/streamControl/getActiveStreams');
+// --- TARGET EXAMS ---
+export const getTargetExams = () => crudRequest('get', '/admin/targetExamControl/all');
+export const addTargetExam = (data: unknown) => crudRequest('post', '/admin/targetExamControl/add', data);
+export const updateTargetExam = (id: string, data: unknown) => crudRequest('put', `/admin/targetExamControl/update/${id}`, data);
+export const deleteTargetExam = (id: string) => crudRequest('delete', `/admin/targetExamControl/delete/${id}`);
+export const getActiveTargetExams = () => crudRequest('get', '/admin/targetExamControl/getActiveTargetExams');
+// --- SUBJECTS ---
+// Overwriting getSubjects to match the specific controller response structure if needed, 
+// or you can use the generic one if your controller returns pure array.
+// The current controller returns { subjects: [] }, so we might need to unwrap it in the component or here.
+export const getAllSubjects = () => crudRequest('get', '/admin/subjectControl/all'); 
+export const addSubject = (data: unknown) => crudRequest('post', '/admin/subjectControl/add', data);
+export const updateSubject = (id: string, data: unknown) => crudRequest('put', `/admin/subjectControl/update/${id}`, data);
+export const deleteSubject = (id: string) => crudRequest('delete', `/admin/subjectControl/delete/${id}`);
+export const getActiveSubjects = () => crudRequest('get', '/admin/subjectControl/getActiveSubjects');

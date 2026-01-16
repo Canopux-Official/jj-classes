@@ -22,9 +22,9 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import EditIcon from '@mui/icons-material/Edit';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever'; // Hard Delete
-import VisibilityIcon from '@mui/icons-material/Visibility'; // Active
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'; // Inactive
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever'; 
+import VisibilityIcon from '@mui/icons-material/Visibility'; 
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'; 
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -41,10 +41,19 @@ import {
   addStudent,
   updateStudent,
   toggleStudentStatus,
-  deleteStudent, // Ensure you have this exported in apiFunctions.ts
+  deleteStudent,
   bulkImportStudents,
-  getSubjects
+  getActiveSubjects,
+  getActiveStreams,
+  getActiveTargetExams
 } from '../../api/apiFunctions';
+
+// --- Interfaces ---
+
+interface INamedEntity {
+  _id: string;
+  name: string;
+}
 
 interface IStudentUI {
   _id: string;
@@ -54,19 +63,37 @@ interface IStudentUI {
   email: string;      
   dob: string;        
   currentClass: string;
-  stream?: string;
-  targetExams: string[];
-  enrolledSubjects: (string | { name: string })[]; 
+  stream?: INamedEntity | null;
+  targetExams: INamedEntity[];
+  enrolledSubjects: INamedEntity[];
   academicSession: string;
   isActive: boolean;
 }
 
-const TARGET_OPTIONS = ['JEE', 'NEET', 'Boards', 'Foundation', 'Olympiad', 'Other'];
+interface IStudentFormData {
+  name: string;
+  phoneNumber: string;
+  parentPhoneNumber: string;
+  email: string;
+  dob: string;
+  currentClass: string;
+  stream: string;
+  targetExams: string[];
+  enrolledSubjects: string[];
+  academicSession: string;
+  isActive: boolean;
+}
 
 const StudentsPage: React.FC = () => {
   // --- State ---
   const [students, setStudents] = useState<IStudentUI[]>([]);
-  const [subjects, setSubjects] = useState<string[]>([]); 
+  const [loading, setLoading] = useState(true);
+  
+  // Dropdown Data Options
+  const [subjectOptions, setSubjectOptions] = useState<string[]>([]); 
+  const [streamOptions, setStreamOptions] = useState<string[]>([]);
+  const [examOptions, setExamOptions] = useState<string[]>([]);
+
   const [searchTerm, setSearchTerm] = useState('');
 
   // Filters
@@ -81,7 +108,7 @@ const StudentsPage: React.FC = () => {
   // Dialogs
   const [openDialog, setOpenDialog] = useState(false);
   const [openImportDialog, setOpenImportDialog] = useState(false);
-  const [editingStudent, setEditingStudent] = useState<IStudentUI | null>(null);
+  const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
 
   // Import State
   const [importData, setImportData] = useState<Record<string, unknown>[]>([]);
@@ -90,7 +117,7 @@ const StudentsPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form State
-  const [formData, setFormData] = useState<Partial<IStudentUI>>({
+  const [formData, setFormData] = useState<IStudentFormData>({
     name: '', 
     phoneNumber: '', 
     parentPhoneNumber: '',
@@ -104,33 +131,52 @@ const StudentsPage: React.FC = () => {
     isActive: true
   });
 
+  // Check if Stream is applicable (Class 11 or 12)
+  const isStreamApplicable = ['11', '12'].includes(formData.currentClass);
+
   // --- Effects ---
   useEffect(() => {
-    fetchStudentsList();
-    fetchSubjectsList();
+    const fetchAllData = async () => {
+      setLoading(true);
+      await Promise.all([
+          fetchStudentsList(),
+          fetchDropdownOptions()
+      ]);
+      setLoading(false);
+    };
+
+    fetchAllData();
   }, []);
 
   const fetchStudentsList = async () => {
     try {
       const response = await getStudents();
-      const data = response.data as IStudentUI[];
-      setStudents(data);
+      if(response.success && response.data) {
+          setStudents(response.data as IStudentUI[]);
+      }
     } catch (error) {
       console.error('Error fetching students:', error);
     }
   };
 
-  const fetchSubjectsList = async () => {
+  const fetchDropdownOptions = async () => {
     try {
-      const response = await getSubjects();
-      const data = response.data as any; 
-      
-      if (data.subjects && Array.isArray(data.subjects)) {
-        const subjectNames = data.subjects.map((sub: any) => sub.name);
-        setSubjects(subjectNames);
-      }
+        const subRes = await getActiveSubjects();
+        if (subRes.success && (subRes.data as any).subjects) {
+            setSubjectOptions((subRes.data as any).subjects.map((s: any) => s.name));
+        }
+
+        const streamRes = await getActiveStreams();
+        if (streamRes.success && Array.isArray(streamRes.data)) {
+            setStreamOptions(streamRes.data.map((s: any) => s.name));
+        }
+
+        const examRes = await getActiveTargetExams();
+        if (examRes.success && Array.isArray(examRes.data)) {
+            setExamOptions(examRes.data.map((e: any) => e.name));
+        }
     } catch (error) {
-      console.error('Error fetching subjects:', error);
+        console.error('Error fetching options:', error);
     }
   };
 
@@ -138,7 +184,7 @@ const StudentsPage: React.FC = () => {
 
   const handleOpenDialog = (student?: IStudentUI) => {
     if (student) {
-      setEditingStudent(student);
+      setEditingStudentId(student._id);
       
       let formattedDob = '';
       if (student.dob) {
@@ -147,17 +193,21 @@ const StudentsPage: React.FC = () => {
           } catch (e) { console.error("Invalid Date", e) }
       }
 
-      const subjectNames = student.enrolledSubjects.map((s) => 
-        (typeof s === 'object' && s !== null && 'name' in s) ? s.name : String(s)
-      );
-      
       setFormData({ 
-          ...student, 
-          dob: formattedDob, 
-          enrolledSubjects: subjectNames 
+          name: student.name,
+          phoneNumber: student.phoneNumber,
+          parentPhoneNumber: student.parentPhoneNumber || '',
+          email: student.email || '',
+          dob: formattedDob,
+          currentClass: student.currentClass,
+          stream: student.stream ? student.stream.name : '',
+          targetExams: student.targetExams.map(t => t.name),
+          enrolledSubjects: student.enrolledSubjects.map(s => s.name),
+          academicSession: student.academicSession,
+          isActive: student.isActive
       });
     } else {
-      setEditingStudent(null);
+      setEditingStudentId(null);
       setFormData({
         name: '', phoneNumber: '', parentPhoneNumber: '',
         email: '', dob: '', 
@@ -175,25 +225,29 @@ const StudentsPage: React.FC = () => {
           !formData.phoneNumber || 
           !formData.currentClass || 
           !formData.dob ||
-          !formData.stream || 
-          !formData.targetExams || formData.targetExams.length === 0 ||
-          !formData.enrolledSubjects || formData.enrolledSubjects.length === 0
+          !formData.academicSession ||
+          !formData.targetExams || formData.targetExams.length === 0
       ) {
-          alert("Please fill in all mandatory fields: Name, Phone, DOB, Class, Stream, Target Exams, and Enrolled Subjects.");
+          alert("Please fill in all mandatory fields.");
+          return;
+      }
+
+      // If stream is required (Class 11/12) but missing
+      if (isStreamApplicable && !formData.stream) {
+          alert("Stream is required for Class 11 and 12.");
           return;
       }
 
       let response;
       const payload = { ...formData };
 
-      if (editingStudent) {
-        response = await updateStudent(editingStudent._id, payload);
+      if (editingStudentId) {
+        response = await updateStudent(editingStudentId, payload);
       } else {
         response = await addStudent(payload);
       }
 
       if (response.success) {
-        alert(editingStudent ? "Student updated!" : "Student added!");
         setOpenDialog(false);
         fetchStudentsList();
       } else {
@@ -205,7 +259,6 @@ const StudentsPage: React.FC = () => {
     }
   };
 
-  // 1. Toggle Status (Soft Delete/Deactivate)
   const handleToggleStatus = async (id: string) => {
     const response = await toggleStudentStatus(id);
     if (response.success) {
@@ -217,7 +270,6 @@ const StudentsPage: React.FC = () => {
     }
   };
 
-  // 2. Hard Delete (Remove from DB)
   const handleHardDelete = async (id: string) => {
     if (window.confirm('⚠️ WARNING: This will PERMANENTLY delete the student record from the database.\n\nAre you sure you want to proceed?')) {
         try {
@@ -298,11 +350,12 @@ const StudentsPage: React.FC = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  
   const handleExamFilterChange = (event: SelectChangeEvent<unknown>) => {
     const value = event.target.value;
     setExamFilter(typeof value === 'string' ? value.split(',') : (value as string[]));
   };
+
+  // --- Filtering & Pagination ---
 
   const filteredStudents = students.filter((student) => {
     const term = searchTerm.toLowerCase();
@@ -313,7 +366,11 @@ const StudentsPage: React.FC = () => {
         (student.email && student.email.toLowerCase().includes(term));
 
     const matchesClass = classFilter === 'All' || student.currentClass === classFilter;
-    const matchesExam = examFilter.length === 0 || examFilter.some(filter => student.targetExams.includes(filter));
+    
+    const matchesExam = examFilter.length === 0 || examFilter.some(filter => 
+        student.targetExams.some(t => t.name === filter)
+    );
+    
     const matchesStatus = statusFilter === 'All' || (statusFilter === 'Active' ? student.isActive : !student.isActive);
     
     return matchesSearch && matchesClass && matchesExam && matchesStatus;
@@ -374,7 +431,7 @@ const StudentsPage: React.FC = () => {
             input={<OutlinedInput label="Target Exams" />}
             renderValue={(selected) => (selected as string[]).join(', ')}
           >
-            {TARGET_OPTIONS.map((name) => (
+            {examOptions.map((name) => (
               <MenuItem key={name} value={name}>
                 <Checkbox checked={examFilter.indexOf(name) > -1} size="small" />
                 <ListItemText primary={name} />
@@ -402,6 +459,11 @@ const StudentsPage: React.FC = () => {
       {/* TABLE */}
       <Box sx={{ border: '1px solid #e0e0e0', borderRadius: 2, overflow: 'hidden', bgcolor: 'white' }}>
         <TableContainer>
+          {loading ? (
+             <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                <CircularProgress />
+             </Box>
+          ) : (
           <Table sx={{ minWidth: 800 }}>
             <TableHead sx={{ backgroundColor: '#f8fafc' }}>
               <TableRow>
@@ -426,21 +488,19 @@ const StudentsPage: React.FC = () => {
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" fontWeight={600}>{student.currentClass}</Typography>
-                    {student.stream && <Typography variant="caption">{student.stream}</Typography>}
+                    {student.stream && <Typography variant="caption">{student.stream.name}</Typography>}
                   </TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={0.5} flexWrap="wrap">
                       {student.targetExams.map((exam) => (
-                        <Chip key={exam} label={exam} size="small" variant="outlined" sx={{ height: 20, fontSize: '0.7rem' }} />
+                        <Chip key={exam._id} label={exam.name} size="small" variant="outlined" sx={{ height: 20, fontSize: '0.7rem' }} />
                       ))}
                     </Stack>
                   </TableCell>
                   <TableCell>
                     <Typography variant="caption" color="text.secondary">
                       {student.enrolledSubjects.length > 0 
-                        ? student.enrolledSubjects.map((s) => 
-                            (typeof s === 'object' && s !== null && 'name' in s) ? s.name : String(s)
-                          ).join(', ') 
+                        ? student.enrolledSubjects.map((s) => s.name).join(', ') 
                         : 'None'}
                     </Typography>
                   </TableCell>
@@ -449,7 +509,6 @@ const StudentsPage: React.FC = () => {
                     <Chip label={student.isActive ? 'Active' : 'Inactive'} size="small" color={student.isActive ? 'success' : 'default'} />
                   </TableCell>
                   
-                  {/* --- UPDATED: 3 ACTION BUTTONS --- */}
                   <TableCell align="right">
                     <ActionButtonContainer>
                         <Tooltip title="Edit">
@@ -475,6 +534,7 @@ const StudentsPage: React.FC = () => {
               ))}
             </TableBody>
           </Table>
+          )}
         </TableContainer>
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
@@ -487,10 +547,10 @@ const StudentsPage: React.FC = () => {
         />
       </Box>
 
-      {/* --- ADD / EDIT DIALOG (Responsive without Grid) --- */}
+      {/* --- ADD / EDIT DIALOG --- */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
         <DialogTitle sx={{ bgcolor: '#f8fafc', fontWeight: 600 }}>
-            {editingStudent ? 'Edit Student Details' : 'Add New Student'}
+            {editingStudentId ? 'Edit Student Details' : 'Add New Student'}
         </DialogTitle>
         <DialogContent dividers>
           
@@ -504,7 +564,6 @@ const StudentsPage: React.FC = () => {
                 <Divider sx={{ mb: 2 }} />
 
                 <Stack spacing={2}>
-                    {/* Row 1: Name & DOB */}
                     <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
                         <MuiTextField 
                             label="Full Name" required fullWidth 
@@ -517,7 +576,6 @@ const StudentsPage: React.FC = () => {
                         />
                     </Box>
 
-                    {/* Row 2: Phone & Parent Phone */}
                     <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
                         <MuiTextField 
                             label="Phone Number" required fullWidth 
@@ -529,7 +587,6 @@ const StudentsPage: React.FC = () => {
                         />
                     </Box>
                     
-                    {/* Row 3: Email */}
                     <MuiTextField 
                         label="Email Address" fullWidth 
                         value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} 
@@ -554,15 +611,35 @@ const StudentsPage: React.FC = () => {
                         />
                         <FormControl fullWidth required sx={{ flex: 1 }}>
                             <InputLabel>Class</InputLabel>
-                            <Select value={formData.currentClass} label="Class" onChange={(e) => setFormData({ ...formData, currentClass: e.target.value as string })}>
+                            <Select 
+                                value={formData.currentClass} 
+                                label="Class" 
+                                onChange={(e) => {
+                                    const newClass = e.target.value as string;
+                                    setFormData({ 
+                                        ...formData, 
+                                        currentClass: newClass,
+                                        // Reset stream if not Class 11 or 12
+                                        stream: ['11', '12'].includes(newClass) ? formData.stream : ''
+                                    });
+                                }}
+                            >
                               {['9', '10', '11', '12'].map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
                             </Select>
                         </FormControl>
-                        <MuiTextField 
-                            label="Stream" required fullWidth 
-                            value={formData.stream} onChange={(e) => setFormData({ ...formData, stream: e.target.value })} 
-                             sx={{ flex: 1 }}
-                        />
+                        
+                        {/* Stream (Disabled for Class 9/10) */}
+                        <FormControl 
+                            fullWidth 
+                            required={isStreamApplicable} 
+                            disabled={!isStreamApplicable} 
+                            sx={{ flex: 1 }}
+                        >
+                            <InputLabel>Stream</InputLabel>
+                            <Select value={formData.stream} label="Stream" onChange={(e) => setFormData({ ...formData, stream: e.target.value as string })}>
+                                {streamOptions.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                            </Select>
+                        </FormControl>
                     </Box>
 
                     {/* Row 2: Targets */}
@@ -575,7 +652,7 @@ const StudentsPage: React.FC = () => {
                             input={<OutlinedInput label="Target Exams" />}
                             renderValue={(selected) => (selected as string[]).join(', ')}
                         >
-                            {TARGET_OPTIONS.map((name) => (
+                            {examOptions.map((name) => (
                             <MenuItem key={name} value={name}>
                                 <Checkbox checked={(formData.targetExams || []).indexOf(name) > -1} />
                                 <ListItemText primary={name} />
@@ -594,7 +671,7 @@ const StudentsPage: React.FC = () => {
                             input={<OutlinedInput label="Enrolled Subjects" />}
                             renderValue={(selected) => (selected as string[]).join(', ')}
                         >
-                            {subjects.map((name) => (
+                            {subjectOptions.map((name) => (
                             <MenuItem key={name} value={name}>
                                 <Checkbox checked={(formData.enrolledSubjects || []).indexOf(name) > -1} />
                                 <ListItemText primary={name} />
@@ -612,7 +689,7 @@ const StudentsPage: React.FC = () => {
         <DialogActions sx={{ p: 2, bgcolor: '#f8fafc' }}>
           <Button onClick={() => setOpenDialog(false)} color="inherit">Cancel</Button>
           <Button onClick={handleSave} variant="contained" disableElevation>
-            {editingStudent ? 'Update Student' : 'Save Student'}
+            {editingStudentId ? 'Update Student' : 'Save Student'}
           </Button>
         </DialogActions>
       </Dialog>

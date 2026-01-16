@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import Student from "../models/Student";
 import Subject from "../models/Subject";
+import Stream from "../models/Stream";       // Imported
+import TargetExam from "../models/TargetExam"; // Imported
 import bcrypt from 'bcryptjs';
 
 declare global {
@@ -16,20 +18,31 @@ const hashPassword = async (password: string) => {
     return await bcrypt.hash(password, 10);
 };
 
-// Helper to map Subject Names -> ObjectIds
+// Helper: Map Subject Names -> ObjectIds
 const getSubjectIds = async (subjectInput: string | string[]) => {
     if (!subjectInput) return [];
-
-    // If it's a string "Physics,Maths", split it. If it's already an array, use it.
     const names = Array.isArray(subjectInput) ? subjectInput : String(subjectInput).split(',');
-
     if (names.length === 0) return [];
-
-    // Find all subjects that match these names
+    // Case-insensitive lookup recommended, but exact match used here for speed
     const subjects = await Subject.find({ name: { $in: names } });
-
-    // Return just the _id array
     return subjects.map(s => s._id);
+};
+
+// Helper: Get Stream ObjectId by Name
+const getStreamId = async (streamName: string) => {
+    if (!streamName || streamName.toUpperCase() === 'N/A') return null;
+    const streamDoc = await Stream.findOne({ name: streamName });
+    return streamDoc ? streamDoc._id : null;
+};
+
+// Helper: Get TargetExam ObjectIds by Names
+const getTargetExamIds = async (examNames: string | string[]) => {
+    if (!examNames) return [];
+    const names = Array.isArray(examNames) ? examNames : String(examNames).split(',');
+    if (names.length === 0) return [];
+    
+    const exams = await TargetExam.find({ name: { $in: names } });
+    return exams.map(e => e._id);
 };
 
 // --- READ ---
@@ -41,7 +54,9 @@ export const getAllStudents = async (req: Request, res: Response) => {
                 model: Subject,
                 select: 'name stream'
             })
-            .select('-password -createdAt -updatedAt') // Exclude password
+            .populate('stream', 'name')        // Populate Stream Name
+            .populate('targetExams', 'name')   // Populate Exam Names
+            .select('-password -createdAt -updatedAt') 
             .sort({ admissionDate: -1 });
 
         res.status(200).json(students);
@@ -53,7 +68,11 @@ export const getAllStudents = async (req: Request, res: Response) => {
 
 export const getStudentById = async (req: Request, res: Response) => {
     try {
-        const student = await Student.findById(req.user.id).populate('enrolledSubjects', 'name stream');
+        const student = await Student.findById(req.user?.id)
+            .populate('enrolledSubjects', 'name stream')
+            .populate('stream', 'name')
+            .populate('targetExams', 'name');
+
         if (!student) return res.status(404).json({ message: 'Student not found' });
         res.status(200).json(student);
     } catch {
@@ -78,24 +97,20 @@ export const addStudent = async (req: Request, res: Response) => {
 
         for (const student of students) {
             const { name, phoneNumber, dob, email } = student;
-            const stream = student.stream ? String(student.stream).trim().toLowerCase() : 'N/A';
             const currentClass = student.currentClass || student.studentClass || student.class || student.standard;
-
-            // UPDATED: No default value, now compulsory
             const academicSession = student.academicSession;
-
-            const targetExams = student.targetExams || [];
+            
+            // Raw Inputs
+            const rawStream = student.stream ? String(student.stream).trim() : null;
+            const rawTargetExams = student.targetExams || [];
 
             const missingFields = [];
             if (!name) missingFields.push('name');
             if (!phoneNumber) missingFields.push('phoneNumber');
             if (!dob) missingFields.push('dob');
             if (!currentClass) missingFields.push('currentClass');
-
-            // UPDATED: Added check for academicSession
             if (!academicSession) missingFields.push('academicSession');
-
-            if (!targetExams || targetExams.length === 0) missingFields.push('targetExams');
+            if (!rawTargetExams || rawTargetExams.length === 0) missingFields.push('targetExams');
 
             if (missingFields.length > 0) {
                 failedStudents.push({
@@ -112,11 +127,26 @@ export const addStudent = async (req: Request, res: Response) => {
                 continue;
             }
 
-            let subjectIds = [];
+            // --- RESOLVE IDS ---
+            let subjectIds: any[] = [];
+            let streamId: any = null;
+            let targetExamIds: any[] = [];
+
             try {
+                // 1. Resolve Subjects
                 subjectIds = await getSubjectIds(student.enrolledSubjects);
+                
+                // 2. Resolve Stream
+                if (rawStream) {
+                    streamId = await getStreamId(rawStream);
+                    // Optional: If stream provided but not found, you might want to warn or fail
+                }
+
+                // 3. Resolve Target Exams
+                targetExamIds = await getTargetExamIds(rawTargetExams);
+
             } catch (err) {
-                console.error("Subject lookup failed", err);
+                console.error("Reference lookup failed", err);
             }
 
             const hashedPassword = await hashPassword(phoneNumber);
@@ -143,10 +173,13 @@ export const addStudent = async (req: Request, res: Response) => {
                         currentClass,
                         academicSession,
                         password: hashedPassword,
-                        targetExams,
+                        
+                        // Pass RESOLVED IDs here, not strings
+                        targetExams: targetExamIds, 
                         enrolledSubjects: subjectIds,
-                        email: email || 'N/A',
-                        stream: stream || 'N/A',
+                        stream: streamId,
+
+                        email: email || undefined, // undefined prevents storing 'N/A' strings
                         parentPhoneNumber: student.parentPhoneNumber || undefined,
                         isActive: true,
                         admissionDate: new Date()
@@ -158,7 +191,7 @@ export const addStudent = async (req: Request, res: Response) => {
                         name,
                         phoneNumber,
                         reason: createError.message.includes('E11000')
-                            ? "Phone number or Email already exists in system (Unique Constraint)."
+                            ? "Phone number or Email already exists."
                             : `Database Error: ${createError.message}`
                     });
                 }
@@ -187,15 +220,41 @@ export const updateStudent = async (req: Request, res: Response) => {
         const { id } = req.params;
         const updates = req.body;
 
+        // --- RESOLVE REFERENCES IF UPDATING ---
+        
+        // 1. Resolve Subjects
         if (updates.enrolledSubjects && Array.isArray(updates.enrolledSubjects)) {
-            const isName = typeof updates.enrolledSubjects[0] === 'string' && !updates.enrolledSubjects[0].match(/^[0-9a-fA-F]{24}$/);
+            // Check if it looks like names (strings) instead of ObjectIds
+            const firstItem = updates.enrolledSubjects[0];
+            const isName = typeof firstItem === 'string' && !firstItem.match(/^[0-9a-fA-F]{24}$/);
+            
             if (isName) {
                 updates.enrolledSubjects = await getSubjectIds(updates.enrolledSubjects);
             }
         }
 
+        // 2. Resolve Stream
+        if (updates.stream && typeof updates.stream === 'string') {
+             // Only resolve if it's not already an ObjectId
+             if(!updates.stream.match(/^[0-9a-fA-F]{24}$/)) {
+                 updates.stream = await getStreamId(updates.stream);
+             }
+        }
+
+        // 3. Resolve Target Exams
+        if (updates.targetExams && Array.isArray(updates.targetExams)) {
+             const firstItem = updates.targetExams[0];
+             const isName = typeof firstItem === 'string' && !firstItem.match(/^[0-9a-fA-F]{24}$/);
+             
+             if (isName) {
+                 updates.targetExams = await getTargetExamIds(updates.targetExams);
+             }
+        }
+
         const updatedStudent = await Student.findByIdAndUpdate(id, updates, { new: true })
-            .populate('enrolledSubjects', 'name');
+            .populate('enrolledSubjects', 'name')
+            .populate('stream', 'name')
+            .populate('targetExams', 'name');
 
         if (!updatedStudent) return res.status(404).json({ message: "Student not found" });
 
@@ -242,25 +301,23 @@ export const bulkAddStudents = async (req: Request, res: Response) => {
 
                 const name = s.name ? String(s.name).trim() : "";
                 const phoneNumber = s.phoneNumber ? String(s.phoneNumber).trim() : "";
-                const email = s.email ? String(s.email).trim() : "";
+                const email = s.email ? String(s.email).trim() : undefined;
                 const dobRaw = s.dob;
 
                 // Handle Class Aliases
                 const rawClass = s.currentClass || s.studentClass || s.class || s.standard;
                 const currentClass = rawClass ? String(rawClass).trim() : "";
 
-                // UPDATED: No default value for academicSession
                 const academicSession = s.academicSession ? String(s.academicSession).trim() : "";
-
-                const stream = s.stream ? String(s.stream).trim().toLowerCase() : 'N/A';
                 const parentPhoneNumber = s.parentPhoneNumber ? String(s.parentPhoneNumber).trim() : undefined;
-
-                // Handle Target Exams
-                let targetExams: string[] = [];
+                
+                // Raw Inputs for References
+                const rawStream = s.stream ? String(s.stream).trim() : null;
+                let rawTargetExams: string[] = [];
                 if (typeof s.targetExams === 'string') {
-                    targetExams = s.targetExams.split(/[|,]/).map((t: string) => t.trim()).filter((t: string) => t);
+                    rawTargetExams = s.targetExams.split(/[|,]/).map((t: string) => t.trim()).filter((t: string) => t);
                 } else if (Array.isArray(s.targetExams)) {
-                    targetExams = s.targetExams;
+                    rawTargetExams = s.targetExams;
                 }
 
                 // --- 2. Validation ---
@@ -269,11 +326,8 @@ export const bulkAddStudents = async (req: Request, res: Response) => {
                 if (!phoneNumber) missingFields.push('phoneNumber');
                 if (!dobRaw) missingFields.push('dob');
                 if (!currentClass) missingFields.push('currentClass');
-
-                // UPDATED: Added check for academicSession
                 if (!academicSession) missingFields.push('academicSession');
-
-                if (targetExams.length === 0) missingFields.push('targetExams');
+                if (rawTargetExams.length === 0) missingFields.push('targetExams');
 
                 if (missingFields.length > 0) {
                     throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
@@ -285,23 +339,34 @@ export const bulkAddStudents = async (req: Request, res: Response) => {
                     throw new Error("Invalid Date of Birth format");
                 }
 
-                // --- 4. Subject Lookup ---
-                let subjectInput = s.enrolledSubjects;
-                if (typeof subjectInput === 'string') {
-                    subjectInput = subjectInput.split(/[|,]/).map((sub: string) => sub.trim());
-                }
-
-                let subjectIds = [];
+                // --- 4. Resolve References (IDs) ---
+                
+                // A. Subjects
+                let subjectIds: any[] = [];
                 try {
+                    let subjectInput = s.enrolledSubjects;
+                    if (typeof subjectInput === 'string') {
+                        // Split by comma or pipe
+                        subjectInput = subjectInput.split(/[|,]/).map((sub: string) => sub.trim());
+                    }
                     subjectIds = await getSubjectIds(subjectInput || []);
                 } catch (err) {
                     console.error(`Subject lookup warning for ${name}:`, err);
                 }
 
+                // B. Stream
+                let streamId = null;
+                if(rawStream) {
+                    streamId = await getStreamId(rawStream);
+                }
+
+                // C. Target Exams
+                const targetExamIds = await getTargetExamIds(rawTargetExams);
+
                 // --- 5. Password Hashing ---
                 const hashedPassword = await hashPassword(phoneNumber);
 
-                // --- 6. Duplicate Check (Manual) ---
+                // --- 6. Duplicate Check ---
                 const existingStudent = await Student.findOne({
                     name: name,
                     phoneNumber: phoneNumber,
@@ -321,10 +386,13 @@ export const bulkAddStudents = async (req: Request, res: Response) => {
                     currentClass,
                     academicSession,
                     password: hashedPassword,
-                    targetExams,
+                    
+                    // Use Resolved IDs
+                    targetExams: targetExamIds,
                     enrolledSubjects: subjectIds,
-                    email: email || 'N/A',
-                    stream: stream,
+                    stream: streamId,
+                    
+                    email,
                     parentPhoneNumber,
                     isActive: true,
                     admissionDate: new Date()
@@ -333,12 +401,10 @@ export const bulkAddStudents = async (req: Request, res: Response) => {
                 addedStudents.push(newStudent);
 
             } catch (err: any) {
-                // --- Error Handling for Row ---
                 let reason = err.message;
                 if (err.message && err.message.includes('E11000')) {
-                    reason = "Phone number or Email already exists in system (Unique Constraint).";
+                    reason = "Phone number or Email already exists.";
                 }
-
                 failedStudents.push({
                     name: s.name || 'Unknown',
                     phoneNumber: s.phoneNumber || 'N/A',
@@ -347,7 +413,6 @@ export const bulkAddStudents = async (req: Request, res: Response) => {
             }
         }
 
-        // --- Final Response ---
         return res.status(200).json({
             message: "Process completed",
             addedCount: addedStudents.length,
@@ -365,37 +430,33 @@ export const bulkAddStudents = async (req: Request, res: Response) => {
     }
 };
 
-// --Delete Student--
 export const deleteStudent = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-
-        if (!id) {
-            return res.status(400).json({
-                success: false,
-                message: 'Student ID is required',
-            });
-        }
-
+        if (!id) return res.status(400).json({ success: false, message: 'ID required' });
         const deletedStudent = await Student.findByIdAndDelete(id);
-
-        if (!deletedStudent) {
-            return res.status(404).json({
-                success: false,
-                message: 'Student not found',
-            });
-        }
-
-        return res.status(200).json({
-            success: true,
-            message: 'Student deleted successfully',
-            deletedStudent,
-        });
+        if (!deletedStudent) return res.status(404).json({ success: false, message: 'Not found' });
+        return res.status(200).json({ success: true, message: 'Student deleted', deletedStudent });
     } catch (error) {
-        console.error('Delete Student Error:', error);
-        return res.status(500).json({
-            success: false,
-            message: 'Internal Server Error',
-        });
+        return res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
+export const getAllActiveStudents = async (req: Request, res: Response) => {
+    try {
+        const students = await Student.find({isActive: true})
+            .populate({
+                path: 'enrolledSubjects',
+                model: Subject,
+                select: 'name stream'
+            })
+            .populate('stream', 'name')        // Populate Stream Name
+            .populate('targetExams', 'name')   // Populate Exam Names
+            .select('-password -createdAt -updatedAt') 
+            .sort({ admissionDate: -1 });
+
+        res.status(200).json(students);
+    } catch (error) {
+        console.error("Error fetching students:", error);
+        res.status(500).json({ message: 'Error fetching students' });
+    }
+}

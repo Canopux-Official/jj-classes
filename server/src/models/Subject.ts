@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ISubject extends Document {
   name: string;
-  stream?: string;
+  stream?: mongoose.Types.ObjectId; // Changed from string
   isActive: boolean;
 }
 
@@ -15,14 +15,16 @@ const SubjectSchema: Schema = new Schema({
   },
 
   stream: { 
-    type: String,
-    // Comment: Helps categorize subjects in the dropdown (e.g., "Science" vs "Arts").
+    type: Schema.Types.ObjectId, 
+    ref: 'Stream',
+    required: false
+    // Comment: Links subject to a specific stream (e.g., Physics -> Science).
   },
 
   isActive: { 
     type: Boolean, 
     default: true,
-    // Comment: If you stop teaching a subject, set this to false to hide it from the "Add Material" dropdowns.
+    // Comment: If you stop teaching a subject, set this to false.
   },
 }, { timestamps: true });
 
