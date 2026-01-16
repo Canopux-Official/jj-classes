@@ -980,27 +980,29 @@ import { confirmFolderDeletion, createOrFetchClass, deleteSubFolder, getAllClass
 import { deleteFileFromDrive } from '../utils/googleDriveService';
 import { ClassCardSkeleton } from '../utils/CardSkeleton';
 import EditClassDialog from '../DialogForm/EditClassDialog';
+import { getTargetExams, getStreams } from '../../../../api/apiFunctions';
 
 // Available class options
 const CLASS_OPTIONS = [
-  { value: 'class-9', label: 'Class 9' },
-  { value: 'class-10', label: 'Class 10' },
-  { value: 'class-11', label: 'Class 11' },
-  { value: 'class-12', label: 'Class 12' }
+  { value: '9', label: 'Class 9' },
+  { value: '10', label: 'Class 10' },
+  { value: '11', label: 'Class 11' },
+  { value: '12', label: 'Class 12' },
+  { value: 'dropper-1', label: 'Dropper 1' },
+  { value: 'dropper-2', label: 'Dropper 2' },
 ];
 
-const TARGET_EXAM_OPTIONS = [
-  { value: 'jee', label: 'JEE' },
-  { value: 'neet', label: 'NEET' },
-  { value: 'board', label: 'BOARD' },
-  { value: 'other', label: 'OTHER' },
-]
+interface TargetExam {
+  _id: string;
+  name: string;
+  description?: string;
+}
 
-const STREAM_OPTINS = [
-  { value: 'Science', label: 'Science' },
-  { value: 'Commerce', label: 'Commerce' },
-  { value: 'Arts', label: 'Arts' }
-];
+interface Stream {
+  _id: string;
+  name: string;
+  description?: string;
+}
 
 const ShowClass: React.FC = () => {
   const [allNodes, setAllNodes] = useState<Node[]>([]);
@@ -1010,14 +1012,19 @@ const ShowClass: React.FC = () => {
   // Dialog states
   const [openClassSelectionDialog, setOpenClassSelectionDialog] = useState(false);
   const [selectedClassType, setSelectedClassType] = useState<string>('');
-  const [selectedTargetExamType, setSelectedTargetExamType] = useState<string>('');
-  const [selectedStreamType, setSelectedStreamType] = useState<string>('');
+  const [selectedTargetExamId, setSelectedTargetExamId] = useState<string>('');
+  const [selectedStreamId, setSelectedStreamId] = useState<string>('');
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
 
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [editingNode, setEditingNode] = useState<Node | null>(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [deletingNodeId, setDeletingNodeId] = useState<string | null>(null);
+
+  // Dynamic options
+  const [targetExams, setTargetExams] = useState<TargetExam[]>([]);
+  const [streams, setStreams] = useState<Stream[]>([]);
+  const [isLoadingOptions, setIsLoadingOptions] = useState(true);
 
   // Snackbar state
   const [snackbar, setSnackbar] = useState<{
@@ -1049,11 +1056,45 @@ const ShowClass: React.FC = () => {
       }
     };
 
+    const fetchOptions = async () => {
+      setIsLoadingOptions(true);
+      try {
+        const [targetExamsResponse, streamsResponse] = await Promise.all([
+          getTargetExams(),
+          getStreams()
+        ]);
+
+        setTargetExams((targetExamsResponse.data as TargetExam[]) ?? []);
+        setStreams((streamsResponse.data as Stream[]) ?? []);
+      } catch (error) {
+        console.error('Error fetching options:', error);
+        setSnackbar({
+          open: true,
+          message: 'Failed to load target exams and streams',
+          severity: 'error',
+        });
+      } finally {
+        setIsLoadingOptions(false);
+      }
+    };
+
     fetchClasses();
+    fetchOptions();
   }, []);
 
   // Get root classes (parentId === null)
   const rootClasses = allNodes.filter((node) => node.parentId === null);
+
+  // Helper function to get name by ID
+  const getTargetExamName = (id: string): string => {
+    const exam = targetExams.find(exam => exam._id === id);
+    return exam?.name || id;
+  };
+
+  const getStreamName = (id: string): string => {
+    const stream = streams.find(stream => stream._id === id);
+    return stream?.name || id;
+  };
 
   const handleClassClick = (classId: string) => {
     setSelectedNodeId(classId);
@@ -1066,15 +1107,15 @@ const ShowClass: React.FC = () => {
   const handleOpenCreateDialog = () => {
     setOpenClassSelectionDialog(true);
     setSelectedClassType('');
-    setSelectedTargetExamType('');
-    setSelectedStreamType('');
+    setSelectedTargetExamId('');
+    setSelectedStreamId('');
   };
 
   const handleCloseClassSelectionDialog = () => {
     setOpenClassSelectionDialog(false);
     setSelectedClassType('');
-    setSelectedTargetExamType('');
-    setSelectedStreamType('');
+    setSelectedTargetExamId('');
+    setSelectedStreamId('');
   };
 
   const handleClassTypeChange = (event: SelectChangeEvent<string>) => {
@@ -1082,15 +1123,15 @@ const ShowClass: React.FC = () => {
   };
 
   const handleTargetExamTypeChange = (event: SelectChangeEvent<string>) => {
-    setSelectedTargetExamType(event.target.value);
+    setSelectedTargetExamId(event.target.value);
   };
 
   const handleStreamTypeChange = (event: SelectChangeEvent<string>) => {
-    setSelectedStreamType(event.target.value);
+    setSelectedStreamId(event.target.value);
   };
 
   const handleProceedToConfirm = () => {
-    if (selectedClassType && selectedTargetExamType && selectedStreamType) {
+    if (selectedClassType && selectedTargetExamId && selectedStreamId) {
       setOpenClassSelectionDialog(false);
       setOpenConfirmDialog(true);
     }
@@ -1099,22 +1140,20 @@ const ShowClass: React.FC = () => {
   const handleCloseConfirmDialog = () => {
     setOpenConfirmDialog(false);
     setSelectedClassType('');
-    setSelectedTargetExamType('');
-    setSelectedStreamType('');
+    setSelectedTargetExamId('');
+    setSelectedStreamId('');
   };
 
   const handleConfirmCreateClass = async () => {
-    if (!selectedClassType) return;
+    if (!selectedClassType || !selectedTargetExamId || !selectedStreamId) return;
 
     const selectedOption = CLASS_OPTIONS.find(opt => opt.value === selectedClassType);
-    const selectedTargetExamOption = TARGET_EXAM_OPTIONS.find(opt => opt.value === selectedTargetExamType);
-    const selectedStreamOption = STREAM_OPTINS.find(opt => opt.value === selectedStreamType);
-    const className = selectedOption?.label || selectedClassType;
-    const targetExamName = selectedTargetExamOption?.label || selectedTargetExamType;
-    const streamName = selectedStreamOption?.label || selectedStreamType
+    const className = selectedOption?.value || selectedClassType;
 
     try {
-      const response = await createOrFetchClass(className, targetExamName, streamName);
+      // Pass the IDs to the API
+      console.log(className)
+      const response = await createOrFetchClass(className, selectedTargetExamId, selectedStreamId);
 
       if (!response.success) {
         throw new Error(response.message || 'Failed to create class');
@@ -1122,10 +1161,11 @@ const ShowClass: React.FC = () => {
 
       const newNode: Node = {
         _id: (response.data as { _id: string })._id,
-        heading: className,
-        targetExam: targetExamName,
-        stream: streamName,
+        heading: "",
+        targetExam: selectedTargetExamId, // Store ID
+        stream: selectedStreamId, // Store ID
         type: 'folder',
+        classType: className,
         parentId: null,
         description: '',
         tags: [],
@@ -1161,15 +1201,15 @@ const ShowClass: React.FC = () => {
     setEditingNode(null);
   };
 
-  const handleSaveEdit = async (classType: string, targetExam: string, stream: string) => {
+  const handleSaveEdit = async (classType: string, targetExamId: string, streamId: string) => {
     if (!editingNode) return;
 
     try {
       const updatedNode: Node = {
         ...editingNode,
-        heading: classType,
-        targetExam: targetExam,
-        stream: stream
+        classType: classType,
+        targetExam: targetExamId, // Store ID
+        stream: streamId // Store ID
       };
 
       await updateFolder(editingNode._id, updatedNode);
@@ -1190,7 +1230,7 @@ const ShowClass: React.FC = () => {
       console.error('Error updating class:', error);
       setSnackbar({
         open: true,
-        message:'Error updating class',
+        message: 'Error updating class',
         severity: 'error',
       });
     }
@@ -1299,6 +1339,8 @@ const ShowClass: React.FC = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
+  console.log(allNodes)
+
   if (selectedNodeId) {
     return (
       <ShowSubnode
@@ -1316,8 +1358,9 @@ const ShowClass: React.FC = () => {
     tags: node.tags || [],
     status: 'active' as const,
     description: node.description,
-    targetExam: node.targetExam,
-    stream: node.stream,
+    classType: node.classType,
+    targetExam: getTargetExamName(node.targetExam), // Convert ID to name for display
+    stream: getStreamName(node.stream), // Convert ID to name for display
     updatedAt: node.updatedAt,
     fileDetails: node.fileDetails || [],
     referenceDetails: node.referenceDetails || [],
@@ -1385,7 +1428,7 @@ const ShowClass: React.FC = () => {
               variant="contained"
               startIcon={<AddIcon />}
               onClick={handleOpenCreateDialog}
-              disabled={isLoadingClasses}
+              disabled={isLoadingClasses || isLoadingOptions}
               sx={{
                 background: 'linear-gradient(135deg, #031c19 0%, #042d20 100%)',
                 color: 'white',
@@ -1540,14 +1583,15 @@ const ShowClass: React.FC = () => {
           <FormControl fullWidth sx={{ mb: 3 }}>
             <InputLabel>Target Exam</InputLabel>
             <Select
-              value={selectedTargetExamType}
+              value={selectedTargetExamId}
               label="Target Exam"
               onChange={handleTargetExamTypeChange}
               sx={{ borderRadius: '10px' }}
+              disabled={isLoadingOptions || targetExams.length === 0}
             >
-              {TARGET_EXAM_OPTIONS.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
+              {targetExams.map((exam) => (
+                <MenuItem key={exam._id} value={exam._id}>
+                  {exam.name}
                 </MenuItem>
               ))}
             </Select>
@@ -1556,14 +1600,15 @@ const ShowClass: React.FC = () => {
           <FormControl fullWidth>
             <InputLabel>Stream</InputLabel>
             <Select
-              value={selectedStreamType}
+              value={selectedStreamId}
               label="Stream"
               onChange={handleStreamTypeChange}
               sx={{ borderRadius: '10px' }}
+              disabled={isLoadingOptions || streams.length === 0}
             >
-              {STREAM_OPTINS.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
+              {streams.map((stream) => (
+                <MenuItem key={stream._id} value={stream._id}>
+                  {stream.name}
                 </MenuItem>
               ))}
             </Select>
@@ -1590,7 +1635,7 @@ const ShowClass: React.FC = () => {
           <Button
             onClick={handleProceedToConfirm}
             variant="contained"
-            disabled={!selectedClassType || !selectedTargetExamType || !selectedStreamType}
+            disabled={!selectedClassType || !selectedTargetExamId || !selectedStreamId}
             sx={{
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               textTransform: 'none',
@@ -1633,9 +1678,9 @@ const ShowClass: React.FC = () => {
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
               {CLASS_OPTIONS.find(opt => opt.value === selectedClassType)?.label}
               {' • '}
-              {TARGET_EXAM_OPTIONS.find(opt => opt.value === selectedTargetExamType)?.label}
+              {getTargetExamName(selectedTargetExamId)}
               {' • '}
-              {STREAM_OPTINS.find(opt => opt.value === selectedStreamType)?.label}
+              {getStreamName(selectedStreamId)}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               This will create a new class with default structure.
@@ -1668,8 +1713,10 @@ const ShowClass: React.FC = () => {
           onClose={handleCloseEditDialog}
           onSave={handleSaveEdit}
           initialClassType={editingNode.heading}
-          initialTargetExam={editingNode.targetExam}
-          initialStream={editingNode.stream}
+          initialTargetExamId={editingNode.targetExam} // Pass ID instead of name
+          initialStreamId={editingNode.stream} // Pass ID instead of name
+          targetExams={targetExams}
+          streams={streams}
         />
       )}
 

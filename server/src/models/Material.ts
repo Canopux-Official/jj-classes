@@ -20,7 +20,7 @@ export interface IMaterial extends Document {
   tags: string[];
 
   // Access Control
-  class: '9' | '10' | '11' | '12' | 'dropper-1' | 'dropper-2' | '';
+  classType: '9' | '10' | '11' | '12' | 'dropper-1' | 'dropper-2' | '';
   targetExam: mongoose.Types.ObjectId; // Reference
   stream: mongoose.Types.ObjectId;     // Reference
 
@@ -30,7 +30,7 @@ export interface IMaterial extends Document {
 }
 
 const MaterialSchema: Schema = new Schema({
-  heading: { type: String, required: true },
+  heading: { type: String, required: false },
   description: { type: String, default: null, required: false },
   
   fileDetails: [{
@@ -55,7 +55,7 @@ const MaterialSchema: Schema = new Schema({
     default: null
   },
   
-  class: {
+  classType: {
     type: String,
     enum: ['9', '10', '11', '12', 'dropper-1', 'dropper-2', ''],
     required: false,

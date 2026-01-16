@@ -954,6 +954,9 @@ const ShowSubnode: React.FC<ShowSubnodeProps> = ({
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [deletingNodeId, setDeletingNodeId] = useState<string | null>(null);
 
+
+
+
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -997,6 +1000,9 @@ const ShowSubnode: React.FC<ShowSubnodeProps> = ({
 
   const currentNode = localNodes.find((node) => node._id === currentNodeId);
   const childNodes = localNodes.filter((node) => node.parentId === currentNodeId);
+
+  console.log(currentNode)
+  console.log(childNodes)
 
   const buildBreadcrumbPath = (targetNodeId: string): Node[] => {
     const path: Node[] = [];
@@ -1060,6 +1066,7 @@ const ShowSubnode: React.FC<ShowSubnodeProps> = ({
         parentId: currentNodeId,
         targetExam: "",
         stream: "",
+        classType: "",
         description: nodeData.description || '',
         tags: nodeData.tags || [],
         createdAt: new Date().toISOString(),
@@ -1116,6 +1123,7 @@ const ShowSubnode: React.FC<ShowSubnodeProps> = ({
         type: nodeData.type || editingNode.type,
         targetExam: nodeData.targetExam || editingNode.targetExam,
         stream: nodeData.stream || editingNode.stream,
+        classType: nodeData.classType || editingNode.classType,
         description: nodeData.description || editingNode.description,
         tags: nodeData.tags || editingNode.tags,
         parentId: editingNode.parentId,
