@@ -1,36 +1,105 @@
-// import { useState } from "react";
+// import { useState, useEffect } from "react";
 // import type { Node } from "../../../admin/Material/types/node";
-// import { Box, Container } from "@mui/system";
+// import { Box, Container, CircularProgress, Snackbar, Alert } from "@mui/material";
 // import { Breadcrumbs, Link, Typography, Paper, Chip } from "@mui/material";
 // import { Home, NavigateNext, FolderOpen } from "@mui/icons-material";
 // import { SubfolderCard } from "../subfolder/Subfolder";
 // import { ClassCard } from "../classcard/Classcard";
-// import { mockNodes } from "../demodata";
+// import { fetchNodesByParentId, fetchStudentClasses } from "../services/StudentAccessMateral.services";
+
+
+// interface SnackbarState {
+//     open: boolean;
+//     message: string;
+//     severity: 'success' | 'error' | 'info' | 'warning';
+// }
 
 // // Main App Component
 // const StudentFolderStructure: React.FC = () => {
 //     const [currentPath, setCurrentPath] = useState<Node[]>([]);
-//     const [currentItems, setCurrentItems] = useState<Node[]>(
-//         mockNodes.filter((node) => node.parentId === null)
-//     );
-    
-//     const handleFolderClick = (node: Node) => {
-//         if (node.type === 'folder') {
-//             setCurrentPath([...currentPath, node]);
-//             setCurrentItems(mockNodes.filter((item) => item.parentId === node._id));
+//     const [currentItems, setCurrentItems] = useState<Node[]>([]);
+//     const [loading, setLoading] = useState<boolean>(true);
+//     const [snackbar, setSnackbar] = useState<SnackbarState>({
+//         open: false,
+//         message: '',
+//         severity: 'info'
+//     });
+
+//     // Fetch root level classes on component mount
+//     useEffect(() => {
+//         loadRootClasses();
+//     }, []);
+
+//     const loadRootClasses = async () => {
+//         setLoading(true);
+//         try {
+//             const classes = await fetchStudentClasses();
+//             console.log(classes)
+//             setCurrentItems(classes);
+//             setSnackbar({
+//                 open: true,
+//                 message: `Loaded ${classes.length} classes successfully`,
+//                 severity: 'success'
+//             });
+//         } catch (error) {
+//             setSnackbar({
+//                 open: true,
+//                 message: 'Failed to load classes. Please try again.',
+//                 severity: 'error'
+//             });
+//             setCurrentItems([]);
+//         } finally {
+//             setLoading(false);
+//         }
+//     };
+
+//     const loadFolderContents = async (parentId: string) => {
+//         setLoading(true);
+//         try {
+//             const items = await fetchNodesByParentId(parentId);
+//             setCurrentItems(items);
+//             if (items.length === 0) {
+//                 setSnackbar({
+//                     open: true,
+//                     message: 'This folder is empty',
+//                     severity: 'info'
+//                 });
+//             }
+//         } catch (error) {
+//             setSnackbar({
+//                 open: true,
+//                 message: 'Failed to load folder contents. Please try again.',
+//                 severity: 'error'
+//             });
+//             setCurrentItems([]);
+//         } finally {
+//             setLoading(false);
 //         }
 //     };
     
-//     const handleBreadcrumbClick = (index: number) => {
+//     const handleFolderClick = async (node: Node) => {
+//         if (node.type === 'folder') {
+//             setCurrentPath([...currentPath, node]);
+//             await loadFolderContents(node._id);
+//         }
+//     };
+    
+//     const handleBreadcrumbClick = async (index: number) => {
 //         if (index === -1) {
+//             // Go back to root
 //             setCurrentPath([]);
-//             setCurrentItems(mockNodes.filter((node) => node.parentId === null));
+//             await loadRootClasses();
 //         } else {
+//             // Go to specific breadcrumb level
 //             const newPath = currentPath.slice(0, index + 1);
 //             setCurrentPath(newPath);
 //             const parentId = newPath[newPath.length - 1]._id;
-//             setCurrentItems(mockNodes.filter((node) => node.parentId === parentId));
+//             await loadFolderContents(parentId);
 //         }
+//     };
+
+//     const handleCloseSnackbar = () => {
+//         setSnackbar({ ...snackbar, open: false });
 //     };
     
 //     const isRootLevel = currentPath.length === 0;
@@ -106,10 +175,11 @@
 //                                 component="button"
 //                                 underline="none"
 //                                 onClick={() => handleBreadcrumbClick(-1)}
+//                                 disabled={loading}
 //                                 sx={{
 //                                     display: 'flex',
 //                                     alignItems: 'center',
-//                                     cursor: 'pointer',
+//                                     cursor: loading ? 'not-allowed' : 'pointer',
 //                                     px: 1.5,
 //                                     py: 0.75,
 //                                     borderRadius: '8px',
@@ -117,9 +187,10 @@
 //                                     color: isRootLevel ? '#114a50' : '#0b3c54',
 //                                     backgroundColor: isRootLevel ? '#e2f6f6' : 'transparent',
 //                                     transition: 'all 0.2s ease',
+//                                     opacity: loading ? 0.6 : 1,
 //                                     '&:hover': {
-//                                         backgroundColor: isRootLevel ? '#e3fffd' : '#def3f6',
-//                                         transform: 'translateY(-1px)',
+//                                         backgroundColor: loading ? undefined : (isRootLevel ? '#e3fffd' : '#def3f6'),
+//                                         transform: loading ? undefined : 'translateY(-1px)',
 //                                     },
 //                                 }}
 //                             >
@@ -134,8 +205,9 @@
 //                                         component="button"
 //                                         underline="none"
 //                                         onClick={() => handleBreadcrumbClick(index)}
+//                                         disabled={loading}
 //                                         sx={{
-//                                             cursor: 'pointer',
+//                                             cursor: loading ? 'not-allowed' : 'pointer',
 //                                             px: 1.5,
 //                                             py: 0.75,
 //                                             borderRadius: '8px',
@@ -147,9 +219,10 @@
 //                                             overflow: 'hidden',
 //                                             textOverflow: 'ellipsis',
 //                                             whiteSpace: 'nowrap',
+//                                             opacity: loading ? 0.6 : 1,
 //                                             '&:hover': {
-//                                                 backgroundColor: isLast ? '#e3ebff' : '#f5f5f5',
-//                                                 transform: 'translateY(-1px)',
+//                                                 backgroundColor: loading ? undefined : (isLast ? '#e3ebff' : '#f5f5f5'),
+//                                                 transform: loading ? undefined : 'translateY(-1px)',
 //                                             },
 //                                         }}
 //                                     >
@@ -161,7 +234,7 @@
 //                     </Paper>
 
 //                     {/* Path Info Chip */}
-//                     {!isRootLevel && (
+//                     {!isRootLevel && !loading && (
 //                         <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
 //                             <Chip
 //                                 label={`${currentItems.length} ${currentItems.length === 1 ? 'item' : 'items'}`}
@@ -177,8 +250,24 @@
 //                     )}
 //                 </Box>
 
-//                 {/* Content Display using Flexbox */}
-//                 {currentItems.length === 0 ? (
+//                 {/* Loading State */}
+//                 {loading ? (
+//                     <Box
+//                         sx={{
+//                             display: 'flex',
+//                             flexDirection: 'column',
+//                             alignItems: 'center',
+//                             justifyContent: 'center',
+//                             py: 8,
+//                         }}
+//                     >
+//                         <CircularProgress size={60} sx={{ mb: 2 }} />
+//                         <Typography variant="body1" color="text.secondary">
+//                             Loading...
+//                         </Typography>
+//                     </Box>
+//                 ) : currentItems.length === 0 ? (
+//                     /* Empty State */
 //                     <Paper
 //                         elevation={0}
 //                         sx={{
@@ -204,6 +293,7 @@
 //                         </Typography>
 //                     </Paper>
 //                 ) : (
+//                     /* Content Display using Flexbox */
 //                     <Box
 //                         sx={{
 //                             display: 'flex',
@@ -221,7 +311,7 @@
 //                         }}
 //                     >
 //                         {currentItems.map((node) => (
-//                             <Box key={node._id}>
+//                             <Box key={node?._id}>
 //                                 {isRootLevel ? (
 //                                     <ClassCard node={node} onClick={() => handleFolderClick(node)} />
 //                                 ) : (
@@ -235,12 +325,28 @@
 //                     </Box>
 //                 )}
 //             </Container>
+
+//             {/* Snackbar for notifications */}
+//             <Snackbar
+//                 open={snackbar.open}
+//                 autoHideDuration={4000}
+//                 onClose={handleCloseSnackbar}
+//                 anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+//             >
+//                 <Alert 
+//                     onClose={handleCloseSnackbar} 
+//                     severity={snackbar.severity}
+//                     variant="filled"
+//                     sx={{ width: '100%' }}
+//                 >
+//                     {snackbar.message}
+//                 </Alert>
+//             </Snackbar>
 //         </Box>
 //     );
 // };
 
 // export default StudentFolderStructure;
-
 
 import { useState, useEffect } from "react";
 import type { Node } from "../../../admin/Material/types/node";
@@ -260,7 +366,7 @@ interface SnackbarState {
 
 // Main App Component
 const StudentFolderStructure: React.FC = () => {
-    const [currentPath, setCurrentPath] = useState<Node[]>([]);
+    const [currentNode, setCurrentNode] = useState<Node | null>(null);
     const [currentItems, setCurrentItems] = useState<Node[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [snackbar, setSnackbar] = useState<SnackbarState>({
@@ -280,6 +386,7 @@ const StudentFolderStructure: React.FC = () => {
             const classes = await fetchStudentClasses();
             console.log(classes)
             setCurrentItems(classes);
+            setCurrentNode(null); // Reset to root
             setSnackbar({
                 open: true,
                 message: `Loaded ${classes.length} classes successfully`,
@@ -297,11 +404,12 @@ const StudentFolderStructure: React.FC = () => {
         }
     };
 
-    const loadFolderContents = async (parentId: string) => {
+    const loadFolderContents = async (node: Node) => {
         setLoading(true);
         try {
-            const items = await fetchNodesByParentId(parentId);
+            const items = await fetchNodesByParentId(node._id);
             setCurrentItems(items);
+            setCurrentNode(node);
             if (items.length === 0) {
                 setSnackbar({
                     open: true,
@@ -323,22 +431,45 @@ const StudentFolderStructure: React.FC = () => {
     
     const handleFolderClick = async (node: Node) => {
         if (node.type === 'folder') {
-            setCurrentPath([...currentPath, node]);
-            await loadFolderContents(node._id);
+            await loadFolderContents(node);
         }
     };
     
-    const handleBreadcrumbClick = async (index: number) => {
-        if (index === -1) {
+    const handleBreadcrumbClick = async (pathItem: { id: string; heading: string } | null) => {
+        if (!pathItem) {
             // Go back to root
-            setCurrentPath([]);
             await loadRootClasses();
         } else {
-            // Go to specific breadcrumb level
-            const newPath = currentPath.slice(0, index + 1);
-            setCurrentPath(newPath);
-            const parentId = newPath[newPath.length - 1]._id;
-            await loadFolderContents(parentId);
+            // Find the node in currentItems or fetch it
+            const node = currentItems.find(item => item._id === pathItem.id);
+            if (node) {
+                await loadFolderContents(node);
+            } else {
+                // Node not in current items, need to reconstruct it from path
+                // Load the folder by its ID
+                setLoading(true);
+                try {
+                    const items = await fetchNodesByParentId(pathItem.id);
+                    setCurrentItems(items);
+                    // Create a minimal node representation for breadcrumb purposes
+                    setCurrentNode({
+                        _id: pathItem.id,
+                        heading: pathItem.heading,
+                        type: 'folder',
+                        path: currentNode?.path?.filter(p => 
+                            currentNode.path!.indexOf(p) <= currentNode.path!.findIndex(p => p.id === pathItem.id)
+                        ),
+                    } as Node);
+                } catch (error) {
+                    setSnackbar({
+                        open: true,
+                        message: 'Failed to load folder contents. Please try again.',
+                        severity: 'error'
+                    });
+                } finally {
+                    setLoading(false);
+                }
+            }
         }
     };
 
@@ -346,7 +477,13 @@ const StudentFolderStructure: React.FC = () => {
         setSnackbar({ ...snackbar, open: false });
     };
     
-    const isRootLevel = currentPath.length === 0;
+    const isRootLevel = !currentNode;
+    
+    // Build breadcrumb path from backend path data
+    const breadcrumbPath = currentNode?.path || [];
+    const currentBreadcrumb = currentNode 
+        ? [...breadcrumbPath, { id: currentNode._id, heading: currentNode.heading }]
+        : [];
     
     return (
         <Box 
@@ -396,7 +533,7 @@ const StudentFolderStructure: React.FC = () => {
                         </Typography>
                     </Box>
 
-                    {/* Enhanced Breadcrumbs */}
+                    {/* Enhanced Breadcrumbs - NOW USING BACKEND PATH */}
                     <Paper
                         elevation={0}
                         sx={{
@@ -415,10 +552,11 @@ const StudentFolderStructure: React.FC = () => {
                                 />
                             }
                         >
+                            {/* Home Breadcrumb */}
                             <Link
                                 component="button"
                                 underline="none"
-                                onClick={() => handleBreadcrumbClick(-1)}
+                                onClick={() => handleBreadcrumbClick(null)}
                                 disabled={loading}
                                 sx={{
                                     display: 'flex',
@@ -441,17 +579,19 @@ const StudentFolderStructure: React.FC = () => {
                                 <Home sx={{ mr: 0.5, fontSize: 18 }} />
                                 Home
                             </Link>
-                            {currentPath.map((node, index) => {
-                                const isLast = index === currentPath.length - 1;
+                            
+                            {/* Path Breadcrumbs from Backend */}
+                            {currentBreadcrumb.map((pathItem, index) => {
+                                const isLast = index === currentBreadcrumb.length - 1;
                                 return (
                                     <Link
-                                        key={node._id}
+                                        key={pathItem.id}
                                         component="button"
                                         underline="none"
-                                        onClick={() => handleBreadcrumbClick(index)}
-                                        disabled={loading}
+                                        onClick={() => !isLast && handleBreadcrumbClick(pathItem)}
+                                        disabled={loading || isLast}
                                         sx={{
-                                            cursor: loading ? 'not-allowed' : 'pointer',
+                                            cursor: loading || isLast ? 'default' : 'pointer',
                                             px: 1.5,
                                             py: 0.75,
                                             borderRadius: '8px',
@@ -465,12 +605,12 @@ const StudentFolderStructure: React.FC = () => {
                                             whiteSpace: 'nowrap',
                                             opacity: loading ? 0.6 : 1,
                                             '&:hover': {
-                                                backgroundColor: loading ? undefined : (isLast ? '#e3ebff' : '#f5f5f5'),
-                                                transform: loading ? undefined : 'translateY(-1px)',
+                                                backgroundColor: loading || isLast ? undefined : '#f5f5f5',
+                                                transform: loading || isLast ? undefined : 'translateY(-1px)',
                                             },
                                         }}
                                     >
-                                        {node.heading}
+                                        {pathItem.heading}
                                     </Link>
                                 );
                             })}
@@ -490,6 +630,10 @@ const StudentFolderStructure: React.FC = () => {
                                     fontSize: '0.75rem',
                                 }}
                             />
+                            {/* Optional: Show current folder name */}
+                            <Typography variant="body2" color="text.secondary">
+                                in <strong>{currentNode?.heading}</strong>
+                            </Typography>
                         </Box>
                     )}
                 </Box>
