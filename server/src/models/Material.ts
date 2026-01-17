@@ -11,6 +11,11 @@ export interface IReferenceDetail {
   uploadLink: string;
 }
 
+export interface IPathItem {
+  id: string;  // Changed from ObjectId to string
+  heading: string;
+}
+
 export interface IMaterial extends Document {
   heading: string;
   description?: string;
@@ -18,11 +23,12 @@ export interface IMaterial extends Document {
   referenceDetails: IReferenceDetail[];
   type: string;
   tags: string[];
+  path: IPathItem[];
 
   // Access Control
   classType: '9' | '10' | '11' | '12' | 'dropper-1' | 'dropper-2' | '';
   targetExam: mongoose.Types.ObjectId; // Reference
-  stream: mongoose.Types.ObjectId;     // Reference
+  stream: mongoose.Types.ObjectId;    // Reference
 
   lastDate?: Date;
   createdAt: Date;
@@ -32,7 +38,7 @@ export interface IMaterial extends Document {
 const MaterialSchema: Schema = new Schema({
   heading: { type: String, required: false },
   description: { type: String, default: null, required: false },
-  
+
   fileDetails: [{
     fileName: { type: String, required: false },
     uploadLink: { type: String, required: false },
@@ -46,15 +52,19 @@ const MaterialSchema: Schema = new Schema({
 
   type: { type: String, default: 'folder' },
   tags: { type: [String], default: [], required: false },
+  path: [{
+    id: { type: String, required: true },      // STRING, not ObjectId
+    heading: { type: String, required: true }
+  }],
 
   // Access Control
-  stream: { 
-    type: Schema.Types.ObjectId, 
+  stream: {
+    type: Schema.Types.ObjectId,
     ref: 'Stream',
     required: false,
     default: null
   },
-  
+
   classType: {
     type: String,
     enum: ['9', '10', '11', '12', 'dropper-1', 'dropper-2', ''],
@@ -62,7 +72,7 @@ const MaterialSchema: Schema = new Schema({
     default: ''
   },
 
-  targetExam:{
+  targetExam: {
     type: Schema.Types.ObjectId,
     ref: 'TargetExam',
     required: false,
@@ -71,7 +81,7 @@ const MaterialSchema: Schema = new Schema({
 
   lastDate: { type: Date, default: null, required: false },
   createdAt: { type: Date, default: Date.now, required: false },
-  
+
   parentId: {
     type: Schema.Types.ObjectId,
     ref: 'Material',

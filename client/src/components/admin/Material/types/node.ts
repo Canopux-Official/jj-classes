@@ -16,4 +16,9 @@ export interface Node {
   updatedAt?: string;
   fileDetails?: FileDetail[];
   referenceDetails?: ReferenceDetail[];
+
+  path?: Array<{
+    id: string;
+    heading: string;
+  }>;
 }
