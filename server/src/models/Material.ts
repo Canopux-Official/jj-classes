@@ -33,6 +33,7 @@ export interface IMaterial extends Document {
   lastDate?: Date;
   createdAt: Date;
   parentId?: Types.ObjectId;
+  updatedAt: Date;
 }
 
 const MaterialSchema: Schema = new Schema({
