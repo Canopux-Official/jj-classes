@@ -76,14 +76,14 @@
 //             setLoading(false);
 //         }
 //     };
-    
+
 //     const handleFolderClick = async (node: Node) => {
 //         if (node.type === 'folder') {
 //             setCurrentPath([...currentPath, node]);
 //             await loadFolderContents(node._id);
 //         }
 //     };
-    
+
 //     const handleBreadcrumbClick = async (index: number) => {
 //         if (index === -1) {
 //             // Go back to root
@@ -101,9 +101,9 @@
 //     const handleCloseSnackbar = () => {
 //         setSnackbar({ ...snackbar, open: false });
 //     };
-    
+
 //     const isRootLevel = currentPath.length === 0;
-    
+
 //     return (
 //         <Box 
 //             sx={{ 
@@ -356,6 +356,7 @@ import { Home, NavigateNext, FolderOpen } from "@mui/icons-material";
 import { SubfolderCard } from "../subfolder/Subfolder";
 import { ClassCard } from "../classcard/Classcard";
 import { fetchNodesByParentId, fetchStudentClasses } from "../services/StudentAccessMateral.services";
+import { useLocation } from "react-router-dom";
 
 
 interface SnackbarState {
@@ -364,11 +365,22 @@ interface SnackbarState {
     severity: 'success' | 'error' | 'info' | 'warning';
 }
 
+interface LocationState {
+    navigateToPath?: Array<{ id: string; heading: string }>;
+    shouldNavigate?: boolean;
+    timestamp?: number;
+}
+
 // Main App Component
 const StudentFolderStructure: React.FC = () => {
+
+    const location = useLocation();
+    const locationState = location.state as LocationState;
+
     const [currentNode, setCurrentNode] = useState<Node | null>(null);
     const [currentItems, setCurrentItems] = useState<Node[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
+    const [_, setHighlightedItemId] = useState<string | null>(null);
     const [snackbar, setSnackbar] = useState<SnackbarState>({
         open: false,
         message: '',
@@ -377,8 +389,16 @@ const StudentFolderStructure: React.FC = () => {
 
     // Fetch root level classes on component mount
     useEffect(() => {
-        loadRootClasses();
-    }, []);
+        if (locationState?.shouldNavigate && locationState?.navigateToPath) {
+            // Auto-navigate to the specified path
+            navigateToPath(locationState.navigateToPath);
+            // Clear the state to prevent re-navigation on refresh
+            window.history.replaceState({}, document.title);
+        } else {
+            // Normal load - show root classes
+            loadRootClasses();
+        }
+    }, [locationState?.timestamp]); // Use timestamp to detect new navigations
 
     const loadRootClasses = async () => {
         setLoading(true);
@@ -428,13 +448,100 @@ const StudentFolderStructure: React.FC = () => {
             setLoading(false);
         }
     };
-    
+
+    const navigateToPath = async (path: Array<{ id: string; heading: string }>) => {
+        if (path.length === 0) {
+            loadRootClasses();
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            console.log('📂 Starting navigation through path:', path);
+
+            // Show navigation message
+            setSnackbar({
+                open: true,
+                message: `Navigating to ${path[path.length - 1].heading}...`,
+                severity: 'info'
+            });
+
+            // We need to load the parent folder of the target file
+            // The last item is the file, second-to-last is its parent folder
+
+            if (path.length === 1) {
+                // Target is a root-level class
+                const classes = await fetchStudentClasses();
+                setCurrentItems(classes);
+                setCurrentNode(null);
+                setHighlightedItemId(path[0].id);
+            } else {
+                // Navigate to the parent folder (second to last item)
+                const parentFolderItem = path[path.length - 2];
+
+                // Load the parent folder's contents
+                const items = await fetchNodesByParentId(parentFolderItem.id);
+
+                // Create node object for the parent folder
+                const parentNode: Node = {
+                    _id: parentFolderItem.id,
+                    heading: parentFolderItem.heading,
+                    type: 'folder',
+                    path: path.slice(0, path.length - 2).map(p => ({
+                        id: p.id,
+                        heading: p.heading
+                    })),
+                } as Node;
+
+                setCurrentNode(parentNode);
+                setCurrentItems(items);
+
+                // Highlight the target file (last item in path)
+                const targetFileId = path[path.length - 1].id;
+                setHighlightedItemId(targetFileId);
+
+                // Scroll to the highlighted item
+                setTimeout(() => {
+                    const element = document.getElementById(`material-item-${targetFileId}`);
+                    if (element) {
+                        element.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
+                    }
+                }, 500);
+            }
+
+            console.log('✅ Navigation completed');
+
+            setSnackbar({
+                open: true,
+                message: `Navigated to ${path[path.length - 1].heading}`,
+                severity: 'success'
+            });
+
+        } catch (error) {
+            console.error('❌ Navigation error:', error);
+            setSnackbar({
+                open: true,
+                message: 'Failed to navigate. Loading root instead.',
+                severity: 'error'
+            });
+            loadRootClasses();
+        } finally {
+            setLoading(false);
+            // Clear highlight after 4 seconds
+            setTimeout(() => setHighlightedItemId(null), 4000);
+        }
+    };
+
     const handleFolderClick = async (node: Node) => {
         if (node.type === 'folder') {
             await loadFolderContents(node);
         }
     };
-    
+
     const handleBreadcrumbClick = async (pathItem: { id: string; heading: string } | null) => {
         if (!pathItem) {
             // Go back to root
@@ -452,13 +559,18 @@ const StudentFolderStructure: React.FC = () => {
                     const items = await fetchNodesByParentId(pathItem.id);
                     setCurrentItems(items);
                     // Create a minimal node representation for breadcrumb purposes
+                    // Find the index of the clicked item in the current path
+                    const clickedIndex = currentNode?.path?.findIndex(p => p.id === pathItem.id) ?? -1;
+                    // Extract path up to (but NOT including) the clicked item
+                    const newPath = clickedIndex >= 0
+                        ? currentNode?.path?.slice(0, clickedIndex) || []
+                        : [];
+
                     setCurrentNode({
                         _id: pathItem.id,
                         heading: pathItem.heading,
                         type: 'folder',
-                        path: currentNode?.path?.filter(p => 
-                            currentNode.path!.indexOf(p) <= currentNode.path!.findIndex(p => p.id === pathItem.id)
-                        ),
+                        path: newPath,
                     } as Node);
                 } catch (error) {
                     setSnackbar({
@@ -476,18 +588,19 @@ const StudentFolderStructure: React.FC = () => {
     const handleCloseSnackbar = () => {
         setSnackbar({ ...snackbar, open: false });
     };
-    
+
     const isRootLevel = !currentNode;
-    
+
     // Build breadcrumb path from backend path data
     const breadcrumbPath = currentNode?.path || [];
-    const currentBreadcrumb = currentNode 
+    const currentBreadcrumb = currentNode
         ? [...breadcrumbPath, { id: currentNode._id, heading: currentNode.heading }]
         : [];
-    
+
+
     return (
-        <Box 
-            sx={{ 
+        <Box
+            sx={{
                 minHeight: '100vh',
                 background: 'linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%)',
                 pb: 6
@@ -495,8 +608,8 @@ const StudentFolderStructure: React.FC = () => {
         >
             <Container maxWidth="lg" sx={{ pt: 4, pb: 2 }}>
                 {/* Header Section */}
-                <Box 
-                    sx={{ 
+                <Box
+                    sx={{
                         mb: 4,
                         pb: 3,
                         borderBottom: '2px solid',
@@ -519,9 +632,9 @@ const StudentFolderStructure: React.FC = () => {
                         >
                             <FolderOpen sx={{ color: 'white', fontSize: 28 }} />
                         </Box>
-                        <Typography 
-                            variant="h4" 
-                            sx={{ 
+                        <Typography
+                            variant="h4"
+                            sx={{
                                 fontWeight: 700,
                                 background: 'linear-gradient(135deg, #042f1b 0%, #083542 100%)',
                                 backgroundClip: 'text',
@@ -544,11 +657,11 @@ const StudentFolderStructure: React.FC = () => {
                             boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
                         }}
                     >
-                        <Breadcrumbs 
+                        <Breadcrumbs
                             separator={
-                                <NavigateNext 
-                                    fontSize="small" 
-                                    sx={{ color: '#9e9e9e' }} 
+                                <NavigateNext
+                                    fontSize="small"
+                                    sx={{ color: '#9e9e9e' }}
                                 />
                             }
                         >
@@ -579,7 +692,7 @@ const StudentFolderStructure: React.FC = () => {
                                 <Home sx={{ mr: 0.5, fontSize: 18 }} />
                                 Home
                             </Link>
-                            
+
                             {/* Path Breadcrumbs from Backend */}
                             {currentBreadcrumb.map((pathItem, index) => {
                                 const isLast = index === currentBreadcrumb.length - 1;
@@ -666,12 +779,12 @@ const StudentFolderStructure: React.FC = () => {
                             backgroundColor: '#fafafa',
                         }}
                     >
-                        <FolderOpen 
-                            sx={{ 
-                                fontSize: 64, 
+                        <FolderOpen
+                            sx={{
+                                fontSize: 64,
                                 color: '#bdbdbd',
-                                mb: 2 
-                            }} 
+                                mb: 2
+                            }}
                         />
                         <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 500 }}>
                             No items found
@@ -721,8 +834,8 @@ const StudentFolderStructure: React.FC = () => {
                 onClose={handleCloseSnackbar}
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
             >
-                <Alert 
-                    onClose={handleCloseSnackbar} 
+                <Alert
+                    onClose={handleCloseSnackbar}
                     severity={snackbar.severity}
                     variant="filled"
                     sx={{ width: '100%' }}
