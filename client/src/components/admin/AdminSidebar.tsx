@@ -37,6 +37,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen, handleDrawerTog
     // Management Group
     { text: 'Session Manager', icon: <SettingsSuggestIcon />, path: '/admin/session' },
     { text: 'Upload Material', icon: <UploadFileIcon />, path: '/admin/upload' },
+    { text: 'Add Notice', icon: <UploadFileIcon />, path: '/admin/notice' },
   ];
 
   // Common content for both drawers

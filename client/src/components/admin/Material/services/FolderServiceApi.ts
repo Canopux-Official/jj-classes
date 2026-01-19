@@ -224,7 +224,7 @@ function getAuthHeaders() {
 export const createOrFetchClass = async (className: string, targetExam: string, stream: string): Promise<ApiResponse> => {
   try {
     const response = await axios.post(
-      `${host}/api/material/create-class`,
+      `${host}/admin/material/create-class`,
       { className: className, targetExam: targetExam, stream: stream },
       { headers: getAuthHeaders() }
     );
@@ -248,7 +248,7 @@ export const createOrFetchClass = async (className: string, targetExam: string, 
 export const createFolder = async (parentId: string, folderData: Node): Promise<unknown> => {
   try {
     const response = await axios.post(
-      `${host}/api/material/create-sub-folder/${parentId}`,
+      `${host}/admin/material/create-sub-folder/${parentId}`,
       folderData,
       { headers: getAuthHeaders() }
     );
@@ -262,7 +262,7 @@ export const createFolder = async (parentId: string, folderData: Node): Promise<
 export const updateFolder = async (folderId: string, folderData: Node): Promise<unknown> => {
   try {
     const response = await axios.patch(
-      `${host}/api/material/update-sub-folder/${folderId}`,
+      `${host}/admin/material/update-sub-folder/${folderId}`,
       folderData,
       { headers: getAuthHeaders() }
     );
@@ -276,7 +276,7 @@ export const updateFolder = async (folderId: string, folderData: Node): Promise<
 export const getChildrenByParentId = async (parentId: string): Promise<Node[]> => {
   try {
     const response = await axios.get(
-      `${host}/api/material/get-folders/${parentId}`,
+      `${host}/admin/material/get-folders/${parentId}`,
       { headers: getAuthHeaders() }
     );
 
@@ -294,7 +294,7 @@ export const getChildrenByParentId = async (parentId: string): Promise<Node[]> =
 export const deleteSubFolder = async (id: string): Promise<DeleteFolderResponse> => {
   try {
     const response = await axios.delete(
-      `${host}/api/material/delete-sub-folder/${id}`,
+      `${host}/admin/material/delete-sub-folder/${id}`,
       { headers: getAuthHeaders() }
     );
     return response.data;
@@ -307,7 +307,7 @@ export const deleteSubFolder = async (id: string): Promise<DeleteFolderResponse>
 export const getAllClasses = async (): Promise<Node[]> => {
   try {
     const response = await axios.get(
-      `${host}/api/material/get-all-classes`,
+      `${host}/admin/material/get-all-classes`,
       { headers: getAuthHeaders() }
     );
 
@@ -325,7 +325,7 @@ export const getAllClasses = async (): Promise<Node[]> => {
 export const confirmFolderDeletion = async (folderId: string) => {
   try {
     const response = await axios.post(
-      `${host}/api/material/confirm-folder-deletion`,
+      `${host}/admin/material/confirm-folder-deletion`,
       { folderId },
       { headers: getAuthHeaders() }
     );
@@ -341,8 +341,8 @@ export const getAllExistingFiles = async (
 ): Promise<GetAllFilesResponse> => {
   try {
     const url = searchQuery
-      ? `${host}/api/material/files?search=${encodeURIComponent(searchQuery)}`
-      : `${host}/api/material/files`;
+      ? `${host}/admin/material/files?search=${encodeURIComponent(searchQuery)}`
+      : `${host}/admin/material/files`;
 
     const response = await axios.get(url, {
       headers: getAuthHeaders()

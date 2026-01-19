@@ -61,7 +61,7 @@ export const fetchRecentMaterials = async (
 ): Promise<RecentMaterial[]> => {
   try {
     const response = await axios.get(
-      `${API_BASE_URL}/api/student/recent`,
+      `${API_BASE_URL}/student/material/recent`,
       {
         params: { limit },
         ...getAuthConfig()
@@ -92,7 +92,7 @@ export const fetchRecentMaterials = async (
 export const fetchMaterialStats = async (): Promise<MaterialStats> => {
   try {
     const response = await axios.get(
-      `${API_BASE_URL}/api/student/stats`,
+      `${API_BASE_URL}/student/material/stats`,
       getAuthConfig()
     );
 
