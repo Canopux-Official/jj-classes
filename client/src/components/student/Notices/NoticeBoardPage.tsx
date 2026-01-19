@@ -1,25 +1,33 @@
-import React from 'react';
+// Updated src/pages/NoticeBoardPage.tsx (or wherever the component is located)
+import React, { useState, useEffect } from 'react';
 import { Typography, Box, Chip, Stack } from '@mui/material';
 import CampaignIcon from '@mui/icons-material/Campaign';
 import { NoticeCard, DateBadge } from './NoticeBoardPage.styles';
+import type { Notice } from '../../admin/Notice/types/types';
+import { getNoticesForStudent } from './services/StudentNotice';
+
 
 const NoticeBoardPage: React.FC = () => {
-  const notices = [
-    {
-      id: 1,
-      heading: "Diwali Vacation Schedule",
-      date: "2025-10-15",
-      description: "The institute will remain closed from Oct 20th to Oct 25th. Online classes resume on Oct 26th.",
-      tag: "General"
-    },
-    {
-      id: 2,
-      heading: "Physics Extra Class - Class 12",
-      date: "2025-10-12",
-      description: "Extra class for Electrostatics doubt clearing scheduled for Sunday at 10 AM.",
-      tag: "Academic"
-    }
-  ];
+  const [notices, setNotices] = useState<Notice[]>([]);
+
+  useEffect(() => {
+    const fetchNotices = async () => {
+      try {
+        const data = await getNoticesForStudent();
+        setNotices(data);
+      } catch (error) {
+        console.error('Failed to load notices:', error);
+        // Optionally, set an error state or show a message to the user
+      }
+    };
+
+    fetchNotices();
+  }, []);
+
+  const formatDate = (dateStr: string): string => {
+    const date = new Date(dateStr);
+    return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+  };
 
   return (
     <Box maxWidth="md">
@@ -32,18 +40,18 @@ const NoticeBoardPage: React.FC = () => {
       </Stack>
 
       {notices.map((notice) => (
-        <NoticeCard key={notice.id} elevation={0}>
+        <NoticeCard key={notice._id.toString()} elevation={0}>
           <Box display="flex" justifyContent="space-between" alignItems="start" mb={1}>
             <Typography variant="h6" fontWeight={600} color="primary">
               {notice.heading}
             </Typography>
-            <DateBadge>{notice.date}</DateBadge>
+            <DateBadge>{formatDate(notice.createdAt.toString())}</DateBadge>
           </Box>
           <Typography variant="body2" color="text.secondary" paragraph>
             {notice.description}
           </Typography>
           <Chip 
-            label={notice.tag} 
+            label={notice.tag || 'General'} 
             size="small" 
             variant="outlined" 
             color={notice.tag === 'Admin' ? 'error' : notice.tag === 'General' ? 'default' : 'primary'} 

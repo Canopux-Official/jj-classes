@@ -4,7 +4,7 @@ import { CssBaseline, Box } from '@mui/material';
 import { LayoutRoot, MainContent, ContentWrapper } from './AdminDashboard.styles';
 
 // Internal Components
-import AdminSidebar from '../../components/admin/AdminSidebar'; 
+import AdminSidebar from '../../components/admin/AdminSidebar';
 import AdminHeader from '../../components/admin/AdminHeader';
 
 // Page Components
@@ -17,8 +17,9 @@ import ShowClass from '../../components/admin/Material/showclass/ShowClass';
 // NEW COMPONENTS
 import StreamPage from '../../components/admin/StreamPage';
 import TargetExamPage from '../../components/admin/TargetExamPage';
+import AdminNoticePage from './AdminNotice';
 
-const DRAWER_WIDTH = 260; 
+const DRAWER_WIDTH = 260;
 
 const AdminDashboard: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -30,23 +31,23 @@ const AdminDashboard: React.FC = () => {
   return (
     <LayoutRoot>
       <CssBaseline />
-      
+
       {/* Sidebar Wrapper */}
       <Box
         component="nav"
         sx={{ width: { sm: DRAWER_WIDTH }, flexShrink: { sm: 0 } }}
         aria-label="mailbox folders"
       >
-        <AdminSidebar 
-          mobileOpen={mobileOpen} 
-          handleDrawerToggle={handleDrawerToggle} 
+        <AdminSidebar
+          mobileOpen={mobileOpen}
+          handleDrawerToggle={handleDrawerToggle}
         />
       </Box>
 
       {/* Main Content Area */}
       <MainContent>
         <AdminHeader handleDrawerToggle={handleDrawerToggle} />
-        
+
         <ContentWrapper>
           <Routes>
             <Route path="/" element={<DashboardHome />} />
@@ -54,7 +55,8 @@ const AdminDashboard: React.FC = () => {
             <Route path="subjects" element={<SubjectsPage />} />
             <Route path="session" element={<SessionPage />} />
             <Route path="upload" element={<ShowClass />} />
-            
+            <Route path="notice" element={<AdminNoticePage />} />
+
             {/* NEW ROUTES */}
             <Route path="streams" element={<StreamPage />} />
             <Route path="target-exams" element={<TargetExamPage />} />

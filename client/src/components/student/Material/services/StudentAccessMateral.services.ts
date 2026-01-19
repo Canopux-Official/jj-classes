@@ -26,7 +26,7 @@ export interface ApiResponse<T> {
 export const fetchStudentClasses = async (): Promise<Node[]> => {
   try {
     const res = await API.get<ApiResponse<Node[]>>(
-      "/api/student/getClasses",
+      "/student/material/getClasses",
       getAuthHeaders()
     );
 
@@ -55,7 +55,7 @@ export const fetchNodesByParentId = async (
 ): Promise<Node[]> => {
   try {
     const res = await API.get<ApiResponse<Node[]>>(
-      `/api/student/getChild/${parentId}`,
+      `/student/material/getChild/${parentId}`,
       getAuthHeaders()
     );
     return res.data.data;

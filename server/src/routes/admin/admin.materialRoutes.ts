@@ -1,6 +1,7 @@
 import express from 'express';
-import materialController from '../controllers/materialcontroller';
-import verifyAuth from '../middlewares/verifyAuth';
+import materialController from '../../controllers/materialcontroller';
+import verifyAuth from '../../middlewares/verifyAuth';
+
 
 
 const router = express.Router();
