@@ -3,36 +3,6 @@ import Student from '../models/Student';
 import Material from '../models/Material';
 
 
-// const showClass = async(req:Request,res: Response) => {
-//     try {
-//         const studentId = req.user.id;
-//         const student = await Student.findById(studentId);
-
-//         if (!student){
-//             return res.status(404).json({message: "Student with the given id is not present",success: false})
-//         }
-
-//         const targetExam = student.targetExams;
-//         const stream = student.stream;
-//         const className = student.currentClass;
-
-
-//         const allClasses = [];
-
-//         for(const e of targetExam){
-//             const classesMaterial = await Material.findOne({targetExam: e,stream: stream, heading: className})
-//             allClasses.push(classesMaterial)
-//         }
-
-//         return res.status(200).json({message: "Fetched Successfully",success: true,data: allClasses,targetExam})
-
-
-//     } catch (error) {
-//         console.log("Error in createClassId:", error);
-//         res.status(500).json({ message: 'Server Error', success: false });
-//     }
-// }
-
 const showClass = async (req: Request, res: Response) => {
     try {
         const studentId = req.user.id;
@@ -45,6 +15,13 @@ const showClass = async (req: Request, res: Response) => {
         if (!student) {
             return res.status(404).json({
                 message: "Student with the given id is not present",
+                success: false
+            });
+        }
+
+        if (!student.isActive) {
+            return res.status(403).json({
+                message: "Student is not active",
                 success: false
             });
         }
@@ -70,7 +47,6 @@ const showClass = async (req: Request, res: Response) => {
                 allClasses.push(classesMaterial);
             }
         }
-        console.log(allClasses)
 
         // Return the classes with populated data
         return res.status(200).json({
@@ -119,8 +95,6 @@ const getRecentMaterials = async (req: Request, res: Response) => {
                 success: false
             });
         }
-
-        console.log(userId)
 
         // Fetch student details to get their class, stream, and targetExams
         const student = await Student.findById(userId)

@@ -193,7 +193,7 @@ const AdminNoticePage: React.FC = () => {
 
   // Get unique tags and class types for filters
   const uniqueTags = Array.from(new Set(notices.map(n => n.tag).filter(Boolean)));
-  const uniqueClassTypes = Array.from(new Set(notices.map(n => n.classType).filter(Boolean)));
+  const uniqueClassTypes = ['9','10','11','12', 'Dropper 1', 'Dropper 2'];
 
   return (
     <Box sx={{ bgcolor: '#fafbfc', minHeight: '100vh' }}>
