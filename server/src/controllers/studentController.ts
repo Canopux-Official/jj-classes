@@ -482,6 +482,7 @@ export const changePassword = async (req: Request, res: Response) => {
         }
 
         const isMatch = await bcrypt.compare(current, student.password);
+        //const isMatch = current == student.password;
         if (!isMatch) {
             return res.status(400).json({ message: "Incorrect current password." });
         }

@@ -15,8 +15,8 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import AltRouteIcon from '@mui/icons-material/AltRoute'; 
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import SchoolIcon from '@mui/icons-material/School';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
 // API
 import { 
@@ -41,6 +41,28 @@ interface IStudentSessionUI {
 }
 
 // --- Logic Helpers ---
+
+// Validates format "YYYY-YYYY" and logic (End = Start + 1)
+const validateSessionString = (session: string): { isValid: boolean; error?: string } => {
+  const regex = /^\d{4}-\d{4}$/;
+  if (!regex.test(session)) {
+    return { isValid: false, error: "Format must be YYYY-YYYY (e.g. 2024-2025)" };
+  }
+  
+  const [start, end] = session.split('-').map(Number);
+  
+  if (end <= start) {
+    return { isValid: false, error: "End year must be greater than start year." };
+  }
+  
+  if (end - start !== 1) {
+    return { isValid: false, error: "Standard sessions must be 1 year long." };
+  }
+
+  return { isValid: true };
+};
+
+// Calculates the next class based on current class and action
 const calculateNextClass = (currentClass: string, action: PromotionStatus): string => {
   if (action === 'Retain') return currentClass;
   if (action === 'Discontinue') return 'Inactive';
@@ -68,6 +90,10 @@ const SessionPage: React.FC = () => {
   // --- State ---
   const [fromSession, setFromSession] = useState('2024-2025');
   const [toSession, setToSession] = useState('2025-2026');
+  
+  // Validation State for UI feedback
+  const [sessionErrors, setSessionErrors] = useState<{ from?: string; to?: string }>({});
+
   const [targetBatchClass, setTargetBatchClass] = useState('11'); 
 
   // Data
@@ -100,8 +126,19 @@ const SessionPage: React.FC = () => {
     exams: [] as string[] 
   });
 
-  // Determines if "Move to Dropper" is a valid action for the current batch
   const canMoveToDropper = ['12', 'dropper-1'].includes(targetBatchClass);
+
+  // --- Validation Effects ---
+  useEffect(() => {
+    // Real-time validation for UI feedback
+    const fromCheck = validateSessionString(fromSession);
+    const toCheck = validateSessionString(toSession);
+    
+    setSessionErrors({
+        from: fromCheck.isValid ? undefined : fromCheck.error,
+        to: toCheck.isValid ? undefined : toCheck.error
+    });
+  }, [fromSession, toSession]);
 
   // --- Data Fetching ---
   const fetchInitialData = useCallback(async () => {
@@ -239,12 +276,37 @@ const SessionPage: React.FC = () => {
     setOpenCustomize(false);
   };
 
+  // --- COMMIT & VALIDATION ---
   const handleCommit = async () => {
+    // 1. Session Validation
+    const fromCheck = validateSessionString(fromSession);
+    const toCheck = validateSessionString(toSession);
+
+    if (!fromCheck.isValid) return alert(`Current Session Error: ${fromCheck.error}`);
+    if (!toCheck.isValid) return alert(`Next Session Error: ${toCheck.error}`);
+
+    // Check Logic: ToSession must be chronologically after FromSession
+    const fromStartYear = parseInt(fromSession.split('-')[0]);
+    const toStartYear = parseInt(toSession.split('-')[0]);
+
+    if (toStartYear <= fromStartYear) {
+        return alert("Validation Error: Next Session year must be greater than Current Session year.");
+    }
+    
+    // Optional: Ensure sequential flow (Next Session starts when Current ends)
+    // E.g. 2024-2025 -> 2025-2026
+    const fromEndYear = parseInt(fromSession.split('-')[1]);
+    if (toStartYear !== fromEndYear) {
+       if(!window.confirm(`Warning: There is a gap or overlap between sessions.\nCurrent ends: ${fromEndYear}\nNext starts: ${toStartYear}\n\nAre you sure this is correct?`)) {
+           return;
+       }
+    }
+
     const studentsToProcess = allStudents.filter(s => selectedIds.includes(s._id));
     
     if (studentsToProcess.length === 0) return alert("No students selected.");
     
-    // Validation for 10 -> 11 Stream
+    // 2. Stream Validation
     const missingStream = studentsToProcess.find(s => 
       s.currentClass === '10' && s.nextAction === 'Promote' && !s.nextStream && !s.stream
     );
@@ -252,7 +314,7 @@ const SessionPage: React.FC = () => {
       return alert(`Error: ${missingStream.name} is moving to Class 11 but has no Stream assigned.`);
     }
 
-    if (!window.confirm(`Update ${studentsToProcess.length} student records?\n\nNote: Students promoted to 'graduated' will be marked Inactive.`)) {
+    if (!window.confirm(`Update ${studentsToProcess.length} student records from ${fromSession} to ${toSession}?\n\nNote: Students promoted to 'graduated' will be marked Inactive.`)) {
       return;
     }
 
@@ -315,12 +377,28 @@ const SessionPage: React.FC = () => {
 
       {/* 1. Control Panel */}
       <Paper elevation={0} sx={{ p: 2, mb: 3, border: '1px solid #e0e0e0', borderRadius: 2 }}>
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="center">
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="flex-start">
           
-          <Box display="flex" gap={2} alignItems="center" flex={1}>
-            <TextField label="Current Session" value={fromSession} onChange={(e) => setFromSession(e.target.value)} size="small" sx={{ width: 150 }} />
-            <ArrowForwardIcon color="action" />
-            <TextField label="Next Session" value={toSession} onChange={(e) => setToSession(e.target.value)} size="small" sx={{ width: 150 }} />
+          <Box display="flex" gap={2} alignItems="flex-start" flex={1}>
+            <TextField 
+                label="Current Session" 
+                value={fromSession} 
+                onChange={(e) => setFromSession(e.target.value)} 
+                size="small" 
+                sx={{ width: 160 }} 
+                error={!!sessionErrors.from}
+                helperText={sessionErrors.from}
+            />
+            <Box pt={1}><ArrowForwardIcon color="action" /></Box>
+            <TextField 
+                label="Next Session" 
+                value={toSession} 
+                onChange={(e) => setToSession(e.target.value)} 
+                size="small" 
+                sx={{ width: 160 }} 
+                error={!!sessionErrors.to}
+                helperText={sessionErrors.to}
+            />
           </Box>
 
           <FormControl size="small" sx={{ minWidth: 200 }}>
@@ -373,7 +451,12 @@ const SessionPage: React.FC = () => {
               Set To Dropper
             </Button>
           )}
-          <Button variant="contained" startIcon={<SaveIcon />} onClick={handleCommit} disabled={selectedIds.length === 0 || processing}>
+          <Button 
+            variant="contained" 
+            startIcon={<SaveIcon />} 
+            onClick={handleCommit} 
+            disabled={selectedIds.length === 0 || processing || !!sessionErrors.from || !!sessionErrors.to}
+          >
              Confirm Updates
           </Button>
         </Stack>
@@ -455,7 +538,7 @@ const SessionPage: React.FC = () => {
                        {(student.nextAction === 'Promote' || student.nextAction === 'ToDropper') && student.nextClass !== 'graduated' && (
                          <Box>
                             {needsStream ? (
-                                <Chip label="Stream Missing!" color="error" size="small" icon={<SchoolIcon />} />
+                                <Chip label="Stream Missing!" color="error" size="small" icon={<ErrorOutlineIcon />} />
                             ) : (
                                 student.nextStream && <Chip label={student.nextStream} size="small" sx={{ mr: 0.5 }} />
                             )}

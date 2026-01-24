@@ -6,6 +6,7 @@ import Admin from '../../models/Admin';
 import { sendOtp, verifyOtp, resendOtp } from '../../controllers/otpController';
 import { changePassword } from '../../controllers/studentController';
 import verifyAuth, { AuthRequest } from '../../middlewares/verifyAuth';
+import bcrypt from 'bcryptjs';
 
 const router = express.Router();
 const jwt_secret = process.env.JWT_SECRET;
@@ -25,8 +26,8 @@ router.post('/getLoggedInUser', async (req, res): Promise<any> => {
             if (!admin) {
                 return res.status(404).json({ success: false, message: 'Admin not found' });
             }
-
-            if (admin.password != password) {
+            const isMatch = await bcrypt.compare(password, admin.password);
+            if (!isMatch) {
                 return res.status(401).json({ success: false, message: 'Invalid password' });
             }
             const otpResponse = await sendOtp(admin.email, admin._id, 'admin');
@@ -62,8 +63,15 @@ router.post('/getLoggedInUser', async (req, res): Promise<any> => {
                 message: 'Student not found. Please ensure Name, DOB, Class, and Phone Number match your records exactly.'
             });
         }
-
-        if (student.password != password) {
+        if (!student.isActive) {
+            return res.status(404).json({
+                success: false,
+                message: 'Access Denied: Your account has been deactivated. Please contact the administrator.'
+            });
+        }
+        const isMatch = await bcrypt.compare(password, student.password);
+        console.log(isMatch);
+        if (!isMatch) {
             return res.status(401).json({ success: false, message: 'Invalid password' });
         }
 
@@ -94,6 +102,10 @@ router.post('/getLoggedInUser', async (req, res): Promise<any> => {
             success: true,
             message: 'Credentials verified. OTP sent to email.',
             email: student.email,
+            name: name,
+            dob: dob,
+            currentClass: currentClass,
+            phoneNumber: phoneNumber,
             authToken: null
         });
 
@@ -125,20 +137,28 @@ router.post('/resendOtp', async (req, res): Promise<any> => {
 });
 
 router.post('/verifyOtp', async (req, res): Promise<any> => {
-    const { email, otp } = req.body;
-
+    const { email, otp, name, dob, currentClass, phoneNumber } = req.body;
+    const targetDob = dob ? new Date(dob) : null;
     try {
         const result = await verifyOtp(email, otp);
 
         if (result.success) {
             // Determine if user is Admin or Student based on email lookup
             // (Or you could pass 'role' from frontend if you prefer explicit checks)
-            let user: any = await Student.findOne({ email });
-            let role = "student";
+            let user: any = await Admin.findOne({ email });
+            let role = "admin";
 
             if (!user) {
-                user = await Admin.findOne({ email });
-                role = "admin";
+                user = await Student.findOne({
+                    name: name,
+                    currentClass: currentClass,
+                    dob: targetDob,
+                    $or: [
+                        { phoneNumber: phoneNumber },
+                        { parentPhoneNumber: phoneNumber }
+                    ]
+                });
+                role = "student";
             }
 
             if (!user) {
@@ -193,12 +213,11 @@ router.get('/verifyToken', verifyAuth, async (req: AuthRequest, res): Promise<an
         if (!userExists) {
             return res.status(404).json({ success: false, message: 'User record not found. Please login again.' });
         }
-
         // Success: User is real and token is valid
-        return res.status(200).json({ 
-            success: true, 
+        return res.status(200).json({
+            success: true,
             user: userExists,
-            role: role 
+            role: role
         });
 
     } catch (error) {

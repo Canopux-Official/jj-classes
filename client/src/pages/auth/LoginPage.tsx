@@ -19,7 +19,7 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import AccessTimeIcon from '@mui/icons-material/AccessTime'; // Icon for timer
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import JIS from '../../assets/logo/JIS Logo.png';
@@ -36,8 +36,11 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [maskedEmail, setMaskedEmail] = useState('');
   
+  // Validation State
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
   // Timer State
-  const [timer, setTimer] = useState(90); // 90 seconds cooldown
+  const [timer, setTimer] = useState(90);
   const [canResend, setCanResend] = useState(false);
 
   // Form Data
@@ -56,7 +59,6 @@ const LoginPage = () => {
   const isAdmin = formData.phoneNumber === ADMIN_PHONE;
 
   // --- TIMER LOGIC ---
-// --- TIMER LOGIC ---
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
 
@@ -69,7 +71,6 @@ const LoginPage = () => {
       if(interval) clearInterval(interval);
     }
     
-    // Cleanup function
     return () => {
       if (interval) clearInterval(interval);
     };
@@ -81,22 +82,80 @@ const LoginPage = () => {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  // Handle Input Change
   const handleChange = (prop: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [prop]: event.target.value });
+    let value = event.target.value;
+
+    if (prop === 'phoneNumber') {
+      value = value.replace(/[^0-9]/g, '');
+
+      if (value.length > 10) {
+        return;
+      }
+    }
+
+    setFormData({ ...formData, [prop]: value });
+    
+    if (errors[prop]) {
+        setErrors({ ...errors, [prop]: '' });
+    }
+  };
+
+  // --- VALIDATION LOGIC ---
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
+    const { name, dob, phoneNumber, currentClass, password } = formData;
+
+    // 1. Phone Number Validation
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneNumber) {
+        newErrors.phoneNumber = "Phone number is required";
+    } else if (!phoneRegex.test(phoneNumber)) {
+        newErrors.phoneNumber = "Enter a valid 10-digit mobile number";
+    }
+
+    // 2. Password Validation
+    if (!password) {
+        newErrors.password = "Password is required";
+    }
+
+    // 3. Student Specific Validations
+    if (!isAdmin) {
+        // Name: Only alphabets and spaces, min 3 chars
+        const nameRegex = /^[a-zA-Z\s]{3,}$/;
+        if (!name) {
+            newErrors.name = "Full Name is required";
+        } else if (!nameRegex.test(name)) {
+            newErrors.name = "Enter a valid name (min 3 chars, alphabets only)";
+        }
+
+        // Class
+        if (!currentClass) {
+            newErrors.currentClass = "Please select your class";
+        }
+
+        // Date of Birth: Cannot be in future, reasonable age check
+        if (!dob) {
+            newErrors.dob = "Date of Birth is required";
+        } else {
+            const dobDate = new Date(dob);
+            const today = new Date();
+            if (dobDate >= today) {
+                newErrors.dob = "Date of Birth cannot be in the future";
+            } else if (today.getFullYear() - dobDate.getFullYear() < 10) {
+                newErrors.dob = "You seem too young for this platform";
+            }
+        }
+    }
+
+    setErrors(newErrors);
+    // Return true if no errors
+    return Object.keys(newErrors).length === 0;
   };
 
   // Step 1: Handle Initial Login Submission
   const handleLoginSubmit = async () => {
-    const { name, dob, phoneNumber, currentClass, password } = formData;
-    
-    if (phoneNumber.length < 10) return alert('Please enter a valid phone number');
-    if (!password) return alert('Password is required');
-
-    if (!isAdmin) {
-      if (!name || !dob || !currentClass) {
-        return alert('All fields are compulsory for students.');
-      }
+    if (!validateForm()) {
+        return; // Stop if validation fails
     }
 
     setLoading(true);
@@ -105,7 +164,15 @@ const LoginPage = () => {
       const response = await getLoggedInUser(formData);
       if (!response.success || !response.data) {
         setLoading(false);
-        return alert(response.message || 'Login failed');
+        // Show error specifically on phone/password if generic login failure, or alert
+        if(response.message?.toLowerCase().includes("user")) {
+             setErrors({ phoneNumber: response.message });
+        } else if (response.message?.toLowerCase().includes("password")) {
+             setErrors({ password: response.message });
+        } else {
+             alert(response.message || 'Login failed');
+        }
+        return;
       }
 
       const responseData = response.data as { email?: string | null, authToken?: string | null};
@@ -153,13 +220,18 @@ const LoginPage = () => {
 
     try {
       const email = localStorage.getItem('authEmail') || '';
+      const name = localStorage.getItem('authName') || '';
+      const currentClass = localStorage.getItem('authCurrentClass') || '';
+      const dob = localStorage.getItem('authDob') || '';
+      const phoneNumber = localStorage.getItem('authPhoneNumber') || '';
+      
       if(!email) {
           alert("Session expired. Please login again.");
           setStep('FORM');
           return;
       }
 
-      const response = await verifyOtp({ email, otp });
+      const response = await verifyOtp({ otp, email, name, dob, currentClass, phoneNumber});
 
       setLoading(false);
 
@@ -284,6 +356,8 @@ const LoginPage = () => {
                   type="tel"
                   value={formData.phoneNumber}
                   onChange={handleChange('phoneNumber')}
+                  error={!!errors.phoneNumber}
+                  helperText={errors.phoneNumber}
                   sx={loginStyles.inputField}
                   InputProps={{
                     startAdornment: (
@@ -304,6 +378,8 @@ const LoginPage = () => {
                       placeholder="Full Name as per Records"
                       value={formData.name}
                       onChange={handleChange('name')}
+                      error={!!errors.name}
+                      helperText={errors.name}
                       sx={loginStyles.inputField}
                       InputProps={{
                         startAdornment: (
@@ -320,6 +396,8 @@ const LoginPage = () => {
                       label="Date of Birth"
                       value={formData.dob}
                       onChange={handleChange('dob')}
+                      error={!!errors.dob}
+                      helperText={errors.dob}
                       sx={loginStyles.inputField}
                       InputLabelProps={{ shrink: true }}
                       InputProps={{
@@ -337,6 +415,8 @@ const LoginPage = () => {
                       label="Class"
                       value={formData.currentClass}
                       onChange={handleChange('currentClass')}
+                      error={!!errors.currentClass}
+                      helperText={errors.currentClass}
                       sx={{ ...loginStyles.inputField, textAlign: 'left' }}
                       InputProps={{
                         startAdornment: (
@@ -362,6 +442,8 @@ const LoginPage = () => {
                   type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={handleChange('password')}
+                  error={!!errors.password}
+                  helperText={errors.password}
                   sx={loginStyles.inputField}
                   InputProps={{
                     startAdornment: (

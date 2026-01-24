@@ -17,6 +17,10 @@ interface SendOtpPayload {
 interface VerifyOtpPayload {
   otp: string;
   email: string;
+  name: string;
+  dob: string;
+  currentClass: string;
+  phoneNumber: string;
 }
 
 interface ApiResponse<T = unknown> {
@@ -24,7 +28,7 @@ interface ApiResponse<T = unknown> {
   data?: T;
   status?: number;
   message?: string;
-  authToken?: string; 
+  authToken?: string;
   error?: unknown;
 }
 
@@ -48,9 +52,9 @@ export async function getLoggedInUser(formData: LoginPayload): Promise<ApiRespon
       data: formData,
       headers: getAuthHeaders()
     };
-    
+
     const response = await axios(config);
-    
+
     if (response.status === 200) {
       if (response.data.authToken) {
         window.localStorage.setItem("authToken", response.data.authToken);
@@ -58,6 +62,10 @@ export async function getLoggedInUser(formData: LoginPayload): Promise<ApiRespon
         // Store email temporarily for OTP flow
         console.log("Storing email for OTP flow:", response);
         window.localStorage.setItem("authEmail", response.data.email);
+        window.localStorage.setItem("authName", response.data.name);
+        window.localStorage.setItem("authDob", response.data.dob);
+        window.localStorage.setItem("authCurrentClass", response.data.currentClass);
+        window.localStorage.setItem("authPhoneNumber", response.data.phoneNumber);
       }
       return {
         success: true,
@@ -65,7 +73,7 @@ export async function getLoggedInUser(formData: LoginPayload): Promise<ApiRespon
         status: response.status
       };
     }
-    
+
     return { success: false, status: response.status };
 
   } catch (error) {
@@ -92,10 +100,10 @@ export async function resendOtp(payload: SendOtpPayload): Promise<ApiResponse<{ 
     const response = await axios(config);
 
     if (response.status === 201 || response.status === 200) {
-      return { 
-        success: true, 
+      return {
+        success: true,
         data: response.data,
-        status: response.status 
+        status: response.status
       };
     }
 
@@ -121,7 +129,7 @@ export async function verifyOtp(payload: VerifyOtpPayload): Promise<ApiResponse>
       data: payload,
       headers: getAuthHeaders()
     };
-    
+
     const response = await axios(config);
 
     if (response.status === 201 || response.status === 200) {
@@ -129,13 +137,17 @@ export async function verifyOtp(payload: VerifyOtpPayload): Promise<ApiResponse>
         window.localStorage.setItem("authToken", response.data.authToken);
         // Clean up temp email
         window.localStorage.removeItem("authEmail");
+        window.localStorage.removeItem("authName");
+        window.localStorage.removeItem("authDob");
+        window.localStorage.removeItem("authCurrentClass");
+        window.localStorage.removeItem("authPhoneNumber");
       }
       return {
         success: true,
         status: response.status
       };
     }
-    
+
     return { success: false, status: response.status };
 
   } catch (error) {
@@ -156,10 +168,10 @@ export async function validateToken(): Promise<boolean> {
       url: `${import.meta.env.VITE_SERVER_LINK}/auth/verifyToken`,
       headers: getAuthHeaders() // Reuses your existing helper
     };
-    
+
     const response = await axios(config);
     return response.status === 200 && response.data.success;
-  } catch  {
+  } catch {
     // If 401 or network error, token is invalid
     return false;
   }
@@ -275,19 +287,19 @@ export async function deleteStudent(id: string): Promise<ApiResponse> {
     return { success: false, message: axiosError.response?.data?.message || "Failed to delete student" };
   }
 }
-export async function getStudent(){
-  try{
-    const config: AxiosRequestConfig ={
+export async function getStudent() {
+  try {
+    const config: AxiosRequestConfig = {
       method: "get",
       url: `${import.meta.env.VITE_SERVER_LINK}/student/studentProfile/getStudent`,
       headers: getAuthHeaders()
     };
     const response = await axios(config);
-    return {success: true, data: response.data, status: response.status};
-  } catch (error){
+    return { success: true, data: response.data, status: response.status };
+  } catch (error) {
     const axiosError = error as AxiosError;
     // @ts-expect-error response.data is not typed in AxiosError
-    return {success: false, message: axiosError.response?.data?.message || "Failed to fetch student details"};
+    return { success: false, message: axiosError.response?.data?.message || "Failed to fetch student details" };
   }
 }
 
@@ -325,7 +337,7 @@ export const getActiveTargetExams = () => crudRequest('get', '/admin/targetExamC
 // Overwriting getSubjects to match the specific controller response structure if needed, 
 // or you can use the generic one if your controller returns pure array.
 // The current controller returns { subjects: [] }, so we might need to unwrap it in the component or here.
-export const getAllSubjects = () => crudRequest('get', '/admin/subjectControl/all'); 
+export const getAllSubjects = () => crudRequest('get', '/admin/subjectControl/all');
 export const addSubject = (data: unknown) => crudRequest('post', '/admin/subjectControl/add', data);
 export const updateSubject = (id: string, data: unknown) => crudRequest('put', `/admin/subjectControl/update/${id}`, data);
 export const deleteSubject = (id: string) => crudRequest('delete', `/admin/subjectControl/delete/${id}`);

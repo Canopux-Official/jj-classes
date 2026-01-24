@@ -84,6 +84,8 @@ interface IStudentFormData {
   isActive: boolean;
 }
 
+const CLASS_OPTIONS = ['9', '10', '11', '12', 'dropper-1', 'dropper-2'];
+
 const StudentsPage: React.FC = () => {
   // --- State ---
   const [students, setStudents] = useState<IStudentUI[]>([]);
@@ -98,6 +100,8 @@ const StudentsPage: React.FC = () => {
 
   // Filters
   const [classFilter, setClassFilter] = useState('All');
+  const [streamFilter, setStreamFilter] = useState('All'); // New Stream Filter
+  const [subjectFilter, setSubjectFilter] = useState<string[]>([]); // New Subject Filter
   const [examFilter, setExamFilter] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState('All');
 
@@ -131,8 +135,8 @@ const StudentsPage: React.FC = () => {
     isActive: true
   });
 
-  // Check if Stream is applicable (Class 11 or 12)
-  const isStreamApplicable = ['11', '12'].includes(formData.currentClass);
+  // Check if Stream is applicable (Class 11, 12, or Droppers)
+  const isStreamApplicable = ['11', '12', 'dropper-1', 'dropper-2'].includes(formData.currentClass);
 
   // --- Effects ---
   useEffect(() => {
@@ -232,9 +236,9 @@ const StudentsPage: React.FC = () => {
           return;
       }
 
-      // If stream is required (Class 11/12) but missing
+      // If stream is required but missing
       if (isStreamApplicable && !formData.stream) {
-          alert("Stream is required for Class 11 and 12.");
+          alert("Stream is required for the selected class.");
           return;
       }
 
@@ -259,7 +263,12 @@ const StudentsPage: React.FC = () => {
     }
   };
 
-  const handleToggleStatus = async (id: string) => {
+  const handleToggleStatus = async (id: string, currentStatus: boolean) => {
+    const action = currentStatus ? "Deactivate" : "Activate";
+    if (!window.confirm(`Are you sure you want to ${action} this student?`)) {
+        return;
+    }
+
     const response = await toggleStudentStatus(id);
     if (response.success) {
       setStudents(prev => prev.map(s =>
@@ -350,9 +359,16 @@ const StudentsPage: React.FC = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  // --- Filter Logic Handlers ---
+
   const handleExamFilterChange = (event: SelectChangeEvent<unknown>) => {
     const value = event.target.value;
     setExamFilter(typeof value === 'string' ? value.split(',') : (value as string[]));
+  };
+
+  const handleSubjectFilterChange = (event: SelectChangeEvent<unknown>) => {
+    const value = event.target.value;
+    setSubjectFilter(typeof value === 'string' ? value.split(',') : (value as string[]));
   };
 
   // --- Filtering & Pagination ---
@@ -360,23 +376,44 @@ const StudentsPage: React.FC = () => {
   const filteredStudents = students.filter((student) => {
     const term = searchTerm.toLowerCase();
     
+    // 1. Search (Name/Phone/Email)
     const matchesSearch = 
         student.name.toLowerCase().includes(term) || 
         student.phoneNumber.includes(term) ||
         (student.email && student.email.toLowerCase().includes(term));
 
+    // 2. Class Filter
     const matchesClass = classFilter === 'All' || student.currentClass === classFilter;
     
+    // 3. Exam Filter
     const matchesExam = examFilter.length === 0 || examFilter.some(filter => 
         student.targetExams.some(t => t.name === filter)
     );
-    
+
+    // 4. Status Filter
     const matchesStatus = statusFilter === 'All' || (statusFilter === 'Active' ? student.isActive : !student.isActive);
+
+    // 5. Stream Filter (New)
+    const matchesStream = streamFilter === 'All' || (student.stream?.name === streamFilter);
+
+    // 6. Subject Filter (New - OR logic: student has any of the selected subjects)
+    const matchesSubject = subjectFilter.length === 0 || subjectFilter.some(filter => 
+        student.enrolledSubjects.some(sub => sub.name === filter)
+    );
     
-    return matchesSearch && matchesClass && matchesExam && matchesStatus;
+    return matchesSearch && matchesClass && matchesExam && matchesStatus && matchesStream && matchesSubject;
   });
 
   const paginatedStudents = filteredStudents.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  const handleResetFilters = () => {
+    setClassFilter('All');
+    setStreamFilter('All');
+    setExamFilter([]);
+    setSubjectFilter([]);
+    setStatusFilter('All');
+    setSearchTerm('');
+  };
 
   return (
     <PageContainer>
@@ -405,24 +442,33 @@ const StudentsPage: React.FC = () => {
         </Stack>
       </PageHeader>
 
-      <FilterToolbar elevation={0}>
+      <FilterToolbar elevation={0} sx={{ flexWrap: 'wrap', gap: 2 }}>
         <SearchInput
           size="small"
           placeholder="Search Name, Phone, or Email..." 
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
+          sx={{ minWidth: 250 }}
         />
 
-        <FormControl size="small">
+        <FormControl size="small" sx={{ minWidth: 120 }}>
           <InputLabel>Class</InputLabel>
           <FilterSelect value={classFilter} label="Class" onChange={(e) => setClassFilter(e.target.value as string)}>
             <MenuItem value="All">All</MenuItem>
-            {['9', '10', '11', '12'].map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+            {CLASS_OPTIONS.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
           </FilterSelect>
         </FormControl>
 
-        <FormControl size="small" sx={{ minWidth: 200 }}>
+        <FormControl size="small" sx={{ minWidth: 120 }}>
+          <InputLabel>Stream</InputLabel>
+          <FilterSelect value={streamFilter} label="Stream" onChange={(e) => setStreamFilter(e.target.value as string)}>
+            <MenuItem value="All">All</MenuItem>
+            {streamOptions.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+          </FilterSelect>
+        </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 180 }}>
           <InputLabel>Target Exams</InputLabel>
           <FilterSelect
             multiple
@@ -440,7 +486,25 @@ const StudentsPage: React.FC = () => {
           </FilterSelect>
         </FormControl>
 
-        <FormControl size="small">
+        <FormControl size="small" sx={{ minWidth: 180 }}>
+          <InputLabel>Subjects</InputLabel>
+          <FilterSelect
+            multiple
+            value={subjectFilter}
+            onChange={handleSubjectFilterChange}
+            input={<OutlinedInput label="Subjects" />}
+            renderValue={(selected) => (selected as string[]).join(', ')}
+          >
+            {subjectOptions.map((name) => (
+              <MenuItem key={name} value={name}>
+                <Checkbox checked={subjectFilter.indexOf(name) > -1} size="small" />
+                <ListItemText primary={name} />
+              </MenuItem>
+            ))}
+          </FilterSelect>
+        </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 120 }}>
           <InputLabel>Status</InputLabel>
           <FilterSelect value={statusFilter} label="Status" onChange={(e) => setStatusFilter(e.target.value as string)}>
             <MenuItem value="All">All</MenuItem>
@@ -450,7 +514,7 @@ const StudentsPage: React.FC = () => {
         </FormControl>
 
         <Tooltip title="Reset Filters">
-          <IconButton onClick={() => { setClassFilter('All'); setExamFilter([]); setStatusFilter('All'); setSearchTerm(''); }}>
+          <IconButton onClick={handleResetFilters}>
             <FilterListIcon />
           </IconButton>
         </Tooltip>
@@ -518,7 +582,11 @@ const StudentsPage: React.FC = () => {
                         </Tooltip>
                         
                         <Tooltip title={student.isActive ? "Deactivate" : "Activate"}>
-                            <IconButton size="small" color={student.isActive ? "success" : "default"} onClick={() => handleToggleStatus(student._id)}>
+                            <IconButton 
+                                size="small" 
+                                color={student.isActive ? "success" : "default"} 
+                                onClick={() => handleToggleStatus(student._id, student.isActive)}
+                            >
                                 {student.isActive ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" />}
                             </IconButton>
                         </Tooltip>
@@ -619,12 +687,12 @@ const StudentsPage: React.FC = () => {
                                     setFormData({ 
                                         ...formData, 
                                         currentClass: newClass,
-                                        // Reset stream if not Class 11 or 12
-                                        stream: ['11', '12'].includes(newClass) ? formData.stream : ''
+                                        // Reset stream if not Class 11, 12, or Dropper
+                                        stream: ['11', '12', 'dropper-1', 'dropper-2'].includes(newClass) ? formData.stream : ''
                                     });
                                 }}
                             >
-                              {['9', '10', '11', '12'].map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+                              {CLASS_OPTIONS.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
                             </Select>
                         </FormControl>
                         
@@ -637,6 +705,7 @@ const StudentsPage: React.FC = () => {
                         >
                             <InputLabel>Stream</InputLabel>
                             <Select value={formData.stream} label="Stream" onChange={(e) => setFormData({ ...formData, stream: e.target.value as string })}>
+                                <MenuItem value=""><em>None</em></MenuItem>
                                 {streamOptions.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
                             </Select>
                         </FormControl>
