@@ -51,3 +51,25 @@ export const getAllActiveStreams = async (req: Request, res: Response) => {
         return res.status(500).json({ message: "Error fetching streams", error });
     }
 };
+export const getStreamCount = async () => {
+    try {
+        const count = await Stream.countDocuments({});
+        return count;
+    } catch (error) {
+        return {
+            message: "Error fetching stream count",
+            error
+        };
+    }
+};
+export const getActiveStreamCount = async () => {
+    try {
+        const count = await Stream.countDocuments({ isActive: true });
+        return count;
+    } catch (error) {
+        return {
+            message: "Error fetching active stream count",
+            error
+        };
+    }
+};

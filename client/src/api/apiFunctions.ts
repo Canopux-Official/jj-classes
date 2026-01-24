@@ -359,3 +359,20 @@ export async function changePassword(passwordData: { current: string, new: strin
     return { success: false, message: axiosError.response?.data?.message || "Failed to update password" };
   }
 }
+
+export async function getAdminDashboardDetails(){
+  try{
+    const config: AxiosRequestConfig={
+      method: "get",
+      url: `${import.meta.env.VITE_SERVER_LINK}/admin/dashboard/getAdminDashboardDetails`,
+      headers: getAuthHeaders()
+    };
+    const response = await axios(config);
+    return { success: true, data: response.data, status: response.status};
+
+  } catch(error){
+    const axiosError = error as AxiosError;
+    // @ts-expect-error response.data is not typed
+    return { success: false, message: axiosError.response?.data?.message || "Failed to fetch admin dashboard details" };
+  }
+}

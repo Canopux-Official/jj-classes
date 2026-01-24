@@ -343,3 +343,279 @@ const StudentDashboard: React.FC = () => {
 };
 
 export default StudentDashboard;
+
+
+
+// import React from 'react';
+// import { 
+//   Typography, 
+//   Box, 
+//   Stack, 
+//   Container, 
+//   useTheme,
+//   useMediaQuery,
+//   IconButton,
+//   Chip,
+//   Avatar
+// } from '@mui/material';
+
+// // Icons
+// import EventNoteIcon from '@mui/icons-material/EventNote';
+// import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+// import MenuBookIcon from '@mui/icons-material/MenuBook';
+// import SupportAgentIcon from '@mui/icons-material/SupportAgent';
+// import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+// import EmojiObjectsIcon from '@mui/icons-material/EmojiObjects';
+// import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
+// import AutoStoriesIcon from '@mui/icons-material/AutoStories';
+// import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+
+// // Custom Styled Components
+// import {
+//   WelcomeCard, 
+//   SectionContainer,
+//   SectionHeader, 
+//   NoticePreview,
+//   CountdownCard, 
+//   QuickActionButton
+// } from './StudentDashboard.styles';
+
+// // Functional Components
+// import RecentlyAddedMaterials from '../Material/stats/RecentlyAddedMaterials';
+// import MaterialStatsCard from '../Material/stats/MaterialStatsCard';
+// import { useNavigate } from 'react-router-dom';
+
+// const StudentDashboard: React.FC = () => {
+//   const theme = useTheme();
+//   // Using 'md' breakpoint: stack vertically on mobile/tablets, row on desktop
+//   const isMobile = useMediaQuery(theme.breakpoints.down('md')); 
+//   const navigate = useNavigate();
+
+//   // --- Mock Data ---
+//   const student = {
+//     name: "Anjali Singh",
+//     currentClass: "Class 12",
+//     targetExams: ["NEET"]
+//   };
+
+//   const notices = [
+//     { id: 1, title: "Diwali Vacation Schedule declared", date: "15 Oct 2025", type: "Holiday" },
+//     { id: 2, title: "Physics Guest Lecture by Dr. Verma", date: "12 Oct 2025", type: "Event" },
+//   ];
+
+//   const quickLinks = [
+//     { label: "Pay Fees", icon: <ReceiptLongIcon />, color: "#E91E63", route: "/student/fees" },
+//     { label: "Syllabus", icon: <MenuBookIcon />, color: "#2196F3", route: "/student/syllabus" },
+//     { label: "Support", icon: <SupportAgentIcon />, color: "#FF9800", route: "/student/support" },
+//     { label: "Library", icon: <AutoStoriesIcon />, color: "#4CAF50", route: "/student/material" },
+//   ];
+
+//   // --- Logic ---
+//   const handleNavigateToMaterial = (fullPath: Array<{ id: string; heading: string }>) => {
+//     navigate('/student/material', {
+//       state: { navigateToPath: fullPath, shouldNavigate: true, timestamp: Date.now() }
+//     });
+//   };
+
+//   const getCurrentDate = () => {
+//     return new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' });
+//   };
+
+//   return (
+//     <Box sx={{ flexGrow: 1, pb: 4, bgcolor: '#f4f6f8', minHeight: '100vh' }}>
+//       <Container maxWidth="xl" sx={{ pt: 3 }}>
+        
+//         {/* HEADER SECTION */}
+//         <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4}>
+//           <Box>
+//             <Typography variant="body2" color="text.secondary" fontWeight={600} textTransform="uppercase" letterSpacing={1}>
+//               {getCurrentDate()}
+//             </Typography>
+//             <Typography variant={isMobile ? "h5" : "h4"} fontWeight={800} color="#1a237e">
+//               Student Dashboard
+//             </Typography>
+//           </Box>
+//           <IconButton sx={{ bgcolor: 'white', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+//             <NotificationsNoneIcon color="action" />
+//           </IconButton>
+//         </Stack>
+
+//         {/* TOP ROW: Welcome & Countdown */}
+//         {/* Uses Stack with flex-basis for responsive sizing without Grid */}
+//         <Stack direction={isMobile ? 'column' : 'row'} spacing={3} mb={4}>
+          
+//           {/* Left: Welcome Card (Takes 66% width on desktop) */}
+//           <Box flexBasis={isMobile ? '100%' : '66.66%'} flexGrow={1}>
+//             <WelcomeCard elevation={0}>
+//               <Box position="relative" zIndex={2}>
+//                 <Chip 
+//                   label="Academic Year 2025-26" 
+//                   size="small" 
+//                   sx={{ 
+//                     bgcolor: 'rgba(255,255,255,0.15)', 
+//                     color: 'white', 
+//                     mb: 2, 
+//                     fontWeight: 600, 
+//                     border: '1px solid rgba(255,255,255,0.2)' 
+//                   }} 
+//                 />
+//                 <Typography variant="h4" fontWeight={800} sx={{ mb: 1, textShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+//                   Hello, {student.name.split(' ')[0]}! 👋
+//                 </Typography>
+//                 <Typography variant="body1" sx={{ opacity: 0.95, maxWidth: '600px', lineHeight: 1.6, fontSize: '1.05rem' }}>
+//                   You are preparing for <strong>{student.targetExams[0]}</strong>. Consistency is the key to cracking it. Keep your momentum going!
+//                 </Typography>
+//               </Box>
+//               <EmojiObjectsIcon sx={{ 
+//                 position: 'absolute', right: 30, bottom: -20, 
+//                 fontSize: 180, opacity: 0.15, color: 'white', transform: 'rotate(-20deg)' 
+//               }} />
+//             </WelcomeCard>
+//           </Box>
+
+//           {/* Right: Countdown (Takes 33% width on desktop) */}
+//           <Box flexBasis={isMobile ? '100%' : '33.33%'} flexGrow={1}>
+//             <CountdownCard elevation={0}>
+//               <Box position="relative" zIndex={2}>
+//                 <Typography variant="h2" fontWeight={800} sx={{ lineHeight: 1, mb: 0.5, textShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+//                   142
+//                 </Typography>
+//                 <Typography variant="h6" fontWeight={600} sx={{ mb: 2, opacity: 0.9 }}>Days Remaining</Typography>
+//                 <Chip 
+//                   label={`Target: ${student.targetExams[0]}`} 
+//                   size="small" 
+//                   sx={{ bgcolor: 'white', color: '#EF6C00', fontWeight: 800 }} 
+//                 />
+//               </Box>
+//               <HourglassEmptyIcon sx={{ position: 'absolute', right: -20, bottom: -30, fontSize: 160, opacity: 0.2, color: 'white' }} />
+//             </CountdownCard>
+//           </Box>
+//         </Stack>
+
+//         {/* MIDDLE SECTION: Stats & Quick Actions */}
+//         <Stack direction={isMobile ? 'column' : 'row'} spacing={3} mb={4}>
+          
+//           {/* Material Stats (Takes 66%) */}
+//           <Box flexBasis={isMobile ? '100%' : '66.66%'} flexGrow={1}>
+//              <SectionContainer elevation={0}>
+//                 <SectionHeader bgcolor="#e3f2fd"> {/* Light Blue Header */}
+//                   <Stack direction="row" alignItems="center" spacing={1.5}>
+//                     <Avatar sx={{ bgcolor: '#2196F3', width: 32, height: 32 }}>
+//                       <TrendingUpIcon fontSize="small" />
+//                     </Avatar>
+//                     <Box>
+//                       <Typography variant="h6" fontWeight={700} color="#0d47a1">Study Analytics</Typography>
+//                       <Typography variant="caption" color="text.secondary">Your learning progress overview</Typography>
+//                     </Box>
+//                   </Stack>
+//                 </SectionHeader>
+                
+//                 {/* Padding Wrapper to contain the Stats Card */}
+//                 <Box p={3}>
+//                    <MaterialStatsCard /> 
+//                 </Box>
+//              </SectionContainer>
+//           </Box>
+
+//           {/* Quick Actions (Takes 33%) */}
+//           <Box flexBasis={isMobile ? '100%' : '33.33%'} flexGrow={1} display="flex" flexDirection="column">
+//              <Typography variant="h6" fontWeight={700} color="text.primary" mb={2}>Quick Access</Typography>
+             
+//              {/* Using CSS Grid for the 2x2 Layout within the flex item */}
+//              <Box display="grid" gridTemplateColumns="repeat(2, 1fr)" gap={2} flexGrow={1}>
+//                {quickLinks.map((link, index) => (
+//                  <QuickActionButton key={index} accentColor={link.color}>
+//                     {link.icon}
+//                     <Typography variant="body2" fontWeight={700}>{link.label}</Typography>
+//                  </QuickActionButton>
+//                ))}
+//              </Box>
+//           </Box>
+//         </Stack>
+
+//         {/* BOTTOM SECTION: Library & Notices */}
+//         <Stack direction={isMobile ? 'column' : 'row'} spacing={3}>
+          
+//           {/* Recent Materials (Takes 70%) */}
+//           <Box flexBasis={isMobile ? '100%' : '70%'} flexGrow={1}>
+//             <SectionContainer elevation={0} sx={{ minHeight: '400px' }}>
+//               <SectionHeader bgcolor="#f3e5f5"> {/* Light Purple Header */}
+//                 <Stack direction="row" alignItems="center" spacing={1.5}>
+//                   <Avatar sx={{ bgcolor: '#9c27b0', width: 32, height: 32 }}>
+//                     <MenuBookIcon fontSize="small" />
+//                   </Avatar>
+//                   <Box>
+//                     <Typography variant="h6" fontWeight={700} color="#4a148c">Recently Added Materials</Typography>
+//                     <Typography variant="caption" color="text.secondary">Latest uploads by your teachers</Typography>
+//                   </Box>
+//                 </Stack>
+//                 <Typography 
+//                   variant="caption" 
+//                   color="secondary" 
+//                   fontWeight={700} 
+//                   sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+//                   onClick={() => navigate('/student/material')}
+//                 >
+//                   VIEW LIBRARY
+//                 </Typography>
+//               </SectionHeader>
+              
+//               <Box p={2}>
+//                 <RecentlyAddedMaterials
+//                   onNavigateToMaterial={handleNavigateToMaterial}
+//                   maxItems={5}
+//                   showHeader={false}
+//                   containerStyles={{ padding: 0 }}
+//                 />
+//               </Box>
+//             </SectionContainer>
+//           </Box>
+
+//           {/* Notices (Takes 30%) */}
+//           <Box flexBasis={isMobile ? '100%' : '30%'} flexGrow={1}>
+//             <SectionContainer elevation={0} sx={{ height: 'auto' }}>
+//               <SectionHeader bgcolor="#fff3e0"> {/* Light Orange Header */}
+//                 <Stack direction="row" alignItems="center" spacing={1.5}>
+//                   <Avatar sx={{ bgcolor: '#ed6c02', width: 32, height: 32 }}>
+//                     <EventNoteIcon fontSize="small" />
+//                   </Avatar>
+//                   <Typography variant="h6" fontWeight={700} color="#e65100">Notice Board</Typography>
+//                 </Stack>
+//               </SectionHeader>
+
+//               <Box p={2}>
+//                 <Stack spacing={2}>
+//                   {notices.map((notice) => (
+//                     <NoticePreview key={notice.id}>
+//                       <Stack direction="row" justifyContent="space-between" mb={1}>
+//                         <Chip 
+//                           label={notice.type} 
+//                           size="small" 
+//                           sx={{ 
+//                             height: 20, 
+//                             fontSize: '0.65rem', 
+//                             fontWeight: 700,
+//                             borderRadius: '4px',
+//                             bgcolor: notice.type === 'Holiday' ? '#ffebee' : '#e3f2fd',
+//                             color: notice.type === 'Holiday' ? '#c62828' : '#1565c0'
+//                           }} 
+//                         />
+//                         <Typography variant="caption" color="text.secondary" fontWeight={600}>{notice.date}</Typography>
+//                       </Stack>
+//                       <Typography variant="subtitle2" fontWeight={700} color="text.primary" sx={{ lineHeight: 1.3 }}>
+//                         {notice.title}
+//                       </Typography>
+//                     </NoticePreview>
+//                   ))}
+//                 </Stack>
+//               </Box>
+//             </SectionContainer>
+//           </Box>
+
+//         </Stack>
+//       </Container>
+//     </Box>
+//   );
+// };
+
+// export default StudentDashboard;

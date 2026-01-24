@@ -505,3 +505,26 @@ export const changePassword = async (req: Request, res: Response) => {
         });
     }
 };
+
+export const getStudentCount = async () => {
+    try {
+        const count = await Student.countDocuments({});
+        return count;
+    } catch (error) {
+        return {
+            message: "Error fetching student count",
+            error
+        };
+    }
+};
+export const getActiveStudentCount = async () => {
+    try {
+        const count = await Student.countDocuments({ isActive: true });
+        return count;
+    } catch (error) {
+        return {
+            message: "Error fetching active student count",
+            error
+        };
+    }
+};

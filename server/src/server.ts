@@ -15,8 +15,7 @@ import studentMaterialRoutes from './routes/student/studentMaterialRoutes'
 import studentProfileRoutes from './routes/student/studentProfileRoutes'
 import adminNoticeRoutes from './routes/admin/admin.noticeRoutes'
 import studentNoticeRoutes from './routes/student/studentNoticeRoutes'
-import mongoose from 'mongoose';
-
+import adminDashboardRoutes from './routes/admin/admin.dashboardRoutes';
 const corsOptions = {
   origin: `${process.env.CLIENT_LINK}`,
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
@@ -30,6 +29,7 @@ app.use(cors(corsOptions));
 connectDB();
 
 app.use('/auth', authRoutes);
+app.use('/admin/dashboard', adminDashboardRoutes);
 app.use('/admin/studentControl', adminStudentRoutes);
 app.use('/admin/streamControl', adminStreamRoutes);
 app.use('/admin/targetExamControl', adminTargetExamRoutes);

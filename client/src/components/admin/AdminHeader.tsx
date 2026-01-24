@@ -1,7 +1,8 @@
 import React from 'react';
-import { Typography, IconButton, Avatar, Box, Badge, Button } from '@mui/material';
+import { Typography, IconButton, Avatar, Box, Button } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
+// import {Badge} from '@mui/material';;
+//import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { StyledAppBar, HeaderContent, ProfileSection } from './AdminHeader.styles';
 import { useNavigate } from 'react-router-dom';
@@ -33,9 +34,9 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ handleDrawerToggle }) => {
         
         <Box display="flex" alignItems="center" gap={{ xs: 1, sm: 2 }}>
           <IconButton color="inherit">
-            <Badge badgeContent={4} color="error">
+            {/* <Badge badgeContent={4} color="error">
               <NotificationsNoneIcon />
-            </Badge>
+            </Badge> */}
           </IconButton>
           <Button
               variant="outlined"

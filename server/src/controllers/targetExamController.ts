@@ -51,3 +51,25 @@ export const getAllActiveExams = async (req: Request, res: Response) => {
         return res.status(500).json({ message: "Error fetching exams", error });
     }
 };
+export const getTargetExamCount = async () => {
+    try {
+        const count = await TargetExam.countDocuments({});
+        return count;
+    } catch (error) {
+        return {
+            message: "Error fetching target exam count",
+            error
+        };
+    }
+};
+export const getActiveTargetExamCount = async () => {
+    try {
+        const count = await TargetExam.countDocuments({ isActive: true });
+        return count
+    } catch (error) {
+        return {
+            message: "Error fetching active target exam count",
+            error
+        };
+    }
+};

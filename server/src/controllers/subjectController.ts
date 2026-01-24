@@ -53,3 +53,25 @@ export const getAllActiveSubjects = async (req: Request, res: Response) => {
         return res.status(500).json({ message: "Internal server error" });
     }
 };
+export const getSubjectCount = async ()=> {
+    try {
+        const count = await Subject.countDocuments({});
+        return count;
+    } catch (error) {
+       return {
+            message: "Error fetching subject count",
+            error
+        };
+    }
+};
+export const getActiveSubjectCount = async () => {
+    try {
+        const count = await Subject.countDocuments({ isActive: true });
+        return count;
+    } catch (error) {
+        return {
+            message: "Error fetching active ssubject count",
+            error
+        };
+    }
+};
