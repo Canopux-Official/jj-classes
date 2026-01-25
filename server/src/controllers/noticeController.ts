@@ -172,13 +172,7 @@ const getNoticesForStudent = async (req: Request, res: Response): Promise<void> 
             return;
         }
 
-        if (!student.isActive) {
-            res.status(403).json({
-                message: "Student is not active",
-                success: false
-            });
-            return;
-        }
+        
 
         // Build query to fetch relevant notices
         const query: any = {
