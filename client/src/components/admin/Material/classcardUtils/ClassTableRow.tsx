@@ -32,7 +32,6 @@ const ClassTableRow: React.FC<ClassTableRowProps> = ({
     classType,
     targetExam,
     stream,
-    description,
     onClick,
     onEdit,
     onDelete,
