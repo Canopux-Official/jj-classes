@@ -40,7 +40,7 @@ const getTargetExamIds = async (examNames: string | string[]) => {
     if (!examNames) return [];
     const names = Array.isArray(examNames) ? examNames : String(examNames).split(',');
     if (names.length === 0) return [];
-    
+
     const exams = await TargetExam.find({ name: { $in: names } });
     return exams.map(e => e._id);
 };
@@ -56,7 +56,7 @@ export const getAllStudents = async (req: Request, res: Response) => {
             })
             .populate('stream', 'name')        // Populate Stream Name
             .populate('targetExams', 'name')   // Populate Exam Names
-            .select('-password -createdAt -updatedAt') 
+            .select('-password -createdAt -updatedAt')
             .sort({ admissionDate: -1 });
 
         res.status(200).json(students);
@@ -99,7 +99,7 @@ export const addStudent = async (req: Request, res: Response) => {
             const { name, phoneNumber, dob, email } = student;
             const currentClass = student.currentClass || student.studentClass || student.class || student.standard;
             const academicSession = student.academicSession;
-            
+
             // Raw Inputs
             const rawStream = student.stream ? String(student.stream).trim() : null;
             const rawTargetExams = student.targetExams || [];
@@ -135,7 +135,7 @@ export const addStudent = async (req: Request, res: Response) => {
             try {
                 // 1. Resolve Subjects
                 subjectIds = await getSubjectIds(student.enrolledSubjects);
-                
+
                 // 2. Resolve Stream
                 if (rawStream) {
                     streamId = await getStreamId(rawStream);
@@ -173,9 +173,9 @@ export const addStudent = async (req: Request, res: Response) => {
                         currentClass,
                         academicSession,
                         password: hashedPassword,
-                        
+
                         // Pass RESOLVED IDs here, not strings
-                        targetExams: targetExamIds, 
+                        targetExams: targetExamIds,
                         enrolledSubjects: subjectIds,
                         stream: streamId,
 
@@ -221,13 +221,13 @@ export const updateStudent = async (req: Request, res: Response) => {
         const updates = req.body;
 
         // --- RESOLVE REFERENCES IF UPDATING ---
-        
+
         // 1. Resolve Subjects
         if (updates.enrolledSubjects && Array.isArray(updates.enrolledSubjects)) {
             // Check if it looks like names (strings) instead of ObjectIds
             const firstItem = updates.enrolledSubjects[0];
             const isName = typeof firstItem === 'string' && !firstItem.match(/^[0-9a-fA-F]{24}$/);
-            
+
             if (isName) {
                 updates.enrolledSubjects = await getSubjectIds(updates.enrolledSubjects);
             }
@@ -235,20 +235,23 @@ export const updateStudent = async (req: Request, res: Response) => {
 
         // 2. Resolve Stream
         if (updates.stream && typeof updates.stream === 'string') {
-             // Only resolve if it's not already an ObjectId
-             if(!updates.stream.match(/^[0-9a-fA-F]{24}$/)) {
-                 updates.stream = await getStreamId(updates.stream);
-             }
+            // Only resolve if it's not already an ObjectId
+            if (!updates.stream.match(/^[0-9a-fA-F]{24}$/)) {
+                updates.stream = await getStreamId(updates.stream);
+            }
+        }
+        else {
+            updates.stream = null;
         }
 
         // 3. Resolve Target Exams
         if (updates.targetExams && Array.isArray(updates.targetExams)) {
-             const firstItem = updates.targetExams[0];
-             const isName = typeof firstItem === 'string' && !firstItem.match(/^[0-9a-fA-F]{24}$/);
-             
-             if (isName) {
-                 updates.targetExams = await getTargetExamIds(updates.targetExams);
-             }
+            const firstItem = updates.targetExams[0];
+            const isName = typeof firstItem === 'string' && !firstItem.match(/^[0-9a-fA-F]{24}$/);
+
+            if (isName) {
+                updates.targetExams = await getTargetExamIds(updates.targetExams);
+            }
         }
 
         const updatedStudent = await Student.findByIdAndUpdate(id, updates, { new: true })
@@ -310,7 +313,7 @@ export const bulkAddStudents = async (req: Request, res: Response) => {
 
                 const academicSession = s.academicSession ? String(s.academicSession).trim() : "";
                 const parentPhoneNumber = s.parentPhoneNumber ? String(s.parentPhoneNumber).trim() : undefined;
-                
+
                 // Raw Inputs for References
                 const rawStream = s.stream ? String(s.stream).trim() : null;
                 let rawTargetExams: string[] = [];
@@ -340,7 +343,7 @@ export const bulkAddStudents = async (req: Request, res: Response) => {
                 }
 
                 // --- 4. Resolve References (IDs) ---
-                
+
                 // A. Subjects
                 let subjectIds: any[] = [];
                 try {
@@ -356,7 +359,7 @@ export const bulkAddStudents = async (req: Request, res: Response) => {
 
                 // B. Stream
                 let streamId = null;
-                if(rawStream) {
+                if (rawStream) {
                     streamId = await getStreamId(rawStream);
                 }
 
@@ -386,12 +389,12 @@ export const bulkAddStudents = async (req: Request, res: Response) => {
                     currentClass,
                     academicSession,
                     password: hashedPassword,
-                    
+
                     // Use Resolved IDs
                     targetExams: targetExamIds,
                     enrolledSubjects: subjectIds,
                     stream: streamId,
-                    
+
                     email,
                     parentPhoneNumber,
                     isActive: true,
@@ -443,7 +446,7 @@ export const deleteStudent = async (req: Request, res: Response) => {
 };
 export const getAllActiveStudents = async (req: Request, res: Response) => {
     try {
-        const students = await Student.find({isActive: true})
+        const students = await Student.find({ isActive: true })
             .populate({
                 path: 'enrolledSubjects',
                 model: Subject,
@@ -451,7 +454,7 @@ export const getAllActiveStudents = async (req: Request, res: Response) => {
             })
             .populate('stream', 'name')        // Populate Stream Name
             .populate('targetExams', 'name')   // Populate Exam Names
-            .select('-password -createdAt -updatedAt') 
+            .select('-password -createdAt -updatedAt')
             .sort({ admissionDate: -1 });
 
         res.status(200).json(students);
@@ -465,7 +468,7 @@ export const getAllActiveStudents = async (req: Request, res: Response) => {
 export const changePassword = async (req: Request, res: Response) => {
     try {
         const { current, new: newPassword } = req.body;
-        const userId = req.user?.id; 
+        const userId = req.user?.id;
 
         if (!userId) {
             return res.status(401).json({ message: "Unauthorized: User not found." });
@@ -492,16 +495,16 @@ export const changePassword = async (req: Request, res: Response) => {
         student.password = hashedPassword;
         await student.save();
 
-        return res.status(200).json({ 
-            success: true, 
-            message: "Password updated successfully." 
+        return res.status(200).json({
+            success: true,
+            message: "Password updated successfully."
         });
 
     } catch (error) {
         console.error("Change Password Error:", error);
-        return res.status(500).json({ 
-            success: false, 
-            message: "Server error while updating password." 
+        return res.status(500).json({
+            success: false,
+            message: "Server error while updating password."
         });
     }
 };
