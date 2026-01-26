@@ -239,6 +239,8 @@ export const updateStudent = async (req: Request, res: Response) => {
              if(!updates.stream.match(/^[0-9a-fA-F]{24}$/)) {
                  updates.stream = await getStreamId(updates.stream);
              }
+        }else{
+            updates.stream = null;
         }
 
         // 3. Resolve Target Exams
