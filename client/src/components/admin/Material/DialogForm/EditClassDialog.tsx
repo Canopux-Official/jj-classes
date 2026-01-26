@@ -93,7 +93,7 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
     onSave(className, selectedTargetExamId, selectedStreamId);
   };
 
-  const isFormValid = selectedClassType && selectedTargetExamId && selectedStreamId;
+  const isFormValid = selectedClassType && selectedTargetExamId
 
   return (
     <Dialog
