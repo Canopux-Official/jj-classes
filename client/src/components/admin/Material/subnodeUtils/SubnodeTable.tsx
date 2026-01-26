@@ -64,7 +64,7 @@ const SubnodeTable: React.FC<SubnodeTableProps> = ({
     setSelectedNode(null);
   };
 
-  console.log(nodes)
+  console.log(selectedNode)
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
@@ -114,7 +114,7 @@ const SubnodeTable: React.FC<SubnodeTableProps> = ({
                       flex: 1,
                     }}
                   >
-                    {node.heading}
+                    {node.heading ? node.heading : (typeof node.subject === 'object' && node.subject?.name) || ''}
                   </Typography>
                 </Box>
 
@@ -127,7 +127,7 @@ const SubnodeTable: React.FC<SubnodeTableProps> = ({
                       mb: 1,
                     }}
                   >
-                    {node.description}
+                    {node.description ? node.description.slice(0,20)+"......." : '-'}
                   </Typography>
                 )}
 
@@ -320,11 +320,11 @@ const SubnodeTable: React.FC<SubnodeTableProps> = ({
                           variant="body2"
                           sx={{ fontWeight: 600, mb: 0.5 }}
                         >
-                          {reference.name || reference.title || 'Reference'}
+                          {reference.fileName}
                         </Typography>
-                        {reference.link && (
+                        {reference.referenceLink && (
                           <Link
-                            href={reference.link}
+                            href={reference.referenceLink}
                             target="_blank"
                             rel="noopener noreferrer"
                             sx={{
@@ -467,7 +467,7 @@ const SubnodeTable: React.FC<SubnodeTableProps> = ({
                         whiteSpace: 'nowrap',
                       }}
                     >
-                      {node.description || '-'}
+                      {node.description ? node.description.slice(0,20)+"......." : '-'}
                     </Typography>
                   </TableCell>
                 )}
@@ -678,11 +678,11 @@ const SubnodeTable: React.FC<SubnodeTableProps> = ({
                         variant="body2"
                         sx={{ fontWeight: 600, mb: 0.5 }}
                       >
-                        {reference.name || reference.title || 'Reference'}
+                        {reference.fileName}
                       </Typography>
-                      {reference.link && (
+                      {reference.referenceLink && (
                         <Link
-                          href={reference.link}
+                          href={reference.referenceLink}
                           target="_blank"
                           rel="noopener noreferrer"
                           sx={{

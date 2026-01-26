@@ -320,6 +320,8 @@ const showClass = async (req: Request, res: Response) => {
         const stream = student.stream;           // This will be a populated object
         const className = student.currentClass;
 
+        console.log(targetExams, stream, className);
+
         const allClasses = [];
 
         // Iterate through each target exam
@@ -345,6 +347,8 @@ const showClass = async (req: Request, res: Response) => {
                 allClasses.push(classesMaterial);
             }
         }
+
+        console.log(allClasses)
 
         // Return the classes with populated data
         return res.status(200).json({
