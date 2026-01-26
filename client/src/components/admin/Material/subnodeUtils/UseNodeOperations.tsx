@@ -48,6 +48,7 @@ export const useNodeOperations = (
         fileDetails: nodeData.fileDetails || [],
         referenceDetails: nodeData.referenceDetails || [],
         path: [],
+        subject: nodeData.subject,
       };
 
       const result = await createFolder(currentNodeId, newNode);
@@ -89,6 +90,7 @@ export const useNodeOperations = (
         lastDate: nodeData.lastDate || editingNode.lastDate,
         fileDetails: nodeData.fileDetails,
         referenceDetails: nodeData.referenceDetails,
+        subject: nodeData.subject || editingNode.subject,
       };
 
       const result = await updateFolder(editingNode._id, updatedNode);

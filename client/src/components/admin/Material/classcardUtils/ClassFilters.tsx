@@ -41,8 +41,6 @@ interface ClassFiltersProps {
 const ClassFilters: React.FC<ClassFiltersProps> = ({
   searchTerm,
   onSearchChange,
-  filterTag,
-  onTagChange,
   filterClassType,
   onClassTypeChange,
   filterStream,
@@ -84,29 +82,6 @@ const ClassFilters: React.FC<ClassFiltersProps> = ({
           ),
         }}
       />
-
-      {/* Tag Filter */}
-      <FormControl
-        size="small"
-        sx={{
-          minWidth: 150,
-          flex: { xs: '1 1 calc(50% - 8px)', sm: '0 0 auto' },
-          '& .MuiOutlinedInput-root': {
-            borderRadius: '8px',
-            backgroundColor: '#ffffff',
-          },
-        }}
-      >
-        <InputLabel>Tag</InputLabel>
-        <Select
-          value={filterTag}
-          label="Tag"
-          onChange={(e: SelectChangeEvent) => onTagChange(e.target.value)}
-        >
-          <MenuItem value="">All Tags</MenuItem>
-          {/* Add dynamic tags here if needed */}
-        </Select>
-      </FormControl>
 
       {/* Class Type Filter */}
       <FormControl

@@ -105,7 +105,7 @@ import {
   Box,
   Chip,
 } from "@mui/material";
-import { AttachFile,Link as LinkIcon } from "@mui/icons-material";
+import { AttachFile, Link as LinkIcon } from "@mui/icons-material";
 import { ClickableCard, FileChip, LinkChip, StyledCard } from "../theme/material.styles";
 import type { Node } from "../../../admin/Material/types/node";
 import def from '../../../../../public/images/default.jpg'
@@ -113,7 +113,18 @@ import chem from '../../../../../public/images/chemistry.jpg'
 
 // Function to detect subject from heading or use provided subject
 const getSubjectTheme = (node: Node) => {
-  const subject = (node as any).subject || node.heading;
+  // Handle both populated subject object and plain heading
+  let subjectName: string = '';
+
+  if ((node as any).subject) {
+    // If subject is populated, it will be an object with a 'name' field
+    subjectName = typeof (node as any).subject === 'object'
+      ? (node as any).subject.name
+      : (node as any).subject;
+  } else if (node.heading) {
+    // Fallback to heading if subject doesn't exist
+    subjectName = node.heading;
+  }
 
   const subjectThemes = {
     Physics: {
@@ -172,9 +183,12 @@ const getSubjectTheme = (node: Node) => {
     }
   };
 
-  for (const [key, theme] of Object.entries(subjectThemes)) {
-    if (subject.toLowerCase().includes(key.toLowerCase())) {
-      return theme;
+  // Only try to match if we have a valid string
+  if (subjectName && typeof subjectName === 'string') {
+    for (const [key, theme] of Object.entries(subjectThemes)) {
+      if (subjectName.toLowerCase().includes(key.toLowerCase())) {
+        return theme;
+      }
     }
   }
 
@@ -184,6 +198,13 @@ const getSubjectTheme = (node: Node) => {
 export const SubfolderCard: React.FC<{ node: Node; onClick?: () => void }> = ({ node, onClick }) => {
   const isFolder = node.type === 'folder';
   const theme = getSubjectTheme(node);
+
+  // Get display heading (from subject or manual heading)
+  const displayHeading = (node as any).subject
+    ? (typeof (node as any).subject === 'object'
+      ? (node as any).subject.name
+      : (node as any).subject)
+    : node.heading;
 
   const handleFileClick = (link: string) => {
     window.open(link, '_blank');
@@ -225,7 +246,7 @@ export const SubfolderCard: React.FC<{ node: Node; onClick?: () => void }> = ({ 
       <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
         {/* Title */}
         <Typography variant="subtitle1" sx={{ fontWeight: 600, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-          {node.heading}
+          {displayHeading}
         </Typography>
 
         {/* Description */}

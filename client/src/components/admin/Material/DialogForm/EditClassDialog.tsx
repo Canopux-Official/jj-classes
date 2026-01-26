@@ -144,6 +144,7 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
           </Select>
         </FormControl>
 
+        {selectedClassType === '9' || selectedClassType === '10' ? null : (
         <FormControl fullWidth sx={{ mb: 2 }}>
           <InputLabel>Stream</InputLabel>
           <Select
@@ -160,6 +161,7 @@ const EditClassDialog: React.FC<EditClassDialogProps> = ({
             ))}
           </Select>
         </FormControl>
+        )}
 
         <Paper
           elevation={0}

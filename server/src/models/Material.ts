@@ -29,11 +29,14 @@ export interface IMaterial extends Document {
   classType: '9' | '10' | '11' | '12' | 'dropper-1' | 'dropper-2' | '';
   targetExam: mongoose.Types.ObjectId; // Reference
   stream: mongoose.Types.ObjectId;    // Reference
+  subject?: mongoose.Types.ObjectId;
 
   lastDate?: Date;
   createdAt: Date;
   parentId?: Types.ObjectId;
   updatedAt: Date;
+  isActive: Boolean,
+  inactiveSince: Date
 }
 
 const MaterialSchema: Schema = new Schema({
@@ -55,7 +58,7 @@ const MaterialSchema: Schema = new Schema({
   tags: { type: [String], default: [], required: false },
   path: [{
     id: { type: String, required: true },      // STRING, not ObjectId
-    heading: { type: String, required: true }
+    heading: { type: String, required: false }
   }],
 
   // Access Control
@@ -79,6 +82,12 @@ const MaterialSchema: Schema = new Schema({
     required: false,
     default: null
   },
+  subject: {
+    type: Schema.Types.ObjectId,
+    ref: 'Subject',
+    required: false,
+    default: null
+  },
 
   lastDate: { type: Date, default: null, required: false },
   createdAt: { type: Date, default: Date.now, required: false },
@@ -89,6 +98,14 @@ const MaterialSchema: Schema = new Schema({
     default: null,
     required: false
   },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  inactiveSince: {
+    type: Date,
+    default: null
+  }
 }, { timestamps: true });
 
 export default mongoose.model<IMaterial>('Material', MaterialSchema);

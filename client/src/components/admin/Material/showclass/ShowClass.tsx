@@ -1081,7 +1081,7 @@ const ShowClass: React.FC = () => {
   };
 
   const handleProceedToConfirm = () => {
-    if (selectedClassType && selectedTargetExamId && selectedStreamId) {
+    if (selectedClassType && selectedTargetExamId) {
       setOpenClassSelectionDialog(false);
       setOpenConfirmDialog(true);
     }
@@ -1095,7 +1095,7 @@ const ShowClass: React.FC = () => {
   };
 
   const handleConfirmCreateClass = async () => {
-    if (!selectedClassType || !selectedTargetExamId || !selectedStreamId) return;
+    if (!selectedClassType || !selectedTargetExamId) return;
 
     const className = CLASS_OPTIONS.find((opt) => opt.value === selectedClassType)?.value || selectedClassType;
 
@@ -1105,7 +1105,7 @@ const ShowClass: React.FC = () => {
       if (!response.success) {
         throw new Error(response.message || 'Failed to create class');
       }
-
+      
       const newNode: Node = {
         _id: (response.data as { _id: string })._id,
         heading: '',
@@ -1412,16 +1412,7 @@ const ShowClass: React.FC = () => {
             <Table>
               <TableHead>
                 <TableRow sx={{ backgroundColor: '#fafafa' }}>
-                  <TableCell sx={{ fontWeight: 600, color: '#616161' }}>Heading</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#616161', display: { xs: 'none', md: 'table-cell' } }}>
-                    Description
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#616161', display: { xs: 'none', sm: 'table-cell' } }}>
-                    Tag
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#616161', display: { xs: 'none', lg: 'table-cell' } }}>
-                    Class Type
-                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#616161' }}>Class</TableCell>
                   <TableCell sx={{ fontWeight: 600, color: '#616161', display: { xs: 'none', md: 'table-cell' } }}>
                     Streams
                   </TableCell>
@@ -1497,6 +1488,7 @@ const ShowClass: React.FC = () => {
               ))}
             </Select>
           </FormControl>
+          {selectedClassType === '9'|| selectedClassType === '10' ? (null) : (
           <FormControl fullWidth>
             <InputLabel>Stream</InputLabel>
             <Select
@@ -1513,6 +1505,9 @@ const ShowClass: React.FC = () => {
               ))}
             </Select>
           </FormControl>
+          )}
+
+
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3 }}>
           <Button onClick={handleCloseClassSelectionDialog} sx={{ textTransform: 'none' }}>
@@ -1521,7 +1516,7 @@ const ShowClass: React.FC = () => {
           <Button
             onClick={handleProceedToConfirm}
             variant="contained"
-            disabled={!selectedClassType || !selectedTargetExamId || !selectedStreamId}
+            disabled={!selectedClassType || !selectedTargetExamId}
             sx={{
               background: '#1a1a1a',
               textTransform: 'none',
