@@ -1,10 +1,17 @@
 import type { FileDetail } from "./FileDetail";
 import type { ReferenceDetail } from "./referenceDetails";
 
+export interface Subject {
+  _id: string;
+  name: string;
+}
+
+
 export interface Node {
   _id: string;
   heading: string;
   targetExam: string;
+  subject?: Subject | string;  // Can be populated object or just ID
   stream: string;
   type: 'folder' | 'file';
   parentId: string | null;

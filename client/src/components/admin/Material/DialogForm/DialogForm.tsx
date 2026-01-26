@@ -1,3 +1,4 @@
+
 // import React, { useState, useEffect, useRef } from 'react';
 // import {
 //   Dialog,
@@ -32,6 +33,8 @@
 // import type { ReferenceDetail } from '../types/referenceDetails';
 // import { deleteFileFromDrive, initGoogleDrive, isGoogleDriveInitialized, uploadMultipleFiles } from '../utils/googleDriveService';
 // import FileBrowserModal from './FileBrowserModal';
+// import { getAllSubjects } from '../../../../api/apiFunctions';
+
 
 // interface NodeDialogFormProps {
 //   open: boolean;
@@ -40,6 +43,17 @@
 //   initialData?: Partial<Node>;
 //   title: string;
 //   parentId: string;
+//   depth?: number; // Add depth prop to know if this is first level
+// }
+
+// interface ISubjectUI {
+//   _id: string;
+//   name: string;
+//   isActive: boolean;
+// }
+
+// interface ISubjectResponse {
+//   subjects: ISubjectUI[];
 // }
 
 // const NodeDialogForm: React.FC<NodeDialogFormProps> = ({
@@ -49,8 +63,10 @@
 //   initialData = {},
 //   title,
 //   parentId,
+//   depth = 0,
 // }) => {
 //   const isEdit = !!initialData._id;
+//   const isFirstDepth = depth === 1; // Check if this is first depth (child of root)
 
 //   const [formData, setFormData] = useState<Partial<Node>>({
 //     heading: initialData.heading || '',
@@ -76,6 +92,11 @@
 //     referenceLink: '',
 //   });
 
+//   // Subject-related state
+//   const [subjects, setSubjects] = useState<any[]>([]);
+//   const [loadingSubjects, setLoadingSubjects] = useState(false);
+//   const [selectedSubject, setSelectedSubject] = useState('');
+
 //   const initialDataRef = useRef(initialData);
 //   const cancelUpload = useRef<boolean>(false);
 
@@ -83,12 +104,29 @@
 //     initialDataRef.current = initialData;
 //   }, [initialData]);
 
-//   // Initialize Google Drive API when dialog opens
+//   // Fetch subjects when dialog opens and it's first depth
 //   useEffect(() => {
+//     const fetchSubjects = async () => {
+//       if (!isFirstDepth) return;
+
+//       setLoadingSubjects(true);
+//       try {
+//         const res = await getAllSubjects();
+//         if (res.success && res.data && (res.data as ISubjectResponse).subjects) {
+//           setSubjects((res.data as ISubjectResponse).subjects);
+//         }
+//       } catch (error) {
+//         console.error('Error fetching subjects:', error);
+//       } finally {
+//         setLoadingSubjects(false);
+//       }
+//     };
+
 //     if (open) {
+//       fetchSubjects();
 //       initGoogleDrive();
 //     }
-//   }, [open]);
+//   }, [open, isFirstDepth]);
 
 //   // Reset form when dialog opens
 //   useEffect(() => {
@@ -109,10 +147,18 @@
 //       setNewReference({ fileName: '', referenceLink: '' });
 //       setSelectedFiles(null);
 //       setUploadProgress({});
-//       setUploading(false); // Reset uploading state
-//       cancelUpload.current = false; // Reset cancel flag
+//       setUploading(false);
+//       cancelUpload.current = false;
+//       setSelectedSubject(data.heading || ''); // Pre-select if editing
 //     }
 //   }, [open]);
+
+//   // Handle subject selection
+//   const handleSubjectChange = (event: any) => {
+//     const subjectName = event.target.value;
+//     setSelectedSubject(subjectName);
+//     setFormData({ ...formData, heading: subjectName });
+//   };
 
 //   // Handle file selection
 //   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,17 +178,15 @@
 //     }
 
 //     setUploading(true);
-//     cancelUpload.current = false; // Reset cancel flag when starting new upload
+//     cancelUpload.current = false;
 //     const filesArray = Array.from(selectedFiles);
 
 //     try {
 //       const uploadedFiles = await uploadMultipleFiles(
 //         filesArray,
-//         // Progress callback
 //         (fileName, progress) => {
 //           setUploadProgress((prev) => ({ ...prev, [fileName]: progress }));
 //         },
-//         // Completion callback
 //         (fileName, result) => {
 //           if (!result) {
 //             alert(`Failed to upload ${fileName}`);
@@ -150,7 +194,6 @@
 //         }
 //       );
 
-//       // Add successfully uploaded files to form data
 //       if (uploadedFiles.length > 0) {
 //         setFormData({
 //           ...formData,
@@ -158,7 +201,6 @@
 //         });
 //       }
 
-//       // Reset selection
 //       setSelectedFiles(null);
 //       setUploadProgress({});
 //     } catch (error: unknown) {
@@ -246,10 +288,10 @@
 //   };
 
 //   const handleCancel = () => {
-//     cancelUpload.current = true; // Mark the upload as canceled
-//     setUploading(false); // Reset uploading state immediately
-//     setUploadProgress({}); // Clear upload progress
-//     setSelectedFiles(null); // Clear selected files
+//     cancelUpload.current = true;
+//     setUploading(false);
+//     setUploadProgress({});
+//     setSelectedFiles(null);
 //     onClose();
 //   };
 
@@ -267,7 +309,7 @@
 //       <DialogContent dividers sx={{ maxHeight: '70vh' }}>
 //         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 1 }}>
 //           {/* Type Selection */}
-//           <FormControl fullWidth>
+//           <FormControl fullWidth disabled={isFirstDepth ? true : false}>
 //             <InputLabel>Type</InputLabel>
 //             <Select
 //               value={formData.type || 'folder'}
@@ -279,15 +321,42 @@
 //             </Select>
 //           </FormControl>
 
-//           {/* Heading / Name */}
-//           <TextField
-//             label={formData.type === 'folder' ? 'Folder Name' : 'File Name'}
-//             required
-//             fullWidth
-//             value={formData.heading || ''}
-//             onChange={(e) => setFormData({ ...formData, heading: e.target.value })}
-//             placeholder={formData.type === 'folder' ? 'e.g., Chapter 1: Limits' : 'e.g., Lecture Notes.pdf'}
-//           />
+//           {/* Subject Dropdown for First Depth OR Regular Heading Input */}
+//           {isFirstDepth ? (
+//             <FormControl fullWidth required>
+//               <InputLabel>Select Subject</InputLabel>
+//               <Select
+//                 value={selectedSubject}
+//                 label="Select Subject"
+//                 onChange={handleSubjectChange}
+//                 disabled={loadingSubjects}
+//               >
+//                 {loadingSubjects ? (
+//                   <MenuItem disabled>
+//                     <CircularProgress size={20} sx={{ mr: 1 }} />
+//                     Loading subjects...
+//                   </MenuItem>
+//                 ) : subjects.length === 0 ? (
+//                   <MenuItem disabled>No subjects available</MenuItem>
+//                 ) : (
+//                   subjects.map((subject) => (
+//                     <MenuItem key={subject._id || subject.id} value={subject.name || subject.subjectName}>
+//                       {subject.name || subject.subjectName}
+//                     </MenuItem>
+//                   ))
+//                 )}
+//               </Select>
+//             </FormControl>
+//           ) : (
+//             <TextField
+//               label={formData.type === 'folder' ? 'Folder Name' : 'File Name'}
+//               required
+//               fullWidth
+//               value={formData.heading || ''}
+//               onChange={(e) => setFormData({ ...formData, heading: e.target.value })}
+//               placeholder={formData.type === 'folder' ? 'e.g., Chapter 1: Limits' : 'e.g., Lecture Notes.pdf'}
+//             />
+//           )}
 
 //           {/* Description */}
 //           <TextField
@@ -351,7 +420,7 @@
 //           <Box>
 //             <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
 //               <FileIcon fontSize="small" />
-//               File Details (optional)
+//               {formData.type === 'folder' ? 'Prerequisite (optional)' : 'File Details (optional)'}
 //             </Typography>
 
 //             {/* Upload Files to Google Drive */}
@@ -361,7 +430,6 @@
 //                   Upload files directly to Google Drive (Multiple files supported)
 //                 </Typography>
 
-//                 {/* File Input */}
 //                 <Button
 //                   variant="outlined"
 //                   component="label"
@@ -373,7 +441,6 @@
 //                   <input type="file" hidden multiple onChange={handleFileSelect} />
 //                 </Button>
 
-//                 {/* Show selected files */}
 //                 {selectedFiles && selectedFiles.length > 0 && (
 //                   <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
 //                     <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
@@ -387,7 +454,6 @@
 //                   </Box>
 //                 )}
 
-//                 {/* Upload Button */}
 //                 <Button
 //                   variant="contained"
 //                   onClick={handleUploadClick}
@@ -398,7 +464,6 @@
 //                   {uploading ? 'Uploading...' : 'Upload to Google Drive'}
 //                 </Button>
 
-//                 {/* Upload Progress */}
 //                 {Object.keys(uploadProgress).length > 0 && (
 //                   <Box sx={{ mt: 1 }}>
 //                     {Object.entries(uploadProgress).map(([fileName, progress]) => (
@@ -414,16 +479,15 @@
 //               </Box>
 //             </Paper>
 
-
 //             {/* Link Existing Files Button */}
 //             <Paper variant="outlined" sx={{ p: 2, mb: 2, bgcolor: 'success.50', borderColor: 'success.main' }}>
-//               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2,color: "white" }}>
+//               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, color: "white" }}>
 //                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
 //                   Link files that are already uploaded in other folders
 //                 </Typography>
 //                 <Button
 //                   variant="contained"
-//                   sx={{color: "white"}}
+//                   sx={{ color: "white" }}
 //                   onClick={() => setFileBrowserOpen(true)}
 //                   startIcon={<LinkIcon />}
 //                   fullWidth
@@ -433,7 +497,6 @@
 //               </Box>
 //             </Paper>
 
-//             {/* File Browser Modal */}
 //             <FileBrowserModal
 //               open={fileBrowserOpen}
 //               onClose={() => setFileBrowserOpen(false)}
@@ -601,9 +664,6 @@
 // export default NodeDialogForm;
 
 
-
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
@@ -648,7 +708,7 @@ interface NodeDialogFormProps {
   initialData?: Partial<Node>;
   title: string;
   parentId: string;
-  depth?: number; // Add depth prop to know if this is first level
+  depth?: number;
 }
 
 interface ISubjectUI {
@@ -681,6 +741,7 @@ const NodeDialogForm: React.FC<NodeDialogFormProps> = ({
     lastDate: initialData.lastDate || '',
     fileDetails: initialData.fileDetails || [],
     referenceDetails: initialData.referenceDetails || [],
+    subject: initialData.subject || undefined,
   });
 
   const [currentTag, setCurrentTag] = useState('');
@@ -698,9 +759,10 @@ const NodeDialogForm: React.FC<NodeDialogFormProps> = ({
   });
 
   // Subject-related state
-  const [subjects, setSubjects] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<ISubjectUI[]>([]);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
-  const [selectedSubject, setSelectedSubject] = useState('');
+  const [selectedSubjectId, setSelectedSubjectId] = useState('');
+  const [useManualHeading, setUseManualHeading] = useState(false);
 
   const initialDataRef = useRef(initialData);
   const cancelUpload = useRef<boolean>(false);
@@ -713,10 +775,11 @@ const NodeDialogForm: React.FC<NodeDialogFormProps> = ({
   useEffect(() => {
     const fetchSubjects = async () => {
       if (!isFirstDepth) return;
-      
+
       setLoadingSubjects(true);
       try {
         const res = await getAllSubjects();
+        console.log(res.data)
         if (res.success && res.data && (res.data as ISubjectResponse).subjects) {
           setSubjects((res.data as ISubjectResponse).subjects);
         }
@@ -737,6 +800,19 @@ const NodeDialogForm: React.FC<NodeDialogFormProps> = ({
   useEffect(() => {
     if (open) {
       const data = initialDataRef.current;
+
+      // Determine if we're using subject or manual heading
+      const hasSubject = data.subject && typeof data.subject === 'object'
+        ? data?.subject?._id
+        : data.subject;
+
+      const subjectId =
+        typeof data.subject === 'object' && data.subject !== null && '_id' in data.subject
+          ? data.subject._id
+          : null;
+
+      console.log(subjectId);
+
       setFormData({
         heading: data.heading || '',
         type: data.type || 'folder',
@@ -745,6 +821,7 @@ const NodeDialogForm: React.FC<NodeDialogFormProps> = ({
         lastDate: data.lastDate || '',
         fileDetails: data.fileDetails || [],
         referenceDetails: data.referenceDetails || [],
+        subject: subjectId || undefined,
       });
 
       setCurrentTag('');
@@ -754,15 +831,41 @@ const NodeDialogForm: React.FC<NodeDialogFormProps> = ({
       setUploadProgress({});
       setUploading(false);
       cancelUpload.current = false;
-      setSelectedSubject(data.heading || ''); // Pre-select if editing
+
+      // Set subject selection state
+      if (hasSubject) {
+        setSelectedSubjectId(subjectId || '');
+        setUseManualHeading(false);
+      } else if (data.heading) {
+        setSelectedSubjectId('');
+        setUseManualHeading(true);
+      } else {
+        setSelectedSubjectId('');
+        setUseManualHeading(false);
+      }
     }
   }, [open]);
 
   // Handle subject selection
   const handleSubjectChange = (event: any) => {
-    const subjectName = event.target.value;
-    setSelectedSubject(subjectName);
-    setFormData({ ...formData, heading: subjectName });
+    const subjectId = event.target.value;
+
+    if (subjectId === 'manual') {
+      // User wants to enter manual heading
+      setUseManualHeading(true);
+      setSelectedSubjectId('');
+      setFormData({ ...formData, subject: undefined, heading: '' });
+    } else {
+      // User selected a subject
+      setUseManualHeading(false);
+      setSelectedSubjectId(subjectId);
+      setFormData({ ...formData, subject: subjectId, heading: '' });
+    }
+  };
+
+  // Handle manual heading input
+  const handleManualHeadingChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, heading: event.target.value, subject: undefined });
   };
 
   // Handle file selection
@@ -877,18 +980,51 @@ const NodeDialogForm: React.FC<NodeDialogFormProps> = ({
   };
 
   const handleSave = () => {
-    if (!formData.heading?.trim()) return;
+    console.log('handleSave called with formData:', formData);
+    console.log('selectedSubjectId:', selectedSubjectId);
+    console.log('useManualHeading:', useManualHeading);
+    console.log('isFirstDepth:', isFirstDepth);
 
-    onSave({
-      ...formData,
-      heading: formData.heading.trim(),
-      parentId,
+    // Validation: Either subject or heading must be present
+    if (isFirstDepth && !formData.subject && !formData.heading?.trim()) {
+      alert('Please select a subject or enter a heading');
+      return;
+    }
+
+    if (!isFirstDepth && !formData.heading?.trim()) {
+      alert('Please enter a heading');
+      return;
+    }
+
+    const dataToSave: Partial<Node> = {
       type: formData.type,
       tags: formData.tags?.length ? formData.tags : undefined,
       fileDetails: formData.fileDetails?.length ? formData.fileDetails : undefined,
       referenceDetails: formData.referenceDetails?.length ? formData.referenceDetails : undefined,
-    });
+      description: formData.description || undefined,
+      lastDate: formData.lastDate || undefined,
+    };
 
+    // Only add parentId for create operations
+    if (!isEdit) {
+      dataToSave.parentId = parentId;
+    }
+
+    // Add subject OR heading based on what's selected
+    if (isFirstDepth) {
+      if (formData.subject) {
+        dataToSave.subject = formData.subject || formData.subject;
+        // Don't send heading if subject is set
+      } else if (formData.heading?.trim()) {
+        dataToSave.heading = formData.heading.trim();
+        // Don't send subject if heading is set
+      }
+    } else {
+      dataToSave.heading = formData.heading?.trim();
+    }
+
+    console.log('dataToSave:', dataToSave);
+    onSave(dataToSave);
     onClose();
   };
 
@@ -898,6 +1034,28 @@ const NodeDialogForm: React.FC<NodeDialogFormProps> = ({
     setUploadProgress({});
     setSelectedFiles(null);
     onClose();
+  };
+
+  // Get display name for selected subject
+  const getSelectedSubjectName = () => {
+    if (selectedSubjectId) {
+      const subject = subjects.find(s => s._id === selectedSubjectId);
+      return subject?.name || '';
+    }
+    return '';
+  };
+
+  // Check if save button should be disabled
+  const isSaveDisabled = () => {
+    if (uploading) return true;
+
+    if (isFirstDepth) {
+      // For first depth: either subject OR heading must be present
+      return !formData.subject && !formData.heading?.trim();
+    } else {
+      // For other depths: heading must be present
+      return !formData.heading?.trim();
+    }
   };
 
   return (
@@ -914,7 +1072,7 @@ const NodeDialogForm: React.FC<NodeDialogFormProps> = ({
       <DialogContent dividers sx={{ maxHeight: '70vh' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 1 }}>
           {/* Type Selection */}
-          <FormControl fullWidth>
+          <FormControl fullWidth disabled={isFirstDepth}>
             <InputLabel>Type</InputLabel>
             <Select
               value={formData.type || 'folder'}
@@ -926,32 +1084,72 @@ const NodeDialogForm: React.FC<NodeDialogFormProps> = ({
             </Select>
           </FormControl>
 
-          {/* Subject Dropdown for First Depth OR Regular Heading Input */}
+          {/* Subject Selection or Manual Heading for First Depth */}
           {isFirstDepth ? (
-            <FormControl fullWidth required>
-              <InputLabel>Select Subject</InputLabel>
-              <Select
-                value={selectedSubject}
-                label="Select Subject"
-                onChange={handleSubjectChange}
-                disabled={loadingSubjects}
-              >
-                {loadingSubjects ? (
-                  <MenuItem disabled>
-                    <CircularProgress size={20} sx={{ mr: 1 }} />
-                    Loading subjects...
-                  </MenuItem>
-                ) : subjects.length === 0 ? (
-                  <MenuItem disabled>No subjects available</MenuItem>
-                ) : (
-                  subjects.map((subject) => (
-                    <MenuItem key={subject._id || subject.id} value={subject.name || subject.subjectName}>
-                      {subject.name || subject.subjectName}
-                    </MenuItem>
-                  ))
-                )}
-              </Select>
-            </FormControl>
+            <>
+              {!useManualHeading ? (
+                <FormControl fullWidth required>
+                  <InputLabel>Select Subject</InputLabel>
+                  <Select
+                    value={selectedSubjectId || ''}
+                    label="Select Subject"
+                    onChange={handleSubjectChange}
+                    disabled={loadingSubjects}
+                  >
+                    {loadingSubjects ? (
+                      <MenuItem disabled>
+                        <CircularProgress size={20} sx={{ mr: 1 }} />
+                        Loading subjects...
+                      </MenuItem>
+                    ) : subjects.length === 0 ? (
+                      <MenuItem disabled>No subjects available</MenuItem>
+                    ) : (
+                      [
+                        ...subjects.map((subject) => (
+                          <MenuItem key={subject._id} value={subject._id}>
+                            {subject.name}
+                          </MenuItem>
+                        )),
+                        <Divider key="divider" />,
+                        <MenuItem key="manual" value="manual">
+                          <em>Enter custom heading instead</em>
+                        </MenuItem>
+                      ]
+                    )}
+                  </Select>
+                </FormControl>
+              ) : (
+                <Box>
+                  <TextField
+                    label="Custom Heading"
+                    required
+                    fullWidth
+                    value={formData.heading || ''}
+                    onChange={handleManualHeadingChange}
+                    placeholder="e.g., Introduction"
+                  />
+                  <Button
+                    size="small"
+                    onClick={() => {
+                      setUseManualHeading(false);
+                      setFormData({ ...formData, heading: '', subject: undefined });
+                    }}
+                    sx={{ mt: 1 }}
+                  >
+                    ← Back to subject selection
+                  </Button>
+                </Box>
+              )}
+
+              {/* Show selected subject name for clarity */}
+              {selectedSubjectId && !useManualHeading && (
+                <Box sx={{ p: 1.5, bgcolor: 'primary.50', borderRadius: 1 }}>
+                  <Typography variant="body2" color="primary">
+                    <strong>Selected:</strong> {getSelectedSubjectName()}
+                  </Typography>
+                </Box>
+              )}
+            </>
           ) : (
             <TextField
               label={formData.type === 'folder' ? 'Folder Name' : 'File Name'}
@@ -1025,7 +1223,7 @@ const NodeDialogForm: React.FC<NodeDialogFormProps> = ({
           <Box>
             <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
               <FileIcon fontSize="small" />
-              File Details (optional)
+              {formData.type === 'folder' ? 'Prerequisite (optional)' : 'Material Details (optional)'}
             </Typography>
 
             {/* Upload Files to Google Drive */}
@@ -1086,13 +1284,12 @@ const NodeDialogForm: React.FC<NodeDialogFormProps> = ({
 
             {/* Link Existing Files Button */}
             <Paper variant="outlined" sx={{ p: 2, mb: 2, bgcolor: 'success.50', borderColor: 'success.main' }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, color: "white" }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                   Link files that are already uploaded in other folders
                 </Typography>
                 <Button
                   variant="contained"
-                  sx={{ color: "white" }}
                   onClick={() => setFileBrowserOpen(true)}
                   startIcon={<LinkIcon />}
                   fullWidth
@@ -1258,7 +1455,7 @@ const NodeDialogForm: React.FC<NodeDialogFormProps> = ({
         <Button onClick={handleCancel} variant="outlined">
           Cancel
         </Button>
-        <Button onClick={handleSave} variant="contained" disabled={!formData.heading?.trim() || uploading}>
+        <Button onClick={handleSave} variant="contained" disabled={isSaveDisabled()}>
           {isEdit ? 'Save Changes' : 'Create'}
         </Button>
       </DialogActions>

@@ -32,7 +32,6 @@ const ClassTableRow: React.FC<ClassTableRowProps> = ({
     classType,
     targetExam,
     stream,
-    description,
     onClick,
     onEdit,
     onDelete,
@@ -99,41 +98,10 @@ const ClassTableRow: React.FC<ClassTableRowProps> = ({
                     </Box>
                 </TableCell>
 
-                {/* Description */}
-                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
-                    <Typography
-                        variant="body2"
-                        sx={{
-                            color: '#5f6368',
-                            fontSize: '0.875rem',
-                            maxWidth: 250,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                        }}
-                    >
-                        {description || '-'}
-                    </Typography>
-                </TableCell>
-
-                {/* Tag (you can add tags here if needed) */}
-                <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
-                    <Typography variant="body2" sx={{ color: '#5f6368', fontSize: '0.875rem' }}>
-                        -
-                    </Typography>
-                </TableCell>
-
-                {/* Class Type */}
-                <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>
-                    <Typography variant="body2" sx={{ color: '#5f6368', fontSize: '0.875rem' }}>
-                        {classType}
-                    </Typography>
-                </TableCell>
-
                 {/* Stream */}
                 <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                     <Chip
-                        label={stream}
+                        label={stream ? stream : "N/A"}
                         size="small"
                         sx={{
                             backgroundColor: '#f5f5f5',
