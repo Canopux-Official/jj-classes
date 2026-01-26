@@ -40,7 +40,7 @@ export const fetchStudentClasses = async (): Promise<Node[]> => {
       // Extract the ID if targetExam is an object, otherwise keep as is
       targetExam: classItem.targetExam.name,
       // Extract the ID if stream is an object, otherwise keep as is
-      stream: classItem.stream.name,
+      stream: classItem.stream ? classItem.stream.name : '',
     }));
 
     return transformedClasses;
