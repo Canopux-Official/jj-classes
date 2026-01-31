@@ -1406,7 +1406,7 @@ const StudentFolderStructure: React.FC = () => {
   const locationState = location.state as LocationState;
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const isTablet = useMediaQuery(theme.breakpoints.down("lg"));
+  // const isTablet = useMediaQuery(theme.breakpoints.down("lg"));
 
   const [currentNode, setCurrentNode] = useState<Node | null>(null);
   const [currentItems, setCurrentItems] = useState<Node[]>([]);
