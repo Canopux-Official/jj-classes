@@ -378,17 +378,17 @@ const findByParentId = async (req: Request, res: Response) => {
         if (!parentId) {
             return res.status(400).json({ message: 'Parent ID is required', success: false });
         }
-        
+
         // Only fetch active materials
-        const materials = await Material.find({ 
+        const materials = await Material.find({
             parentId: parentId,
-            isActive: true 
+            isActive: true
         }).populate('subject', 'name');
-        
-        return res.status(200).json({ 
-            message: 'Materials fetched successfully', 
-            success: true, 
-            data: materials 
+
+        return res.status(200).json({
+            message: 'Materials fetched successfully',
+            success: true,
+            data: materials
         });
     } catch (error) {
         console.log("Error in findByParentId:", error);
@@ -423,28 +423,35 @@ const getRecentMaterials = async (req: Request, res: Response) => {
 
         const { currentClass, stream, targetExams } = student;
 
-        if (!currentClass || !stream || !targetExams || targetExams.length === 0) {
+        if (!currentClass || !targetExams || targetExams.length === 0) {
             return res.status(400).json({
-                message: 'Student profile incomplete. Please update class, stream, and target exams.',
+                message: 'Student profile incomplete. Please update class and target exams.',
                 success: false
             });
         }
 
-        // Find all materials that:
-        // 1. Match the student's class
-        // 2. Match the student's stream
-        // 3. Match ANY of the student's target exams
-        // 4. Are files (not folders)
-        // 5. Have fileDetails (actual files uploaded)
-        // 6. Are active
-        const materials = await Material.find({
+        // Build the query object based on whether stream exists
+        const query: any = {
             classType: currentClass,
-            stream: stream,
             targetExam: { $in: targetExams }, // Match any of the student's target exams
             type: 'file',
             fileDetails: { $exists: true, $ne: [] },
             isActive: true // Only fetch active materials
-        })
+        };
+
+        // If stream exists, include it in the query
+        if (stream) {
+            query.stream = stream;
+        }
+
+        // Find all materials that:
+        // 1. Match the student's class
+        // 2. Match the student's stream (if stream exists)
+        // 3. Match ANY of the student's target exams
+        // 4. Are files (not folders)
+        // 5. Have fileDetails (actual files uploaded)
+        // 6. Are active
+        const materials = await Material.find(query)
             .sort({ updatedAt: -1 }) // Sort by most recently updated
             .limit(Number(limit))
             .select('heading description fileDetails path updatedAt createdAt tags targetExam subject')
@@ -454,8 +461,8 @@ const getRecentMaterials = async (req: Request, res: Response) => {
         // Transform the data to include file-specific information
         const recentMaterials = materials.map(material => {
             // Get display heading (from subject or manual heading)
-            const displayHeading = (material as any).subject 
-                ? (material as any).subject.name 
+            const displayHeading = (material as any).subject
+                ? (material as any).subject.name
                 : material.heading;
 
             // Build the breadcrumb from path
@@ -549,7 +556,7 @@ const getMaterialStats = async (req: Request, res: Response) => {
 
         const { currentClass, stream, targetExams } = student;
 
-        if (!currentClass || !stream || !targetExams || targetExams.length === 0) {
+        if (!currentClass || !targetExams || targetExams.length === 0) {
             return res.status(400).json({
                 message: 'Student profile incomplete',
                 success: false
@@ -561,14 +568,19 @@ const getMaterialStats = async (req: Request, res: Response) => {
         const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
         const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-        const baseQuery = {
+        // Build the base query object based on whether stream exists
+        const baseQuery: any = {
             classType: currentClass,
-            stream: stream,
             targetExam: { $in: targetExams },
             type: 'file',
             fileDetails: { $exists: true, $ne: [] },
             isActive: true // Only count active materials
         };
+
+        // If stream exists, include it in the query
+        if (stream) {
+            baseQuery.stream = stream;
+        }
 
         const [todayCount, weekCount, totalCount] = await Promise.all([
             Material.countDocuments({

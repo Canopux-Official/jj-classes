@@ -7,7 +7,6 @@ import {
   getChildrenByParentId,
   updateFolder,
 } from '../services/FolderServiceApi';
-import { deleteFileFromDrive } from '../utils/googleDriveService';
 
 interface SnackbarState {
   open: boolean;
@@ -88,8 +87,8 @@ export const useNodeOperations = (
         description: nodeData.description || editingNode.description,
         tags: nodeData.tags || editingNode.tags,
         lastDate: nodeData.lastDate || editingNode.lastDate,
-        fileDetails: nodeData.fileDetails,
-        referenceDetails: nodeData.referenceDetails,
+        fileDetails: nodeData.fileDetails || [],
+        referenceDetails: nodeData.referenceDetails || [],
         subject: nodeData.subject || editingNode.subject,
       };
 
@@ -141,16 +140,6 @@ export const useNodeOperations = (
       if (result.requiresDriveDeletion && result.driveFileIds) {
         showSnackbar('Deleting files from Google Drive...', 'info');
 
-        let deletedCount = 0;
-        for (const fileId of result.driveFileIds) {
-          try {
-            const success = await deleteFileFromDrive(fileId);
-            if (success) deletedCount++;
-          } catch (error) {
-            console.error('Error deleting file from Drive:', fileId, error);
-          }
-        }
-
         const confirmData = await confirmFolderDeletion(result.folderId || '');
 
         if (confirmData.success) {
@@ -159,7 +148,7 @@ export const useNodeOperations = (
           onNodesUpdate?.(updatedNodes);
 
           showSnackbar(
-            `Deleted ${deletedCount} file(s) from Drive and folder successfully`,
+            `Deleted SuccessFully`,
             'success'
           );
         } else {
