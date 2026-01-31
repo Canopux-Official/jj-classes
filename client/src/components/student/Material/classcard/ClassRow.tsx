@@ -10,7 +10,6 @@ import {
 import {
     Folder,
     ChevronRight,
-    School,
     CalendarToday,
 } from "@mui/icons-material";
 import type { Node } from "../../../admin/Material/types/node";
