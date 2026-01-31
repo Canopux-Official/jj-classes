@@ -1105,7 +1105,7 @@ const ShowClass: React.FC = () => {
       if (!response.success) {
         throw new Error(response.message || 'Failed to create class');
       }
-      
+
       const newNode: Node = {
         _id: (response.data as { _id: string })._id,
         heading: '',
@@ -1321,10 +1321,10 @@ const ShowClass: React.FC = () => {
     >
       <Container maxWidth="xl" sx={{ pt: 4, pb: 2 }}>
         {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Box>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+          <Box sx={{ mb: { xs: 2, sm: 0 } }}>
             <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a1a1a', mb: 0.5 }}>
-              Class Management
+              Material Management
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Manage and organize all classes for students
@@ -1340,9 +1340,11 @@ const ShowClass: React.FC = () => {
               color: 'white',
               textTransform: 'none',
               borderRadius: '8px',
-              px: 3,
-              py: 1.25,
+              px: { xs: 3, sm: 3 }, // Padding for mobile
+              py: { xs: 1.5, sm: 1.25 }, // Adjust vertical padding for mobile
               fontWeight: 600,
+              fontSize: { xs: '16px', sm: '16px' }, // Adjust font size for mobile
+              width: { xs: '100%', sm: 'auto' }, // Full width on mobile, auto on larger screens
               '&:hover': {
                 backgroundColor: '#333',
               },
@@ -1351,6 +1353,7 @@ const ShowClass: React.FC = () => {
             Create A Class
           </Button>
         </Box>
+
 
         {/* Filters */}
         <ClassFilters
@@ -1457,7 +1460,7 @@ const ShowClass: React.FC = () => {
           Create New Class
         </DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
-          <FormControl fullWidth sx={{ mb: 3 }}>
+          <FormControl fullWidth sx={{ mb: 3, mt: 2 }}>
             <InputLabel>Class</InputLabel>
             <Select
               value={selectedClassType}
@@ -1488,23 +1491,23 @@ const ShowClass: React.FC = () => {
               ))}
             </Select>
           </FormControl>
-          {selectedClassType === '9'|| selectedClassType === '10' ? (null) : (
-          <FormControl fullWidth>
-            <InputLabel>Stream</InputLabel>
-            <Select
-              value={selectedStreamId}
-              label="Stream"
-              onChange={(e: SelectChangeEvent<string>) => setSelectedStreamId(e.target.value)}
-              sx={{ borderRadius: '10px' }}
-              disabled={isLoadingOptions || streams.length === 0}
-            >
-              {streams.map((stream) => (
-                <MenuItem key={stream._id} value={stream._id}>
-                  {stream.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          {selectedClassType === '9' || selectedClassType === '10' ? (null) : (
+            <FormControl fullWidth>
+              <InputLabel>Stream</InputLabel>
+              <Select
+                value={selectedStreamId}
+                label="Stream"
+                onChange={(e: SelectChangeEvent<string>) => setSelectedStreamId(e.target.value)}
+                sx={{ borderRadius: '10px' }}
+                disabled={isLoadingOptions || streams.length === 0}
+              >
+                {streams.map((stream) => (
+                  <MenuItem key={stream._id} value={stream._id}>
+                    {stream.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           )}
 
 
