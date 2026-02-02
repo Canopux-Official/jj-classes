@@ -39,7 +39,7 @@ const NoticeList: React.FC<NoticeListProps> = ({ notices, onEdit, onDelete }) =>
               <Typography variant="h6" gutterBottom>
                 {notice.heading}
               </Typography>
-              
+
               {notice.description && (
                 <Typography variant="body2" color="text.secondary" paragraph>
                   {notice.description}
@@ -60,33 +60,50 @@ const NoticeList: React.FC<NoticeListProps> = ({ notices, onEdit, onDelete }) =>
                     {notice.classType && (
                       <Chip label={`Class ${notice.classType}`} size="small" variant="outlined" />
                     )}
+
+
+
+
                     
-                    {notice.streams && notice.streams.length > 0 && (
+
+                    {notice.streams && notice.streams.length > 0 ? (
                       <>
                         {notice.streams.map((stream) => (
-                          <Chip 
-                            key={stream._id} 
-                            label={stream.name} 
-                            size="small" 
+                          <Chip
+                            key={stream._id}
+                            label={stream.name}
+                            size="small"
                             variant="outlined"
                             color="primary"
                           />
                         ))}
                       </>
-                    )}
-                    
-                    {notice.targetExams && notice.targetExams.length > 0 && (
+                    ) : (<Chip
+                      label="ALL"
+                      size="small"
+                      variant="outlined"
+                      color="primary"
+                    />)}
+
+                    {notice.targetExams && notice.targetExams.length > 0 ? (
                       <>
                         {notice.targetExams.map((exam) => (
-                          <Chip 
-                            key={exam._id} 
-                            label={exam.name} 
-                            size="small" 
+                          <Chip
+                            key={exam._id}
+                            label={exam.name}
+                            size="small"
                             variant="outlined"
                             color="secondary"
                           />
                         ))}
                       </>
+                    ) : (
+                      <Chip
+                        label="ALL"
+                        size="small"
+                        variant="outlined"
+                        color="secondary"
+                      />
                     )}
                   </Box>
                 )}
