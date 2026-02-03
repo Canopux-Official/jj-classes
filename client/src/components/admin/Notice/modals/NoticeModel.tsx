@@ -184,6 +184,8 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
                 </Select>
               </FormControl>
 
+              {formData.classType == '9' || formData.classType == '10' ? null : (
+
               <FormControl fullWidth>
                 <InputLabel>Streams</InputLabel>
                 <Select
@@ -210,6 +212,7 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
                   ))}
                 </Select>
               </FormControl>
+              )}
 
               <FormControl fullWidth>
                 <InputLabel>Target Exams</InputLabel>

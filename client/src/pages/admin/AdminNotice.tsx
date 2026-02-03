@@ -433,7 +433,7 @@ const AdminNoticePage: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" color="text.secondary">
-                            {notice.classType || '—'}
+                            {notice.classType || (notice.isForAll ? 'ALL' : '—')}
                           </Typography>
                         </TableCell>
                         <TableCell>
@@ -467,7 +467,7 @@ const AdminNoticePage: React.FC = () => {
                                 )}
                               </>
                             ) : (
-                              <Typography variant="body2" color="text.secondary">—</Typography>
+                              <Typography variant="body2" color="text.secondary">{notice.isForAll ? 'ALL' : '—'}</Typography>
                             )}
                           </Box>
                         </TableCell>
@@ -504,7 +504,7 @@ const AdminNoticePage: React.FC = () => {
                                 )}
                               </>
                             ) : (
-                              <Typography variant="body2" color="text.secondary">—</Typography>
+                              <Typography variant="body2" color="text.secondary">{notice.isForAll ? 'ALL' : '—'}</Typography>
                             )}
                           </Box>
                         </TableCell>
