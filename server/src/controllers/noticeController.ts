@@ -172,18 +172,20 @@ const getNoticesForStudent = async (req: Request, res: Response): Promise<void> 
             return;
         }
 
-        
-
         // Build query to fetch relevant notices
         const query: any = {
             $or: [
                 { isForAll: true }, // Notices for all students
                 {
-                    $and: [
-                        { classType: student.currentClass }, // Notices for student's class
-                        { streams: student.stream }, // Notices for student's stream
-                        { targetExams: { $in: student.targetExams } } // Notices for student's target exams
-                    ]
+                    // Match by class and target exams (stream optional)
+                    classType: student.currentClass,
+                    targetExams: { $in: student.targetExams }
+                },
+                {
+                    // Match by class, target exams, and stream (when stream exists)
+                    classType: student.currentClass,
+                    targetExams: { $in: student.targetExams },
+                    ...(student.stream && { streams: student.stream })
                 }
             ]
         };

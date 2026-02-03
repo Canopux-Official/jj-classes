@@ -5,7 +5,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 //import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { StyledAppBar, HeaderContent, ProfileSection } from './AdminHeader.styles';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 interface AdminHeaderProps {
   handleDrawerToggle: () => void;
@@ -13,6 +13,10 @@ interface AdminHeaderProps {
 
 const AdminHeader: React.FC<AdminHeaderProps> = ({ handleDrawerToggle }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const headName = location.pathname.split('/')[2] ? location.pathname.split('/')[2].toLocaleUpperCase(): 'DASHBOARD';
+
+
   return (
     <StyledAppBar position="sticky" elevation={0}>
       <HeaderContent>
@@ -28,7 +32,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ handleDrawerToggle }) => {
           </IconButton>
 
           <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 700, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-            Dashboard
+            {headName}
           </Typography>
         </Box>
         
