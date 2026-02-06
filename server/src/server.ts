@@ -34,15 +34,17 @@ app.use(cors(corsOptions));
 connectDB();
 
 app.use('/auth', authRoutes);
+
 app.use('/admin/dashboard', adminDashboardRoutes);
 app.use('/admin/studentControl', adminStudentRoutes);
 app.use('/admin/streamControl', adminStreamRoutes);
 app.use('/admin/targetExamControl', adminTargetExamRoutes);
 app.use('/admin/subjectControl', adminSubjectRoutes);
-app.use('/student/studentProfile', studentProfileRoutes);
 app.use('/admin/material', materialRoutes);
-app.use('/student/material', studentMaterialRoutes);
 app.use('/admin/notice', adminNoticeRoutes);
+
+app.use('/student/studentProfile', studentProfileRoutes);
+app.use('/student/material', studentMaterialRoutes);
 app.use('/student/notice', studentNoticeRoutes);
 
 cron.schedule('0 0 * * *', async () => {
