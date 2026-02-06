@@ -1,0 +1,79 @@
+{
+  "champions": [
+    {
+      "id": 1,
+      "name": "Rahul Verma",
+      "rank": "AIR 45",
+      "exam": "JEE Advanced",
+      "image": "https://randomuser.me/api/portraits/men/32.jpg"
+    },
+    {
+      "id": 2,
+      "name": "Ananya Gupta",
+      "rank": "AIR 12",
+      "exam": "NEET",
+      "image": "https://randomuser.me/api/portraits/women/44.jpg"
+    },
+    {
+      "id": 3,
+      "name": "Vikram Singh",
+      "rank": "98.5%",
+      "exam": "CBSE Boards",
+      "image": "https://randomuser.me/api/portraits/men/15.jpg"
+    },
+    {
+      "id": 4,
+      "name": "Priya Sharma",
+      "rank": "AIR 156",
+      "exam": "JEE Mains",
+      "image": "https://randomuser.me/api/portraits/women/68.jpg"
+    }
+  ],
+  "results": [
+    {
+      "id": 101,
+      "name": "Siddharth Rao",
+      "rank": "AIR 5",
+      "course": "JEE Repeater",
+      "image": "https://randomuser.me/api/portraits/men/22.jpg",
+      "videoUrl": "https://www.youtube.com/watch?v=LXb3EKWsInQ",
+      "story": "Siddharth struggled with Physics initially but with our dedicated faculty, he turned it into his strongest subject."
+    },
+    {
+      "id": 102,
+      "name": "Meera Iyer",
+      "rank": "AIR 89",
+      "course": "NEET Crash Course",
+      "image": "https://randomuser.me/api/portraits/women/28.jpg",
+      "videoUrl": "https://www.youtube.com/watch?v=LXb3EKWsInQ",
+      "story": "Meera's dedication was unmatched. She solved over 5000 problems in the last 3 months."
+    },
+    {
+      "id": 103,
+      "name": "Aditya Kumar",
+      "rank": "99.2%",
+      "course": "12th Integrated",
+      "image": "https://randomuser.me/api/portraits/men/54.jpg",
+      "videoUrl": "https://www.youtube.com/watch?v=LXb3EKWsInQ",
+      "story": "Aditya balanced his board preparations and JEE coaching perfectly to achieve this stellar result."
+    },
+    {
+      "id": 104,
+      "name": "Neha Patel",
+      "rank": "AIR 230",
+      "course": "JEE Mains",
+      "image": "https://randomuser.me/api/portraits/women/12.jpg",
+      "videoUrl": "https://www.youtube.com/watch?v=LXb3EKWsInQ",
+      "story": "Consistency was Neha's key to success. She never missed a single test or class."
+    },
+    {
+      "id": 105,
+      "name": "Rohan Das",
+      "rank": "AIR 115",
+      "course": "NEET Two Year",
+      "image": "https://randomuser.me/api/portraits/men/86.jpg",
+      "videoUrl": "https://www.youtube.com/watch?v=LXb3EKWsInQ",
+      "story": "Rohan joined us in 11th grade and steadily improved his mock test scores to reach the top."
+    }
+  ]
+}

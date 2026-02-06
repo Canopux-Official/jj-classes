@@ -1,12 +1,67 @@
-import { Box, Container, Typography, Paper } from '@mui/material';
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { Box, Container, Typography, Modal, IconButton } from '@mui/material';
+import Slider from "react-slick";
+import ReactPlayer from 'react-player';
+import CloseIcon from '@mui/icons-material/Close';
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import { resultStyles } from './Results.styles';
+import dummyData from '../../../data/dummyData.json';
 
-import result1 from '../../../assets/results/result1.png';
-import result2 from '../../../assets/results/result2.png';
-import result3 from '../../../assets/results/result3.png';
+// Import slick css
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+
+interface StudentResult {
+  id: number;
+  name: string;
+  rank: string;
+  course: string;
+  image: string;
+  videoUrl: string;
+  story: string;
+}
 
 const Results = () => {
+  const [open, setOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<StudentResult | null>(null);
+
+  const handleOpen = (student: StudentResult) => {
+    setSelectedStudent(student);
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setSelectedStudent(null);
+  };
+
+  const settings = {
+    dots: false, // Hide dots for ticker effect
+    infinite: true,
+    speed: 5000, // Slow smooth speed
+    slidesToShow: 3,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 0, // Continuous
+    cssEase: "linear",
+    pauseOnHover: false,
+    arrows: false,
+    responsive: [
+      {
+        breakpoint: 960,
+        settings: {
+          slidesToShow: 2,
+        }
+      },
+      {
+        breakpoint: 600,
+        settings: {
+          slidesToShow: 1,
+        }
+      }
+    ]
+  };
+
   return (
     <Box sx={resultStyles.section} id="results">
       <Container maxWidth="lg">
@@ -22,57 +77,77 @@ const Results = () => {
           </Typography>
         </Box>
 
-        {/* CUSTOM GRID LAYOUT */}
-        <Box sx={{ 
-          display: 'grid', 
-          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, // 1 column mobile, 2 columns desktop
-          gap: 4,
-          alignItems: 'start' 
-        }}>
-          
-          {/* TOP LEFT: Result 2 */}
-          <motion.div initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
-            <Paper elevation={4} sx={{ borderRadius: 4, overflow: 'hidden' }}>
-              <Box component="img" src={result3} alt="Result 2" 
-                sx={{ width: '100%', height: 'auto', maxHeight: '400px', objectFit: 'contain', display: 'block' }} 
-              />
-            </Paper>
-          </motion.div>
+        <Box sx={resultStyles.carouselWrapper}>
+          <Slider {...settings}>
+            {dummyData.results.map((student) => (
+              <Box key={student.id} sx={{ p: 1, height: '420px' }} onClick={() => handleOpen(student)}>
+                <Box sx={resultStyles.studentCard}>
+                  <Box component="img" src={student.image} alt={student.name} sx={resultStyles.studentImage} />
+                  <Box sx={resultStyles.cardContent}>
+                    <Box sx={resultStyles.rankBadge}>{student.rank}</Box>
+                    <Typography variant="h6" fontWeight={700} gutterBottom>{student.name}</Typography>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>{student.course}</Typography>
 
-          {/* TOP RIGHT: Result 3 */}
-          <motion.div initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.2 }}>
-            <Paper elevation={4} sx={{ borderRadius: 4, overflow: 'hidden' }}>
-              <Box component="img" src={result2} alt="Result 3" 
-                sx={{ width: '100%', height: 'auto', maxHeight: '400px', objectFit: 'contain', display: 'block' }} 
-              />
-            </Paper>
-          </motion.div>
-
-          {/* BOTTOM ROW: Result 1 (Adjusted Size) */}
-          <Box sx={{ gridColumn: { xs: '1', md: '1 / -1' }, display: 'flex', justifyContent: 'center' }}> 
-            <motion.div 
-              initial={{ opacity: 0, y: 50 }} 
-              whileInView={{ opacity: 1, y: 0 }} 
-              viewport={{ once: true }} 
-              transition={{ duration: 0.8, delay: 0.4 }}
-              style={{ width: '100%', maxWidth: '900px' }} // Restrict width so it doesn't look stretched
-            >
-              <Paper elevation={6} sx={{ borderRadius: 4, overflow: 'hidden' }}>
-                <Box component="img" src={result1} alt="Main Result 1" 
-                  sx={{ 
-                    width: '100%', 
-                    height: 'auto', 
-                    maxHeight: '400px', // REDUCED HEIGHT (Was 600px)
-                    objectFit: 'contain', 
-                    display: 'block',
-                    bgcolor: 'white' // Optional background if image has transparency
-                  }} 
-                />
-              </Paper>
-            </motion.div>
-          </Box>
-
+                    <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, color: 'primary.main' }}>
+                      <PlayCircleOutlineIcon />
+                      <Typography variant="button" fontWeight={700}>Watch Story</Typography>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
+            ))}
+          </Slider>
         </Box>
+
+        {/* Video Modal */}
+        <Modal open={open} onClose={handleClose}>
+          <Box sx={resultStyles.modalContent}>
+            <IconButton
+              onClick={handleClose}
+              sx={{ position: 'absolute', top: 10, right: 10, zIndex: 10, bgcolor: 'rgba(255,255,255,0.8)' }}
+            >
+              <CloseIcon />
+            </IconButton>
+
+            <Box sx={resultStyles.videoContainer}>
+              {selectedStudent && (
+                <ReactPlayer
+                  url={selectedStudent.videoUrl}
+                  width="100%"
+                  height="100%"
+                  controls
+                  playing={true}
+                />
+              )}
+            </Box>
+
+            <Box sx={resultStyles.detailsContainer}>
+              {selectedStudent && (
+                <>
+                  <Typography variant="overline" color="secondary.dark" fontWeight={800}>
+                    STUDENT SUCCESS STORY
+                  </Typography>
+                  <Typography variant="h3" fontWeight={700} sx={{ mt: 1, mb: 2 }}>
+                    Know {selectedStudent.name.split(' ')[0]}'s Story
+                  </Typography>
+
+                  <Box sx={{ display: 'flex', gap: 2, mb: 4, flexWrap: 'wrap' }}>
+                    <Box sx={{ bgcolor: 'primary.light', color: 'primary.main', px: 2, py: 1, borderRadius: 2, fontWeight: 600 }}>
+                      {selectedStudent.rank}
+                    </Box>
+                    <Box sx={{ bgcolor: 'background.default', px: 2, py: 1, borderRadius: 2, fontWeight: 600 }}>
+                      {selectedStudent.course}
+                    </Box>
+                  </Box>
+
+                  <Typography variant="body1" sx={{ fontSize: '1.1rem', lineHeight: 1.8, color: 'text.secondary' }}>
+                    "{selectedStudent.story}"
+                  </Typography>
+                </>
+              )}
+            </Box>
+          </Box>
+        </Modal>
 
       </Container>
     </Box>
