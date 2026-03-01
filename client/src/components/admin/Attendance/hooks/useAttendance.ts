@@ -1,0 +1,535 @@
+// // useAttendance.ts
+
+// import { useState, useCallback, useEffect } from 'react';
+// import { useLocalStorage } from './useIndexedDB';
+// import type { AttendanceFilters, AttendanceUpdate, StudentWithDirtyFlag } from '../types';
+// import { attendanceApi } from '../services/AttendanceApi';
+
+
+// export const useAttendance = () => {
+//   const [students, setStudents] = useState<StudentWithDirtyFlag[]>([]);
+//   const [loading, setLoading] = useState(false);
+//   const [syncing, setSyncing] = useState(false);
+//   const [error, setError] = useState<string | null>(null);
+//   const [filters, setFilters] = useState<AttendanceFilters>({
+//     currentClass: '9',
+//     month: new Date().getMonth() + 1,
+//     year: new Date().getFullYear(),
+//   });
+//   const [dayHeaders, setDayHeaders] = useState<number[]>([]);
+//   const [monthName, setMonthName] = useState<string>('');
+//   const [isCurrentMonth, setIsCurrentMonth] = useState(true);
+//   const [dirtyCount, setDirtyCount] = useState(0);
+
+//   const {
+//     isInitialized,
+//     saveStudents,
+//     getAllStudents,
+//     updateAttendance,
+//     getDirtyStudents,
+//     clearDirtyFlags,
+//   } = useLocalStorage();
+
+//   // Fetch attendance data
+//   const fetchAttendance = useCallback(async () => {
+//     if (!isInitialized) return;
+
+//     setLoading(true);
+//     setError(null);
+
+//     try {
+//       const response = await attendanceApi.getAdminView(
+//         filters.currentClass,
+//         filters.streamId,
+//         filters.month,
+//         filters.year
+//       );
+
+//       if (response.success) {
+//         const { students: fetchedStudents, dayHeaders, monthName, isCurrentMonth } =
+//           response.data;
+
+//         // Save to localStorage
+//         await saveStudents(fetchedStudents, filters.month!, filters.year!);
+
+//         // Get from localStorage (to ensure consistency)
+//         const localStudents = await getAllStudents(
+//           filters.month,
+//           filters.year
+//         );
+
+//         setStudents(localStudents);
+//         setDayHeaders(dayHeaders);
+//         setMonthName(monthName);
+//         setIsCurrentMonth(isCurrentMonth);
+//         setDirtyCount(0);
+//       }
+//     } catch (err) {
+//       setError(err instanceof Error ? err.message : 'Failed to fetch attendance');
+//     } finally {
+//       setLoading(false);
+//     }
+//   }, [
+//     isInitialized,
+//     filters,
+//     saveStudents,
+//     getAllStudents,
+//   ]);
+
+//   // Update filters
+//   const updateFilters = useCallback((newFilters: Partial<AttendanceFilters>) => {
+//     setFilters((prev) => ({ ...prev, ...newFilters }));
+//   }, []);
+
+//   // Toggle attendance for a single day
+//   const toggleAttendance = useCallback(
+//     async (studentId: string, day: number) => {
+//       try {
+//         console.log(studentId,day)
+//         const student = students.find((s) => s.studentId === studentId);
+//         if (!student) return;
+
+//         const currentStatus = student.attendance.days[day.toString()];
+//         let newStatus: boolean | null;
+
+//         // Cycle: null -> true (P) -> false (A) -> null
+//         if (currentStatus === null) {
+//           newStatus = true;
+//         } else if (currentStatus === true) {
+//           newStatus = false;
+//         } else {
+//           newStatus = null;
+//         }
+
+//         console.log(studentId,day,newStatus)
+
+//         // Update in localStorage
+//         await updateAttendance(studentId, day, newStatus);
+
+//         // Refresh from localStorage
+//         const updatedStudents = await getAllStudents(
+//           filters.month,
+//           filters.year
+//         );
+//         setStudents(updatedStudents);
+
+//         // Update dirty count
+//         const dirtyStudents = updatedStudents.filter((s) => s.isDirty);
+//         console.log(dirtyStudents)
+//         setDirtyCount(dirtyStudents.length);
+//       } catch (err) {
+//         setError(
+//           err instanceof Error ? err.message : 'Failed to update attendance'
+//         );
+//       }
+//     },
+//     [students, filters, updateAttendance, getAllStudents]
+//   );
+
+//   // Mark all students for a specific day
+//   const markAllForDay = useCallback(
+//     async (day: number, status: boolean) => {
+//       try {
+//         // Update all students
+//         const updatePromises = students.map((student) =>
+//           updateAttendance(student.studentId, day, status)
+//         );
+//         await Promise.all(updatePromises);
+
+//         // Refresh from localStorage
+//         const updatedStudents = await getAllStudents(
+//           filters.month,
+//           filters.year
+//         );
+//         setStudents(updatedStudents);
+
+//         // Update dirty count
+//         const dirtyStudents = updatedStudents.filter((s) => s.isDirty);
+//         setDirtyCount(dirtyStudents.length);
+//       } catch (err) {
+//         setError(err instanceof Error ? err.message : 'Failed to mark all');
+//       }
+//     },
+//     [students, filters, updateAttendance, getAllStudents]
+//   );
+
+//   // Sync changes to backend
+//   const syncChanges = useCallback(async () => {
+//     setSyncing(true);
+//     setError(null);
+
+//     try {
+//       const dirtyStudents = await getDirtyStudents();
+//       console.log(dirtyStudents)
+
+//       if (dirtyStudents.length === 0) {
+//         setError('No changes to sync');
+//         setSyncing(false);
+//         return;
+//       }
+
+//       // Build updates array
+//       const updates: AttendanceUpdate[] = [];
+
+//       dirtyStudents.forEach((student) => {
+//         if (student.dirtyDays) {
+//           student.dirtyDays.forEach((day) => {
+//             const status = student.attendance.days[day.toString()];
+//             if (status !== null) {
+//               updates.push({
+//                 studentId: student.studentId,
+//                 year: filters.year!,
+//                 month: filters.month!,
+//                 day,
+//                 status: status ? 'P' : 'A',
+//               });
+//             }
+//           });
+//         }
+//       });
+
+//       // Send to backend
+//       const response = await attendanceApi.syncAttendance(updates);
+
+//       if (response.success) {
+//         // Clear dirty flags
+//         await clearDirtyFlags();
+
+//         // Refresh data
+//         await fetchAttendance();
+
+//         return response;
+//       }
+//     } catch (err) {
+//       setError(err instanceof Error ? err.message : 'Failed to sync changes');
+//       throw err;
+//     } finally {
+//       setSyncing(false);
+//     }
+//   }, [filters, getDirtyStudents, clearDirtyFlags, fetchAttendance]);
+
+//   // Fetch on mount and filter change
+//   useEffect(() => {
+//     if (isInitialized && filters.currentClass) {
+//       fetchAttendance();
+//     }
+//   }, [isInitialized, fetchAttendance, filters.currentClass]);
+
+//   return {
+//     students,
+//     loading,
+//     syncing,
+//     error,
+//     filters,
+//     dayHeaders,
+//     monthName,
+//     isCurrentMonth,
+//     dirtyCount,
+//     updateFilters,
+//     toggleAttendance,
+//     markAllForDay,
+//     syncChanges,
+//     refetch: fetchAttendance,
+//   };
+// };
+
+
+// useAttendance.ts
+
+// useAttendance.ts
+
+import { useState, useCallback, useEffect } from 'react';
+import { useLocalStorage } from './useIndexedDB';
+import type { AttendanceFilters, AttendanceUpdate, StudentWithDirtyFlag } from '../types';
+import { attendanceApi } from '../services/AttendanceApi';
+
+export const useAttendance = () => {
+  const [students, setStudents] = useState<StudentWithDirtyFlag[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState<AttendanceFilters>({
+    currentClass: '9',
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear(),
+  });
+  const [dayHeaders, setDayHeaders] = useState<number[]>([]);
+  const [monthName, setMonthName] = useState<string>('');
+  const [isCurrentMonth, setIsCurrentMonth] = useState(true);
+  const [dirtyCount, setDirtyCount] = useState(0);
+
+  const {
+    isInitialized,
+    saveStudents,
+    getAllStudents,
+    updateAttendance,
+    getDirtyStudents,
+    clearDirtyFlags,
+  } = useLocalStorage();
+
+  // Fetch attendance data
+  const fetchAttendance = useCallback(async () => {
+    if (!isInitialized) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await attendanceApi.getAdminView(
+        filters.currentClass,
+        filters.streamId,
+        filters.month,
+        filters.year
+      );
+
+      if (response.success) {
+        const { students: fetchedStudents, dayHeaders, monthName, isCurrentMonth } =
+          response.data;
+
+        console.log(`Fetched ${fetchedStudents.length} students for ${monthName} ${filters.year}`);
+
+        // Save to localStorage
+        await saveStudents(fetchedStudents, filters.month!, filters.year!);
+
+        // Get from localStorage (to ensure consistency)
+        const localStudents = await getAllStudents(
+          filters.month!,
+          filters.year!
+        );
+
+        console.log(`Loaded ${localStudents.length} students from localStorage`);
+
+        setStudents(localStudents);
+        setDayHeaders(dayHeaders);
+        setMonthName(monthName);
+        setIsCurrentMonth(isCurrentMonth);
+        setDirtyCount(0);
+      }
+    } catch (err) {
+      console.error('Fetch attendance error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch attendance');
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    isInitialized,
+    filters,
+    saveStudents,
+    getAllStudents,
+  ]);
+
+  // Update filters
+  const updateFilters = useCallback((newFilters: Partial<AttendanceFilters>) => {
+    setFilters((prev) => ({ ...prev, ...newFilters }));
+  }, []);
+
+  // Toggle attendance for a single day
+  const toggleAttendance = useCallback(
+    async (studentId: string, day: number) => {
+      console.log(`Toggle clicked: ${studentId}, Day ${day}`);
+
+      try {
+        const student = students.find((s) => s.studentId === studentId);
+        if (!student) {
+          console.error('Student not found in state');
+          return;
+        }
+
+        // Check enrollment date - prevent marking attendance before enrollment
+        const attendanceDate = new Date(filters.year!, filters.month! - 1, day);
+        const enrollmentDate = new Date(student.admissionDate);
+        enrollmentDate.setHours(0, 0, 0, 0);
+        attendanceDate.setHours(0, 0, 0, 0);
+
+        if (attendanceDate < enrollmentDate) {
+          setError(`Cannot mark attendance before enrollment date: ${enrollmentDate.toLocaleDateString()}`);
+          return;
+        }
+
+        const currentStatus = student.attendance.days[day.toString()];
+        let newStatus: boolean | null;
+
+        // Cycle: null -> true (P) -> false (A) -> null
+        if (currentStatus === null || currentStatus === undefined) {
+          newStatus = true;
+        } else if (currentStatus === true) {
+          newStatus = false;
+        } else {
+          newStatus = null;
+        }
+
+        console.log(`Toggling: ${studentId} Day ${day} from ${currentStatus} to ${newStatus}`);
+
+        // Update in localStorage with month and year
+        await updateAttendance(studentId, day, newStatus, filters.month!, filters.year!);
+
+        console.log('Update complete, refreshing from localStorage...');
+
+        // Force refresh from localStorage
+        const updatedStudents = await getAllStudents(
+          filters.month!,
+          filters.year!
+        );
+
+        console.log(`Refreshed ${updatedStudents.length} students from localStorage`);
+
+        setStudents(updatedStudents);
+
+        // Update dirty count
+        const dirtyStudents = updatedStudents.filter((s) => s.isDirty);
+        setDirtyCount(dirtyStudents.length);
+
+        console.log(`✅ Toggle complete. Dirty count: ${dirtyStudents.length}`);
+      } catch (err) {
+        console.error('Toggle attendance error:', err);
+        setError(
+          err instanceof Error ? err.message : 'Failed to update attendance'
+        );
+      }
+    },
+    [students, filters, updateAttendance, getAllStudents]
+  );
+
+  // Mark all students for a specific day
+  const markAllForDay = useCallback(
+    async (day: number, status: boolean) => {
+      try {
+        console.log(`Marking all students for day ${day} as ${status ? 'Present' : 'Absent'}`);
+
+        // Update all students
+        const updatePromises = students.map((student) =>
+          updateAttendance(student.studentId, day, status, filters.month!, filters.year!)
+        );
+        await Promise.all(updatePromises);
+
+        // Refresh from localStorage
+        const updatedStudents = await getAllStudents(
+          filters.month!,
+          filters.year!
+        );
+        setStudents(updatedStudents);
+
+        // Update dirty count
+        const dirtyStudents = updatedStudents.filter((s) => s.isDirty);
+        setDirtyCount(dirtyStudents.length);
+
+        console.log(`✅ Marked all complete. Dirty count: ${dirtyStudents.length}`);
+      } catch (err) {
+        console.error('Mark all error:', err);
+        setError(err instanceof Error ? err.message : 'Failed to mark all');
+      }
+    },
+    [students, filters, updateAttendance, getAllStudents]
+  );
+
+  // Sync changes to backend
+  const syncChanges = useCallback(async () => {
+    setSyncing(true);
+    setError(null);
+
+    try {
+      const dirtyStudents = await getDirtyStudents(filters.month!, filters.year!);
+
+      console.log(`Found ${dirtyStudents.length} dirty students to sync`);
+
+      if (dirtyStudents.length === 0) {
+        setError('No changes to sync');
+        setSyncing(false);
+        return;
+      }
+
+      // Build updates array - ONLY include non-null statuses
+      const updates: AttendanceUpdate[] = [];
+
+      dirtyStudents.forEach((student) => {
+        if (student.dirtyDays && student.dirtyDays.size > 0) {
+          student.dirtyDays.forEach((day) => {
+            const status = student.attendance.days[day.toString()];
+
+            // IMPORTANT: Only send updates for Present (true) or Absent (false)
+            // Don't send null - null means "delete this record" in backend
+            let statusCode: 'P' | 'A' | '';
+
+            if (status === true) {
+              statusCode = 'P';
+            } else if (status === false) {
+              statusCode = 'A';
+            } else {
+              statusCode = ''; // Null status
+            }
+            updates.push({
+              studentId: student.studentId,
+              year: filters.year!,
+              month: filters.month!,
+              day,
+              status: statusCode,
+            });
+          });
+        }
+      });
+
+      // Check if we have any valid updates after filtering out nulls
+      if (updates.length === 0) {
+        setError('No valid attendance records to sync (all changes were deletions)');
+        setSyncing(false);
+
+        // Clear dirty flags even if no updates - user removed all marked attendance
+        await clearDirtyFlags(filters.month!, filters.year!);
+
+        // Refresh to update UI
+        const updatedStudents = await getAllStudents(filters.month!, filters.year!);
+        setStudents(updatedStudents);
+        setDirtyCount(0);
+
+        return;
+      }
+
+      console.log(`Syncing ${updates.length} attendance updates...`);
+
+      // Send to backend
+      const response = await attendanceApi.syncAttendance(updates);
+
+      if (response.success) {
+        console.log('✅ Sync successful');
+
+        // Clear dirty flags
+        await clearDirtyFlags(filters.month!, filters.year!);
+
+        // Refresh data from backend
+        await fetchAttendance();
+
+        return response;
+      }
+    } catch (err) {
+      console.error('Sync error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to sync changes');
+      throw err;
+    } finally {
+      setSyncing(false);
+    }
+  }, [filters, getDirtyStudents, clearDirtyFlags, fetchAttendance, getAllStudents]);
+
+  // Fetch on mount and filter change
+  useEffect(() => {
+    if (isInitialized && filters.currentClass) {
+      fetchAttendance();
+    }
+  }, [isInitialized, filters.currentClass, filters.streamId, filters.month, filters.year]);
+
+  return {
+    students,
+    loading,
+    syncing,
+    error,
+    filters,
+    dayHeaders,
+    monthName,
+    isCurrentMonth,
+    dirtyCount,
+    updateFilters,
+    toggleAttendance,
+    markAllForDay,
+    syncChanges,
+    refetch: fetchAttendance,
+  };
+};
