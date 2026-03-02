@@ -62,6 +62,8 @@ const Results = () => {
     ]
   };
 
+  const Player = ReactPlayer as any;
+
   return (
     <Box sx={resultStyles.section} id="results">
       <Container maxWidth="lg">
@@ -111,7 +113,7 @@ const Results = () => {
 
             <Box sx={resultStyles.videoContainer}>
               {selectedStudent && (
-                <ReactPlayer
+                <Player
                   url={selectedStudent.videoUrl}
                   width="100%"
                   height="100%"

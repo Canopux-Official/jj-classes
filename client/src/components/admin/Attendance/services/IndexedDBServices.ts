@@ -438,7 +438,7 @@ class LocalStorageService {
       let presentCount = 0;
       let absentCount = 0;
       
-      Object.entries(student.attendance.days).forEach(([dayKey, dayStatus]) => {
+      Object.entries(student.attendance.days).forEach(([_, dayStatus]) => {
         if (dayStatus === true) presentCount++;
         if (dayStatus === false) absentCount++;
       });
