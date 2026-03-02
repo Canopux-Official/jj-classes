@@ -10,6 +10,8 @@ import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import SchoolIcon from '@mui/icons-material/School'; // For Streams
 import QuizIcon from '@mui/icons-material/Quiz';     // For Target Exams
+import EditCalendarIcon from '@mui/icons-material/EditCalendar';
+import PushPinIcon from '@mui/icons-material/PushPin';
 
 import { LogoContainer, drawerPaperStyles } from './AdminSidebar.styles';
 import LogoImg from '../../assets/logo.jpeg';
@@ -37,7 +39,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen, handleDrawerTog
     // Management Group
     { text: 'Session Manager', icon: <SettingsSuggestIcon />, path: '/admin/session' },
     { text: 'Upload Material', icon: <UploadFileIcon />, path: '/admin/upload' },
-    { text: 'Add Notice', icon: <UploadFileIcon />, path: '/admin/notice' },
+    { text: 'Add Notice', icon: <PushPinIcon />, path: '/admin/notice' },
+
+    { text: 'Attendance', icon: <EditCalendarIcon />, path: '/admin/attendance' },
   ];
 
   // Common content for both drawers

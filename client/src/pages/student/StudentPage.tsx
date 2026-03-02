@@ -13,6 +13,7 @@ import StudentDashboard from '../../components/student/Dashboard/StudentDashboar
 import StudentProfile from '../../components/student/Profile/StudentProfile';
 import NoticeBoardPage from '../../components/student/Notices/NoticeBoardPage';
 import StudentFolderStructure from '../../components/student/Material/showFolder/ShowFolder';
+import StudentAttendance from '../../components/student/Attendance/components/StudentAttendance';
 
 const StudentPage: React.FC = () => {
   return (
@@ -29,6 +30,7 @@ const StudentPage: React.FC = () => {
           <Route path="profile" element={<StudentProfile />} />
           <Route path="notices" element={<NoticeBoardPage />} />
           <Route path="material" element={<StudentFolderStructure />} />
+          <Route path="attendance" element={<StudentAttendance />} />
           
           {/* Fallback Route */}
           <Route path="*" element={<Navigate to="dashboard" replace />} />

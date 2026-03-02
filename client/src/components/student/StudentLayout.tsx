@@ -11,6 +11,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks'; // Added for Materials
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 
 import { RootContainer, StyledDrawer, StyledAppBar, MainContent, LogoSection } from './StudentLayout.styles';
 import LogoImg from '../../assets/logo.jpeg';
@@ -27,6 +28,7 @@ const StudentLayout: React.FC = () => {
     { text: 'My Profile', icon: <PersonIcon />, path: '/student/profile' },
     { text: 'Study Materials', icon: <LibraryBooksIcon />, path: '/student/material' },
     { text: 'Notice Board', icon: <NotificationsIcon />, path: '/student/notices' },
+    { text: 'Attendance', icon: <CalendarMonthIcon />, path: '/student/attendance' },
   ];
 
   const drawerContent = (

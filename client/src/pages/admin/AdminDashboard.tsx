@@ -18,6 +18,7 @@ import ShowClass from '../../components/admin/Material/showclass/ShowClass';
 import StreamPage from '../../components/admin/StreamPage';
 import TargetExamPage from '../../components/admin/TargetExamPage';
 import AdminNoticePage from './AdminNotice';
+import AttendanceManagement from '../../components/admin/Attendance/attendance/AttendanceManagement'
 
 const DRAWER_WIDTH = 260;
 
@@ -56,6 +57,7 @@ const AdminDashboard: React.FC = () => {
             <Route path="session" element={<SessionPage />} />
             <Route path="upload" element={<ShowClass />} />
             <Route path="notice" element={<AdminNoticePage />} />
+            <Route path="attendance" element={<AttendanceManagement />} />
 
             {/* NEW ROUTES */}
             <Route path="streams" element={<StreamPage />} />

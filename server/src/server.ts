@@ -16,6 +16,8 @@ import studentProfileRoutes from './routes/student/studentProfileRoutes'
 import adminNoticeRoutes from './routes/admin/admin.noticeRoutes'
 import studentNoticeRoutes from './routes/student/studentNoticeRoutes'
 import adminDashboardRoutes from './routes/admin/admin.dashboardRoutes';
+import adminAttendanceRoutes from './routes/admin/admin.attendanceRoutes';
+import studentAttendanceRoutes from './routes/student/student.attendanceRoutes';
 
 import materialController from './controllers/materialcontroller';
 import cron from 'node-cron';
@@ -34,16 +36,22 @@ app.use(cors(corsOptions));
 connectDB();
 
 app.use('/auth', authRoutes);
+
 app.use('/admin/dashboard', adminDashboardRoutes);
 app.use('/admin/studentControl', adminStudentRoutes);
 app.use('/admin/streamControl', adminStreamRoutes);
 app.use('/admin/targetExamControl', adminTargetExamRoutes);
 app.use('/admin/subjectControl', adminSubjectRoutes);
-app.use('/student/studentProfile', studentProfileRoutes);
 app.use('/admin/material', materialRoutes);
-app.use('/student/material', studentMaterialRoutes);
 app.use('/admin/notice', adminNoticeRoutes);
+app.use('/admin/attendance', adminAttendanceRoutes);
+
+
+// student routes
+app.use('/student/studentProfile', studentProfileRoutes);
+app.use('/student/material', studentMaterialRoutes);
 app.use('/student/notice', studentNoticeRoutes);
+app.use('/student/attendance', studentAttendanceRoutes);
 
 cron.schedule('0 0 * * *', async () => {
   console.log('Running scheduled cleanup of inactive materials...');
