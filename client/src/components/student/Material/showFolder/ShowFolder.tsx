@@ -855,7 +855,7 @@
 
 
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { Node } from "../../../admin/Material/types/node";
 import {
   Box,
@@ -910,9 +910,10 @@ interface LocationState {
 }
 
 // Helper function to get display name from node
-const getDisplayHeading = (node: any): string => {
-  if (node.subject && typeof node.subject === "object" && node.subject.name) {
-    return node.subject.name;
+const getDisplayHeading = (node: Node | { id: string; heading: string }): string => {
+  if ('subject' in node && node.subject && typeof node.subject === "object") {
+    const subject = node.subject as { name: string };
+    if (subject.name) return subject.name;
   }
   return node.heading || "Untitled";
 };
@@ -936,45 +937,7 @@ const StudentFolderStructure: React.FC = () => {
     severity: "info",
   });
 
-  // Fetch root level classes on component mount
-  useEffect(() => {
-    if (locationState?.shouldNavigate && locationState?.navigateToPath) {
-      navigateToPath(locationState.navigateToPath);
-      window.history.replaceState({}, document.title);
-    } else {
-      loadRootClasses();
-    }
-  }, [locationState?.timestamp]);
-
-  // Filter items based on search query
-  useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredItems(currentItems);
-    } else {
-      const query = searchQuery.toLowerCase();
-      const filtered = currentItems.filter((item) => {
-        const heading = getDisplayHeading(item).toLowerCase();
-        const stream = (item.stream || "").toLowerCase();
-        const targetExam = (item.targetExam || "").toLowerCase();
-        const subject =
-          typeof (item as any).subject === "object"
-            ? ((item as any).subject.name || "").toLowerCase()
-            : ((item as any).subject || "").toLowerCase();
-
-        return (
-          heading.includes(query) ||
-          stream.includes(query) ||
-          targetExam.includes(query) ||
-          subject.includes(query)
-        );
-      });
-      setFilteredItems(filtered);
-    }
-  }, [searchQuery, currentItems]);
-
-  console.log(filteredItems);
-
-  const loadRootClasses = async () => {
+  const loadRootClasses = useCallback(async () => {
     setLoading(true);
     try {
       const classes = await fetchStudentClasses();
@@ -986,7 +949,7 @@ const StudentFolderStructure: React.FC = () => {
         message: `Loaded ${classes.length} classes successfully`,
         severity: "success",
       });
-    } catch (error) {
+    } catch {
       setSnackbar({
         open: true,
         message: "Failed to load classes. Please try again.",
@@ -996,9 +959,9 @@ const StudentFolderStructure: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const loadFolderContents = async (node: Node) => {
+  const loadFolderContents = useCallback(async (node: Node) => {
     setLoading(true);
     try {
       const items = await fetchNodesByParentId(node._id);
@@ -1012,7 +975,7 @@ const StudentFolderStructure: React.FC = () => {
           severity: "info",
         });
       }
-    } catch (error) {
+    } catch {
       setSnackbar({
         open: true,
         message: "Failed to load folder contents. Please try again.",
@@ -1022,9 +985,9 @@ const StudentFolderStructure: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const navigateToPath = async (
+  const navigateToPath = useCallback(async (
     path: Array<{ id: string; heading: string }>
   ) => {
     if (path.length === 0) {
@@ -1085,7 +1048,7 @@ const StudentFolderStructure: React.FC = () => {
         message: `Navigated to ${targetName}`,
         severity: "success",
       });
-    } catch (error) {
+    } catch {
       setSnackbar({
         open: true,
         message: "Failed to navigate. Loading root instead.",
@@ -1096,15 +1059,58 @@ const StudentFolderStructure: React.FC = () => {
       setLoading(false);
       setTimeout(() => setHighlightedItemId(null), 4000);
     }
-  };
+  }, [loadRootClasses]);
 
-  const handleFolderClick = async (node: Node) => {
+  // Fetch root level classes on component mount
+  useEffect(() => {
+    if (locationState?.shouldNavigate && locationState?.navigateToPath) {
+      navigateToPath(locationState.navigateToPath);
+      window.history.replaceState({}, document.title);
+    } else {
+      loadRootClasses();
+    }
+  }, [locationState?.timestamp, locationState?.navigateToPath, locationState?.shouldNavigate, navigateToPath, loadRootClasses]);
+
+  // Filter items based on search query
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredItems(currentItems);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = currentItems.filter((item) => {
+        const heading = getDisplayHeading(item).toLowerCase();
+
+        const stream = (typeof item.stream === "string" ? item.stream : item.stream?.name || "").toLowerCase();
+        const targetExam = (typeof item.targetExam === "string" ? item.targetExam : item.targetExam?.name || "").toLowerCase();
+
+        const subjectValue = item.subject;
+        const subject =
+          subjectValue && typeof subjectValue === "object" && "name" in subjectValue
+            ? ((subjectValue as { name: string }).name || "").toLowerCase()
+            : (typeof subjectValue === "string" ? subjectValue : "").toLowerCase();
+
+        return (
+          heading.includes(query) ||
+          stream.includes(query) ||
+          targetExam.includes(query) ||
+          subject.includes(query)
+        );
+      });
+      setFilteredItems(filtered);
+    }
+  }, [searchQuery, currentItems]);
+
+  console.log(filteredItems);
+
+
+
+  const handleFolderClick = useCallback(async (node: Node) => {
     if (node.type === "folder") {
       await loadFolderContents(node);
     }
-  };
+  }, [loadFolderContents]);
 
-  const handleBreadcrumbClick = async (
+  const handleBreadcrumbClick = useCallback(async (
     pathItem: { id: string; heading: string } | null
   ) => {
     if (!pathItem) {
@@ -1129,7 +1135,7 @@ const StudentFolderStructure: React.FC = () => {
             path: newPath,
           } as Node);
           setCurrentItems(items);
-        } catch (error) {
+        } catch {
           setSnackbar({
             open: true,
             message: "Failed to load folder contents. Please try again.",
@@ -1140,7 +1146,7 @@ const StudentFolderStructure: React.FC = () => {
         }
       }
     }
-  };
+  }, [loadRootClasses, currentItems, loadFolderContents, currentNode?.path]);
 
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
@@ -1154,9 +1160,9 @@ const StudentFolderStructure: React.FC = () => {
 
   const currentBreadcrumb = currentNode
     ? [
-        ...(currentNode.path || []),
-        { id: currentNode._id, heading: getDisplayHeading(currentNode) },
-      ]
+      ...(currentNode.path || []),
+      { id: currentNode._id, heading: getDisplayHeading(currentNode) },
+    ]
     : [];
 
   return (
@@ -1301,8 +1307,8 @@ const StudentFolderStructure: React.FC = () => {
                     backgroundColor: loading
                       ? undefined
                       : isRootLevel
-                      ? "#e3fffd"
-                      : "#def3f6",
+                        ? "#e3fffd"
+                        : "#def3f6",
                     transform: loading ? undefined : "translateY(-1px)",
                   },
                 }}
@@ -1356,9 +1362,8 @@ const StudentFolderStructure: React.FC = () => {
           {!loading && (
             <Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 1 }}>
               <Chip
-                label={`${filteredItems.length} ${
-                  filteredItems.length === 1 ? "item" : "items"
-                }${searchQuery ? " found" : ""}`}
+                label={`${filteredItems.length} ${filteredItems.length === 1 ? "item" : "items"
+                  }${searchQuery ? " found" : ""}`}
                 size="small"
                 sx={{
                   backgroundColor: "#e8eaf6",

@@ -304,7 +304,8 @@ const subjectThemes = {
 
 // Function to detect subject from heading or use provided subject
 const getSubjectTheme = (node: Node) => {
-  const subject = (node as any).subject || node.heading;
+  const subjectValue = typeof (node as unknown as Record<string, unknown>).subject === 'string' ? (node as unknown as Record<string, unknown>).subject : node.heading;
+  const subject = subjectValue as string;
   
   for (const [key, theme] of Object.entries(subjectThemes)) {
     if (subject.toLowerCase().includes(key.toLowerCase())) {
@@ -541,7 +542,7 @@ export const ClassCard: React.FC<{
           >
             {node.stream && (
               <Chip
-                label={node.stream}
+                label={String(typeof node.stream === 'string' ? node.stream : (typeof node.stream === 'object' && node.stream !== null && 'name' in node.stream ? (node.stream as unknown as Record<string, unknown>).name : 'Stream'))}
                 size="small"
                 sx={{
                   backgroundColor: theme.bgColor,
@@ -560,7 +561,7 @@ export const ClassCard: React.FC<{
 
             {node.targetExam && (
               <Chip
-                label={node.targetExam}
+                label={String(typeof node.targetExam === 'string' ? node.targetExam : (typeof node.targetExam === 'object' && node.targetExam !== null && 'name' in node.targetExam ? (node.targetExam as unknown as Record<string, unknown>).name : 'Exam'))}
                 size="small"
                 variant="outlined"
                 sx={{
