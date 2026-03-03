@@ -17,6 +17,7 @@ import adminNoticeRoutes from './routes/admin/admin.noticeRoutes'
 import studentNoticeRoutes from './routes/student/studentNoticeRoutes'
 import adminDashboardRoutes from './routes/admin/admin.dashboardRoutes';
 import adminAttendanceRoutes from './routes/admin/admin.attendanceRoutes';
+import adminControlRoutes from './routes/admin/admin.controlRoutes';
 import studentAttendanceRoutes from './routes/student/student.attendanceRoutes';
 
 import materialController from './controllers/materialcontroller';
@@ -45,6 +46,7 @@ app.use('/admin/subjectControl', adminSubjectRoutes);
 app.use('/admin/material', materialRoutes);
 app.use('/admin/notice', adminNoticeRoutes);
 app.use('/admin/attendance', adminAttendanceRoutes);
+app.use('/admin/control', adminControlRoutes);
 
 
 // student routes

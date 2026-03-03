@@ -18,7 +18,7 @@ const About = () => {
 
         {/* Right Side: Text */}
         <Box sx={aboutStyles.textContent}>
-          <Typography variant="overline" color="secondary.main" fontWeight="bold" letterSpacing={1.5}>
+          <Typography variant="overline" color="secondary.contrastText" fontWeight="bold" letterSpacing={1.5} sx={{ fontSize: { xs: '1.1rem', md: '1.2rem' } }}>
             WHO WE ARE
           </Typography>
           <Typography variant="h3" sx={aboutStyles.heading}>

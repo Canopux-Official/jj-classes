@@ -51,15 +51,23 @@ export const MobileClassCard: React.FC<{
   onClick: () => void;
   isHighlighted?: boolean;
 }> = ({ node, onClick, isHighlighted = false }) => {
-  // const subjectName = getSubjectName(node);
-  // const classInfo = extractClassInfo(node.heading);
-  
+
+  // Safely extract display name from either a populated object or a raw string
+  const getNameLabel = (field: { name?: string } | string | null | undefined): string => {
+    if (!field) return '';
+    if (typeof field === 'object' && field.name) return field.name;
+    return typeof field === 'string' ? field : '';
+  };
+
+  const streamLabel = getNameLabel(node.stream);
+  const examLabel = getNameLabel(node.targetExam);
+
   const createdDate = node.createdAt
     ? new Date(node.createdAt).toLocaleDateString("en-US", {
-        month: "short",
-        day: "2-digit",
-        year: "numeric",
-      })
+      month: "short",
+      day: "2-digit",
+      year: "numeric",
+    })
     : null;
 
   return (
@@ -141,11 +149,11 @@ export const MobileClassCard: React.FC<{
         </Box>
 
         {/* Stream and Target Exam */}
-        {(node.stream || node.targetExam) && (
+        {(streamLabel || examLabel) && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5, flexWrap: "wrap" }}>
-            {node.stream && (
+            {streamLabel && (
               <Chip
-                label={node.stream}
+                label={streamLabel}
                 size="small"
                 sx={{
                   height: 20,
@@ -155,9 +163,9 @@ export const MobileClassCard: React.FC<{
                 }}
               />
             )}
-            {node.targetExam && (
+            {examLabel && (
               <Chip
-                label={node.targetExam}
+                label={examLabel}
                 size="small"
                 variant="outlined"
                 sx={{

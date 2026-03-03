@@ -170,38 +170,70 @@
 // export default StudentDashboard;
 
 
-import React from 'react';
-import { Typography, Box, Stack, Divider } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Typography, Box, Stack, Divider, CircularProgress } from '@mui/material';
 
 import EventNoteIcon from '@mui/icons-material/EventNote';
-import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
-import MenuBookIcon from '@mui/icons-material/MenuBook';
-import SupportAgentIcon from '@mui/icons-material/SupportAgent';
-import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import EmojiObjectsIcon from '@mui/icons-material/EmojiObjects';
 
 import {
-  WelcomeCard, InfoCard, NoticePreview,
-  CountdownCard, QuickActionButton, QuoteBox
+  WelcomeCard, InfoCard, NoticePreview, QuoteBox
 } from './StudentDashboard.styles';
 import RecentlyAddedMaterials from '../Material/stats/RecentlyAddedMaterials';
 import MaterialStatsCard from '../Material/stats/MaterialStatsCard';
 import { useNavigate } from 'react-router-dom';
+import { getStudentProfile, getStudentNotices } from '../../../api/apiFunctions';
+
+interface StudentData {
+  name?: string;
+  targetExams?: { name?: string }[];
+  currentClass?: string;
+  stream?: { name?: string };
+}
+
+interface NoticeData {
+  _id: string;
+  title?: string;
+  heading?: string;
+  createdAt?: string;
+}
 
 const StudentDashboard: React.FC = () => {
-  // Mock Data
-  const student = {
-    name: "Anjali Singh",
-    currentClass: "Class 12",
-    targetExams: ["NEET"]
-  };
-
-  const notices = [
-    { id: 1, title: "Diwali Vacation Schedule", date: "15 Oct 2025" },
-    { id: 2, title: "Physics Guest Lecture by Dr. Verma", date: "12 Oct 2025" },
-  ];
-
+  const [student, setStudent] = useState<StudentData | null>(null);
+  const [notices, setNotices] = useState<NoticeData[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [profileRes, noticesRes] = await Promise.all([
+          getStudentProfile(),
+          getStudentNotices()
+        ]);
+        
+        if (profileRes.success && profileRes.data) {
+          // Backend returns the student document directly (not wrapped in { student })
+          setStudent(profileRes.data as StudentData);
+        }
+        
+        if (noticesRes.success && noticesRes.data) {
+          // Backend returns { success, data: [...notices], count }
+          const payload = noticesRes.data as { data?: NoticeData[] };
+          if (Array.isArray(payload.data)) {
+            setNotices(payload.data);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading dashboard data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
 
   // Handler for when student clicks on a material
   const handleNavigateToMaterial = (fullPath: Array<{ id: string; heading: string }>) => {
@@ -217,16 +249,30 @@ const StudentDashboard: React.FC = () => {
     });
   };
 
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  // Fallback defaults if APIs fail
+  const studentName = student?.name || "Student";
+  const studentTargets = student?.targetExams?.length
+    ? student.targetExams.map(t => t.name || '').filter(Boolean).join(', ')
+    : "Your upcoming exams";
+
   return (
     <Box>
       {/* 1. Welcome Header */}
       <WelcomeCard elevation={3}>
         <Box>
           <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: -0.5 }}>
-            Hello, {student.name}!
+            Hello, {studentName}!
           </Typography>
           <Typography variant="body1" sx={{ opacity: 0.9, mt: 0.5 }}>
-            Stay focused. Your goal <strong>{student.targetExams[0]}</strong> is closer than you think.
+            Stay focused. <strong>{studentTargets}</strong> is closer than you think.
           </Typography>
         </Box>
         <Box sx={{ display: { xs: 'none', sm: 'block' }, opacity: 0.8 }}>
@@ -235,7 +281,7 @@ const StudentDashboard: React.FC = () => {
       </WelcomeCard>
 
       {/* 2. Motivational Quote */}
-      <QuoteBox>
+      <QuoteBox mb={3}>
         <Typography variant="body2" fontWeight={600}>
           "Success is the sum of small efforts, repeated day in and day out."
         </Typography>
@@ -243,44 +289,6 @@ const StudentDashboard: React.FC = () => {
           — Robert Collier
         </Typography>
       </QuoteBox>
-
-      {/* 3. General Utilities Row (Countdown + Quick Actions) */}
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} mb={3}>
-        {/* Exam Countdown */}
-        <Box flex={1}>
-          <CountdownCard elevation={0}>
-            <HourglassEmptyIcon sx={{ fontSize: 40, mb: 1, opacity: 0.8 }} />
-            <Typography variant="h3" fontWeight={800}>142</Typography>
-            <Typography variant="subtitle2" sx={{ textTransform: 'uppercase', letterSpacing: 1, opacity: 0.9 }}>
-              Days to NEET 2026
-            </Typography>
-          </CountdownCard>
-        </Box>
-
-        {/* Quick Actions */}
-        <Box flex={2}>
-          <Stack direction="row" spacing={2} height="100%">
-            <Box flex={1}>
-              <QuickActionButton>
-                <ReceiptLongIcon color="primary" fontSize="large" />
-                <Typography variant="body2" fontWeight={600}>Fee Receipts</Typography>
-              </QuickActionButton>
-            </Box>
-            <Box flex={1}>
-              <QuickActionButton>
-                <MenuBookIcon color="secondary" fontSize="large" />
-                <Typography variant="body2" fontWeight={600}>Syllabus</Typography>
-              </QuickActionButton>
-            </Box>
-            <Box flex={1}>
-              <QuickActionButton>
-                <SupportAgentIcon color="action" fontSize="large" />
-                <Typography variant="body2" fontWeight={600}>Help Desk</Typography>
-              </QuickActionButton>
-            </Box>
-          </Stack>
-        </Box>
-      </Stack>
 
       {/* 4. Material Statistics Section (FULL WIDTH) */}
       <Box mb={3}>
@@ -313,15 +321,21 @@ const StudentDashboard: React.FC = () => {
               </Typography>
             </Box>
 
-            {notices.map((notice) => (
-              <NoticePreview key={notice.id}>
-                <Typography variant="subtitle2" fontWeight={600}>{notice.title}</Typography>
-                <Stack direction="row" alignItems="center" spacing={1} mt={0.5}>
-                  <EventNoteIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
-                  <Typography variant="caption" color="text.secondary">{notice.date}</Typography>
-                </Stack>
-              </NoticePreview>
-            ))}
+            {notices.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">No active notices.</Typography>
+            ) : (
+              notices.slice(0, 3).map((notice) => (
+                <NoticePreview key={notice._id}>
+                  <Typography variant="subtitle2" fontWeight={600}>{notice.title || notice.heading}</Typography>
+                  <Stack direction="row" alignItems="center" spacing={1} mt={0.5}>
+                    <EventNoteIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                    <Typography variant="caption" color="text.secondary">
+                       {notice.createdAt ? new Date(notice.createdAt).toLocaleDateString() : ''}
+                    </Typography>
+                  </Stack>
+                </NoticePreview>
+              ))
+            )}
 
             <Divider sx={{ my: 2 }} />
 

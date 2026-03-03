@@ -12,7 +12,7 @@ const router = express.Router();
 const jwt_secret = process.env.JWT_SECRET;
 
 router.post('/getLoggedInUser', async (req, res): Promise<any> => {
-    const { name, dob, phoneNumber, currentClass, password } = req.body;
+    const { name, dob, phoneNumber, currentClass, password, role } = req.body;
 
     if (!jwt_secret) {
         return res.status(500).json({ success: false, message: 'Server Config Error: JWT_SECRET missing error here' });
@@ -20,8 +20,8 @@ router.post('/getLoggedInUser', async (req, res): Promise<any> => {
 
     try {
         // admin login flow
-        if (phoneNumber === process.env.ADMIN_PHONE) {
-            const admin = await Admin.findOne({ phoneNumber });
+        if (role === 'admin' || role === 'superadmin') {
+            const admin = await Admin.findOne({ phoneNumber, role });
 
             if (!admin) {
                 return res.status(404).json({ success: false, message: 'Admin not found' });
@@ -144,11 +144,12 @@ router.post('/verifyOtp', async (req, res): Promise<any> => {
 
         if (result.success) {
             // Determine if user is Admin or Student based on email lookup
-            // (Or you could pass 'role' from frontend if you prefer explicit checks)
             let user: any = await Admin.findOne({ email });
-            let role = "admin";
+            let userRole = "student";
 
-            if (!user) {
+            if (user) {
+                userRole = user.role; // This will be 'admin' or 'superadmin'
+            } else {
                 user = await Student.findOne({
                     name: name,
                     currentClass: currentClass,
@@ -158,15 +159,14 @@ router.post('/verifyOtp', async (req, res): Promise<any> => {
                         { parentPhoneNumber: phoneNumber }
                     ]
                 });
-                role = "student";
             }
 
             if (!user) {
                 return res.status(404).json({ success: false, message: 'User not found' });
             }
 
-            const payload = role === "admin"
-                ? { id: user._id, role: "admin" }
+            const payload = (userRole === "admin" || userRole === "superadmin")
+                ? { id: user._id, role: userRole }
                 : { id: user._id, role: "student", currentClass: user.currentClass };
 
             const authToken = jwt.sign(
@@ -203,7 +203,7 @@ router.get('/verifyToken', verifyAuth, async (req: AuthRequest, res): Promise<an
         let userExists = null;
 
         // Check Database based on Role
-        if (role === 'admin') {
+        if (role === 'admin' || role === 'superadmin') {
             userExists = await Admin.findById(id).select('-password'); // Exclude password
         } else if (role === 'student') {
             userExists = await Student.findById(id).select('-password');

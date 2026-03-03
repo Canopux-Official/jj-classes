@@ -607,10 +607,10 @@
 //         });
 
 //         const savedSubMaterial = await newSubMaterial.save();
-        
+
 //         // Populate subject to get the name for response
 //         const populatedMaterial = await Material.findById(savedSubMaterial._id).populate('subject', 'name');
-        
+
 //         // Determine display heading
 //         const displayHeading = populatedMaterial?.subject 
 //             ? (populatedMaterial.subject as any).name 
@@ -638,10 +638,10 @@
 //                 success: false
 //             });
 //         }
-        
+
 //         // Populate subject to get name
 //         const materials = await Material.find({ parentId: parentId }).populate('subject', 'name');
-        
+
 //         return res.status(200).json({
 //             message: 'Materials fetched successfully',
 //             success: true,
@@ -800,7 +800,7 @@
 //             // For subfolders, update subject and heading
 //             folder.subject = subject !== undefined ? subject : folder.subject;
 //             folder.heading = heading !== undefined ? heading : folder.heading;
-            
+
 //             // Validate: Either subject OR heading must be present
 //             if (!folder.subject && !folder.heading) {
 //                 return res.status(400).json({
@@ -821,10 +821,10 @@
 //         folder.classType = classType !== undefined ? classType : folder.classType;
 
 //         const updatedFolder = await folder.save();
-        
+
 //         // Populate subject after save
 //         const populatedFolder = await Material.findById(updatedFolder._id).populate('subject', 'name');
-        
+
 //         // Get new heading
 //         const newHeading = populatedFolder?.subject 
 //             ? (populatedFolder.subject as any).name 
@@ -1056,14 +1056,14 @@ const checkAndUpdateIsActive = async (materialId: string): Promise<boolean> => {
     // Update isActive field if it changed
     if (material.isActive !== isActive) {
         material.isActive = isActive;
-        
+
         // If marked as inactive, set inactiveSince timestamp
         if (!isActive && !material.inactiveSince) {
             material.inactiveSince = new Date();
         } else if (isActive) {
             material.inactiveSince = undefined;
         }
-        
+
         await material.save();
     }
 
@@ -1073,7 +1073,7 @@ const checkAndUpdateIsActive = async (materialId: string): Promise<boolean> => {
 // Helper function to recursively mark descendants as inactive
 const markDescendantsInactive = async (parentId: string): Promise<void> => {
     const children = await Material.find({ parentId });
-    
+
     for (const child of children) {
         if (child.isActive) {
             child.isActive = false;
@@ -1081,7 +1081,7 @@ const markDescendantsInactive = async (parentId: string): Promise<void> => {
                 child.inactiveSince = new Date();
             }
             await child.save();
-            
+
             // Recursively mark grandchildren
             await markDescendantsInactive(child._id.toString());
         }
@@ -1102,7 +1102,7 @@ const cleanupInactiveMaterials = async (): Promise<void> => {
         for (const material of inactiveMaterials) {
             // Delete all descendants first
             await deleteDescendants(material._id.toString());
-            
+
             // Delete the material itself
             await Material.findByIdAndDelete(material._id);
         }
@@ -1116,11 +1116,11 @@ const cleanupInactiveMaterials = async (): Promise<void> => {
 // Helper function to delete all descendants
 const deleteDescendants = async (parentId: string): Promise<void> => {
     const children = await Material.find({ parentId });
-    
+
     for (const child of children) {
         // Recursively delete grandchildren
         await deleteDescendants(child._id.toString());
-        
+
         // Delete the child
         await Material.findByIdAndDelete(child._id);
     }
@@ -1159,10 +1159,10 @@ const createClassId = async (req: Request, res: Response) => {
         });
 
         const savedClass = await newClass.save();
-        
+
         // Check and update isActive status
         await checkAndUpdateIsActive(savedClass._id.toString());
-        
+
         // Fetch updated material
         const updatedClass = await Material.findById(savedClass._id);
 
@@ -1228,16 +1228,16 @@ const createSubFolder = async (req: Request, res: Response) => {
         });
 
         const savedSubMaterial = await newSubMaterial.save();
-        
+
         // Check and update isActive status
         await checkAndUpdateIsActive(savedSubMaterial._id.toString());
-        
+
         // Populate subject to get the name for response
         const populatedMaterial = await Material.findById(savedSubMaterial._id).populate('subject', 'name');
-        
+
         // Determine display heading
-        const displayHeading = populatedMaterial?.subject 
-            ? (populatedMaterial.subject as any).name 
+        const displayHeading = populatedMaterial?.subject
+            ? (populatedMaterial.subject as any).name
             : savedSubMaterial.heading;
 
         return res.status(201).json({
@@ -1262,21 +1262,21 @@ const findByParentId = async (req: Request, res: Response) => {
                 success: false
             });
         }
-        
+
         // Find materials and populate subject
         const materials = await Material.find({ parentId: parentId }).populate('subject', 'name');
-        
+
         // Check and update isActive for each material
         for (const material of materials) {
             await checkAndUpdateIsActive(material._id.toString());
         }
-        
+
         // Fetch updated materials and filter only active ones
-        const updatedMaterials = await Material.find({ 
+        const updatedMaterials = await Material.find({
             parentId: parentId,
-            isActive: true 
+            isActive: true
         }).populate('subject', 'name');
-        
+
         return res.status(200).json({
             message: 'Materials fetched successfully',
             success: true,
@@ -1435,7 +1435,7 @@ const updateSubFolder = async (req: Request, res: Response) => {
             // For subfolders, update subject and heading
             folder.subject = subject !== undefined ? subject : folder.subject;
             folder.heading = heading !== undefined ? heading : folder.heading;
-            
+
             // Validate: Either subject OR heading must be present
             if (!folder.subject && !folder.heading) {
                 return res.status(400).json({
@@ -1456,21 +1456,21 @@ const updateSubFolder = async (req: Request, res: Response) => {
         folder.classType = classType !== undefined ? classType : folder.classType;
 
         const updatedFolder = await folder.save();
-        
+
         // Check and update isActive status
         const isActive = await checkAndUpdateIsActive(updatedFolder._id.toString());
-        
+
         // If folder became inactive, mark all descendants as inactive
         if (!isActive) {
             await markDescendantsInactive(updatedFolder._id.toString());
         }
-        
+
         // Populate subject after save
         const populatedFolder = await Material.findById(updatedFolder._id).populate('subject', 'name');
-        
+
         // Get new heading
-        const newHeading = populatedFolder?.subject 
-            ? (populatedFolder.subject as any).name 
+        const newHeading = populatedFolder?.subject
+            ? (populatedFolder.subject as any).name
             : updatedFolder.heading;
 
         // If heading changed, update all descendant paths
@@ -1499,24 +1499,27 @@ const updateSubFolder = async (req: Request, res: Response) => {
 const getAllClasses = async (req: Request, res: Response) => {
     try {
         const classes = await Material.find({ parentId: null }).sort({ createdAt: -1 });
-        
+
         // Check and update isActive for each class
         for (const classItem of classes) {
             const wasActive = classItem.isActive;
             const isActive = await checkAndUpdateIsActive(classItem._id.toString());
-            
+
             // If class became inactive, mark all descendants as inactive
             if (wasActive && !isActive) {
                 await markDescendantsInactive(classItem._id.toString());
             }
         }
-        
-        // Fetch updated classes and filter only active ones
-        const activeClasses = await Material.find({ 
+
+        // Fetch updated classes and filter only active ones, with populated refs
+        const activeClasses = await Material.find({
             parentId: null,
-            isActive: true 
-        }).sort({ createdAt: -1 });
-        
+            isActive: true
+        })
+            .populate('stream', 'name')
+            .populate('targetExam', 'name')
+            .sort({ createdAt: -1 });
+
         return res.status(200).json({
             message: 'Classes fetched successfully',
             success: true,
@@ -1565,8 +1568,8 @@ const getAllFiles = async (req: Request, res: Response) => {
                     if (file.fileName && file.uploadLink) {
                         if (!uniqueFilesMap.has(file.uploadLink)) {
                             // Get display heading (from subject or manual heading)
-                            const displayHeading = (material as any).subject 
-                                ? (material as any).subject.name 
+                            const displayHeading = (material as any).subject
+                                ? (material as any).subject.name
                                 : material.heading;
 
                             // Build breadcrumb from path

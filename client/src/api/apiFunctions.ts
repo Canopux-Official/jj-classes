@@ -8,6 +8,7 @@ interface LoginPayload {
   phoneNumber: string;
   currentClass: string;
   password: string;
+  role: 'student' | 'admin' | 'superadmin';
 }
 
 interface SendOtpPayload {
@@ -29,6 +30,10 @@ interface ApiResponse<T = unknown> {
   status?: number;
   message?: string;
   authToken?: string;
+  role?: string;
+  count?: number;
+  admins?: unknown[];
+  admin?: unknown;
   error?: unknown;
 }
 
@@ -174,6 +179,23 @@ export async function validateToken(): Promise<boolean> {
   } catch {
     // If 401 or network error, token is invalid
     return false;
+  }
+}
+
+export async function getAdminProfile(): Promise<ApiResponse> {
+  try {
+    const config: AxiosRequestConfig = {
+      method: "get",
+      url: `${import.meta.env.VITE_SERVER_LINK}/admin/dashboard/me`,
+      headers: getAuthHeaders()
+    };
+    const response = await axios(config);
+    if (response.status === 200 && response.data.success) {
+      return { success: true, admin: response.data.admin };
+    }
+    return { success: false, message: "Failed to fetch admin profile" };
+  } catch {
+    return { success: false, message: "Network error" };
   }
 }
 export async function getStudents(): Promise<ApiResponse> {
@@ -323,10 +345,10 @@ async function crudRequest(method: 'get' | 'post' | 'put' | 'delete', endpoint: 
 
 // --- STREAMS ---
 export const getStreams = () => crudRequest('get', '/admin/streamControl/all');
+export const getActiveStreams = () => crudRequest('get', '/admin/streamControl/getActiveStreams');
 export const addStream = (data: unknown) => crudRequest('post', '/admin/streamControl/add', data);
 export const updateStream = (id: string, data: unknown) => crudRequest('put', `/admin/streamControl/update/${id}`, data);
 export const deleteStream = (id: string) => crudRequest('delete', `/admin/streamControl/delete/${id}`);
-export const getActiveStreams = () => crudRequest('get', '/admin/streamControl/getActiveStreams');
 // --- TARGET EXAMS ---
 export const getTargetExams = () => crudRequest('get', '/admin/targetExamControl/all');
 export const addTargetExam = (data: unknown) => crudRequest('post', '/admin/targetExamControl/add', data);
@@ -360,19 +382,120 @@ export async function changePassword(passwordData: { current: string, new: strin
   }
 }
 
-export async function getAdminDashboardDetails(){
-  try{
-    const config: AxiosRequestConfig={
+export async function getAdminDashboardDetails() {
+  try {
+    const config: AxiosRequestConfig = {
       method: "get",
       url: `${import.meta.env.VITE_SERVER_LINK}/admin/dashboard/getAdminDashboardDetails`,
       headers: getAuthHeaders()
     };
     const response = await axios(config);
-    return { success: true, data: response.data, status: response.status};
+    return { success: true, data: response.data, status: response.status };
 
-  } catch(error){
+  } catch (error) {
     const axiosError = error as AxiosError;
     // @ts-expect-error response.data is not typed
     return { success: false, message: axiosError.response?.data?.message || "Failed to fetch admin dashboard details" };
+  }
+}
+
+// --- SUPER ADMIN: ADMIN ACCESS CONTROL ---
+export async function getAllAdmins(): Promise<ApiResponse> {
+  try {
+    const config: AxiosRequestConfig = {
+      method: "get",
+      url: `${import.meta.env.VITE_SERVER_LINK}/admin/control/getAllAdmins`,
+      headers: getAuthHeaders()
+    };
+    const response = await axios(config);
+    return { success: true, data: response.data, status: response.status };
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    // @ts-expect-error response.data is not typed
+    return { success: false, message: axiosError.response?.data?.message || "Failed to fetch admins" };
+  }
+}
+
+export async function updateAdminPermissions(id: string, permissions: unknown): Promise<ApiResponse> {
+  try {
+    const config: AxiosRequestConfig = {
+      method: "put",
+      url: `${import.meta.env.VITE_SERVER_LINK}/admin/control/updatePermissions/${id}`,
+      data: { permissions },
+      headers: getAuthHeaders()
+    };
+    const response = await axios(config);
+    return { success: true, data: response.data, status: response.status };
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    // @ts-expect-error response.data is not typed
+    return { success: false, message: axiosError.response?.data?.message || "Failed to update permissions" };
+  }
+}
+
+export async function addAdmin(adminData: unknown): Promise<ApiResponse> {
+  try {
+    const config: AxiosRequestConfig = {
+      method: "post",
+      url: `${import.meta.env.VITE_SERVER_LINK}/admin/control/addAdmin`,
+      data: adminData,
+      headers: getAuthHeaders()
+    };
+    const response = await axios(config);
+    return { success: true, data: response.data, status: response.status };
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    // @ts-expect-error response.data is not typed
+    return { success: false, message: axiosError.response?.data?.message || "Failed to add admin" };
+  }
+}
+
+export async function deleteAdmin(id: string): Promise<ApiResponse> {
+  try {
+    const config: AxiosRequestConfig = {
+      method: "delete",
+      url: `${import.meta.env.VITE_SERVER_LINK}/admin/control/deleteAdmin/${id}`,
+      headers: getAuthHeaders()
+    };
+    const response = await axios(config);
+    return { success: true, data: response.data, status: response.status };
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    // @ts-expect-error response.data is not typed
+    return { success: false, message: axiosError.response?.data?.message || "Failed to delete admin" };
+  }
+}
+
+// --- STUDENT SPECIFIC APIs ---
+
+export async function getStudentProfile(): Promise<ApiResponse> {
+  try {
+    const config: AxiosRequestConfig = {
+      method: "get",
+      url: `${import.meta.env.VITE_SERVER_LINK}/student/studentProfile/getStudent`,
+      headers: getAuthHeaders()
+    };
+    const response = await axios(config);
+    return { success: true, data: response.data, status: response.status };
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    // @ts-expect-error response.data is not typed
+    return { success: false, message: axiosError.response?.data?.message || "Failed to fetch student profile" };
+  }
+}
+
+export async function getStudentNotices(): Promise<ApiResponse> {
+  try {
+    const config: AxiosRequestConfig = {
+      method: "get",
+      url: `${import.meta.env.VITE_SERVER_LINK}/student/notice`,
+      headers: getAuthHeaders()
+    };
+    const response = await axios(config);
+    return { success: true, data: response.data, status: response.status };
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    // @ts-expect-error response.data is not typed
+    return { success: false, message: axiosError.response?.data?.message || "Failed to fetch student notices" };
   }
 }

@@ -7,7 +7,9 @@ import {
   InputAdornment,
   IconButton,
   MenuItem,
-  Collapse
+  Collapse,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
 import { loginStyles } from './LoginPage.styles';
 import PhoneIphoneIcon from '@mui/icons-material/PhoneIphone';
@@ -35,7 +37,7 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [maskedEmail, setMaskedEmail] = useState('');
-  
+
   // Validation State
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
@@ -49,14 +51,14 @@ const LoginPage = () => {
     dob: '',
     phoneNumber: '',
     currentClass: '',
-    password: ''
+    password: '',
+    role: 'student' as 'student' | 'admin' | 'superadmin'
   });
 
   const [otp, setOtp] = useState('');
 
   // --- ADMIN LOGIC ---
-  const ADMIN_PHONE = import.meta.env.VITE_ADMIN_PHONE;
-  const isAdmin = formData.phoneNumber === ADMIN_PHONE;
+  const isAdmin = formData.role === 'admin' || formData.role === 'superadmin';
 
   // --- TIMER LOGIC ---
   useEffect(() => {
@@ -68,9 +70,9 @@ const LoginPage = () => {
       }, 1000);
     } else if (timer === 0) {
       setCanResend(true);
-      if(interval) clearInterval(interval);
+      if (interval) clearInterval(interval);
     }
-    
+
     return () => {
       if (interval) clearInterval(interval);
     };
@@ -94,9 +96,18 @@ const LoginPage = () => {
     }
 
     setFormData({ ...formData, [prop]: value });
-    
+
     if (errors[prop]) {
-        setErrors({ ...errors, [prop]: '' });
+      setErrors({ ...errors, [prop]: '' });
+    }
+  };
+
+  const handleRoleChange = (
+    _event: React.MouseEvent<HTMLElement>,
+    newRole: 'student' | 'admin' | 'superadmin' | null
+  ) => {
+    if (newRole !== null) {
+      setFormData({ ...formData, role: newRole });
     }
   };
 
@@ -108,43 +119,43 @@ const LoginPage = () => {
     // 1. Phone Number Validation
     const phoneRegex = /^[0-9]{10}$/;
     if (!phoneNumber) {
-        newErrors.phoneNumber = "Phone number is required";
+      newErrors.phoneNumber = "Phone number is required";
     } else if (!phoneRegex.test(phoneNumber)) {
-        newErrors.phoneNumber = "Enter a valid 10-digit mobile number";
+      newErrors.phoneNumber = "Enter a valid 10-digit mobile number";
     }
 
     // 2. Password Validation
     if (!password) {
-        newErrors.password = "Password is required";
+      newErrors.password = "Password is required";
     }
 
     // 3. Student Specific Validations
     if (!isAdmin) {
-        // Name: Only alphabets and spaces, min 3 chars
-        const nameRegex = /^[a-zA-Z\s]{3,}$/;
-        if (!name) {
-            newErrors.name = "Full Name is required";
-        } else if (!nameRegex.test(name)) {
-            newErrors.name = "Enter a valid name (min 3 chars, alphabets only)";
-        }
+      // Name: Only alphabets and spaces, min 3 chars
+      const nameRegex = /^[a-zA-Z\s]{3,}$/;
+      if (!name) {
+        newErrors.name = "Full Name is required";
+      } else if (!nameRegex.test(name)) {
+        newErrors.name = "Enter a valid name (min 3 chars, alphabets only)";
+      }
 
-        // Class
-        if (!currentClass) {
-            newErrors.currentClass = "Please select your class";
-        }
+      // Class
+      if (!currentClass) {
+        newErrors.currentClass = "Please select your class";
+      }
 
-        // Date of Birth: Cannot be in future, reasonable age check
-        if (!dob) {
-            newErrors.dob = "Date of Birth is required";
-        } else {
-            const dobDate = new Date(dob);
-            const today = new Date();
-            if (dobDate >= today) {
-                newErrors.dob = "Date of Birth cannot be in the future";
-            } else if (today.getFullYear() - dobDate.getFullYear() < 10) {
-                newErrors.dob = "You seem too young for this platform";
-            }
+      // Date of Birth: Cannot be in future, reasonable age check
+      if (!dob) {
+        newErrors.dob = "Date of Birth is required";
+      } else {
+        const dobDate = new Date(dob);
+        const today = new Date();
+        if (dobDate >= today) {
+          newErrors.dob = "Date of Birth cannot be in the future";
+        } else if (today.getFullYear() - dobDate.getFullYear() < 10) {
+          newErrors.dob = "You seem too young for this platform";
         }
+      }
     }
 
     setErrors(newErrors);
@@ -155,7 +166,7 @@ const LoginPage = () => {
   // Step 1: Handle Initial Login Submission
   const handleLoginSubmit = async () => {
     if (!validateForm()) {
-        return; // Stop if validation fails
+      return; // Stop if validation fails
     }
 
     setLoading(true);
@@ -165,17 +176,17 @@ const LoginPage = () => {
       if (!response.success || !response.data) {
         setLoading(false);
         // Show error specifically on phone/password if generic login failure, or alert
-        if(response.message?.toLowerCase().includes("user")) {
-             setErrors({ phoneNumber: response.message });
+        if (response.message?.toLowerCase().includes("user")) {
+          setErrors({ phoneNumber: response.message });
         } else if (response.message?.toLowerCase().includes("password")) {
-             setErrors({ password: response.message });
+          setErrors({ password: response.message });
         } else {
-             alert(response.message || 'Login failed');
+          alert(response.message || 'Login failed');
         }
         return;
       }
 
-      const responseData = response.data as { email?: string | null, authToken?: string | null};
+      const responseData = response.data as { email?: string | null, authToken?: string | null };
       const authToken = responseData.authToken;
       const email = responseData.email;
 
@@ -188,19 +199,19 @@ const LoginPage = () => {
         // Reset Timer for new OTP
         setTimer(90);
         setCanResend(false);
-        
+
         setLoading(false);
-        setStep('OTP'); 
-      } 
+        setStep('OTP');
+      }
       else if (authToken) {
-        localStorage.setItem('authToken', authToken); 
+        localStorage.setItem('authToken', authToken);
         setLoading(false);
         if (isAdmin) {
           navigate('/admin/dashboard');
         } else {
           navigate('/student/dashboard');
         }
-      } 
+      }
       else {
         setLoading(false);
         alert("Unexpected login state. Please contact support.");
@@ -224,14 +235,14 @@ const LoginPage = () => {
       const currentClass = localStorage.getItem('authCurrentClass') || '';
       const dob = localStorage.getItem('authDob') || '';
       const phoneNumber = localStorage.getItem('authPhoneNumber') || '';
-      
-      if(!email) {
-          alert("Session expired. Please login again.");
-          setStep('FORM');
-          return;
+
+      if (!email) {
+        alert("Session expired. Please login again.");
+        setStep('FORM');
+        return;
       }
 
-      const response = await verifyOtp({ otp, email, name, dob, currentClass, phoneNumber});
+      const response = await verifyOtp({ otp, email, name, dob, currentClass, phoneNumber });
 
       setLoading(false);
 
@@ -252,30 +263,30 @@ const LoginPage = () => {
 
   // Step 3: Handle Resend OTP
   const handleResendOtp = async () => {
-      setLoading(true);
-      try {
-          const email = localStorage.getItem('authEmail');
-          if (!email) {
-              alert("Email not found. Please try logging in again.");
-              setStep('FORM');
-              return;
-          }
-
-          const response = await resendOtp({ email });
-          
-          if (response.success) {
-              alert("OTP Resent successfully!");
-              setTimer(90); // Reset timer
-              setCanResend(false);
-          } else {
-              alert(response.message || "Failed to resend OTP");
-          }
-      } catch (error) {
-          console.error(error);
-          alert("Error resending OTP");
-      } finally {
-          setLoading(false);
+    setLoading(true);
+    try {
+      const email = localStorage.getItem('authEmail');
+      if (!email) {
+        alert("Email not found. Please try logging in again.");
+        setStep('FORM');
+        return;
       }
+
+      const response = await resendOtp({ email });
+
+      if (response.success) {
+        alert("OTP Resent successfully!");
+        setTimer(90); // Reset timer
+        setCanResend(false);
+      } else {
+        alert(response.message || "Failed to resend OTP");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error resending OTP");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -327,9 +338,9 @@ const LoginPage = () => {
 
           {/* Dynamic Title based on Admin State */}
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 1 }}>
-            {isAdmin && <AdminPanelSettingsIcon color="primary" fontSize="large" />}
+            {isAdmin && <AdminPanelSettingsIcon color={formData.role === 'superadmin' ? 'error' : 'primary'} fontSize="large" />}
             <Typography variant="h5" fontWeight={700}>
-              {isAdmin ? 'Admin Access Portal' : 'Student Portal'}
+              {formData.role === 'superadmin' ? 'Super Admin Portal' : formData.role === 'admin' ? 'Admin Access Portal' : 'Student Portal'}
             </Typography>
           </Box>
 
@@ -348,6 +359,28 @@ const LoginPage = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
               >
+                {/* ROLE SELECTION */}
+                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                  <ToggleButtonGroup
+                    value={formData.role}
+                    exclusive
+                    onChange={handleRoleChange}
+                    aria-label="user role"
+                    color="primary"
+                    fullWidth
+                  >
+                    <ToggleButton value="student" aria-label="student login">
+                      Student
+                    </ToggleButton>
+                    <ToggleButton value="admin" aria-label="admin login">
+                      Admin
+                    </ToggleButton>
+                    <ToggleButton value="superadmin" aria-label="superadmin login">
+                      Super Admin
+                    </ToggleButton>
+                  </ToggleButtonGroup>
+                </Box>
+
                 {/* 1. PHONE FIELD */}
                 <TextField
                   fullWidth
@@ -471,10 +504,13 @@ const LoginPage = () => {
                   size="large"
                   onClick={handleLoginSubmit}
                   disabled={loading}
-                  sx={{
-                    ...loginStyles.actionBtn,
-                    backgroundColor: isAdmin ? '#000000' : undefined
-                  }}
+                  sx={
+                    formData.role === 'superadmin'
+                      ? loginStyles.superAdminActionBtn
+                      : formData.role === 'admin'
+                        ? loginStyles.adminActionBtn
+                        : loginStyles.actionBtn
+                  }
                 >
                   {loading ? 'Checking...' : (isAdmin ? 'Verify & Send OTP' : 'Secure Login')}
                 </Button>
@@ -515,27 +551,27 @@ const LoginPage = () => {
 
                 {/* TIMER & RESEND LOGIC */}
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mt: 2 }}>
-                    {!canResend ? (
-                        <>
-                            <AccessTimeIcon fontSize="small" color="disabled" />
-                            <Typography variant="body2" color="text.secondary">
-                                Resend OTP in <b>{formatTime(timer)}</b>
-                            </Typography>
-                        </>
-                    ) : (
-                        <Typography
-                            onClick={handleResendOtp}
-                            sx={{
-                                cursor: 'pointer',
-                                color: 'primary.main',
-                                fontWeight: 600,
-                                textDecoration: 'underline',
-                                '&:hover': { color: 'primary.dark' }
-                            }}
-                        >
-                            Resend OTP
-                        </Typography>
-                    )}
+                  {!canResend ? (
+                    <>
+                      <AccessTimeIcon fontSize="small" color="disabled" />
+                      <Typography variant="body2" color="text.secondary">
+                        Resend OTP in <b>{formatTime(timer)}</b>
+                      </Typography>
+                    </>
+                  ) : (
+                    <Typography
+                      onClick={handleResendOtp}
+                      sx={{
+                        cursor: 'pointer',
+                        color: 'primary.main',
+                        fontWeight: 600,
+                        textDecoration: 'underline',
+                        '&:hover': { color: 'primary.dark' }
+                      }}
+                    >
+                      Resend OTP
+                    </Typography>
+                  )}
                 </Box>
 
                 <Typography

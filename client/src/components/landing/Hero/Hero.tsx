@@ -50,7 +50,7 @@ const Hero = () => {
 
               <Box sx={{ ...heroStyles.contentContainer, textAlign: { xs: 'center', md: 'left' } }}>
 
-                <Typography variant="overline" sx={{ color: 'secondary.dark', fontWeight: 700, letterSpacing: 2 }}>
+                <Typography variant="overline" sx={{ color: 'secondary.dark', fontWeight: 700, letterSpacing: 2, fontSize: { xs: '1rem', md: '1.1rem' } }}>
                   PREMIERE COACHING IN KORAPUT
                 </Typography>
 
@@ -87,25 +87,30 @@ const Hero = () => {
 
           {/* RIGHT: Champions Carousel */}
           <Box sx={heroStyles.carouselContainer}>
-            <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, delay: 0.2 }}>
-              <Box sx={{ position: 'relative' }}>
-                <Typography variant="h6" sx={{
-                  position: 'absolute',
-                  top: -40,
-                  left: 0,
-                  color: 'secondary.dark',
-                  fontWeight: 700,
-                  display: { xs: 'none', md: 'block' }
-                }}>
-                  OUR CHAMPIONS
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
+              <Box sx={heroStyles.carouselRelativeWrapper}>
+                {/* Refined Highlighted Label */}
+                <Typography variant="h6" sx={heroStyles.championsLabel}>
+                  OUR TOP ACHIEVERS
                 </Typography>
-                <div style={{ width: '100%', paddingBottom: '30px' }}> {/* Padding for dots */}
+
+                {/* Decorative Stats/Badge */}
+                <Box sx={heroStyles.experienceBadge}>
+                  <Typography variant="h4" sx={{ fontWeight: 900, lineHeight: 1 }}>10+</Typography>
+                  <Typography variant="caption" sx={{ fontWeight: 600 }}>YEARS OF PRIDE</Typography>
+                </Box>
+
+                <Box sx={heroStyles.carouselGlassCard}>
                   <Slider {...settings}>
                     {dummyData.champions.map((champion) => (
                       <ChampionCard key={champion.id} champion={champion} />
                     ))}
                   </Slider>
-                </div>
+                </Box>
               </Box>
             </motion.div>
           </Box>

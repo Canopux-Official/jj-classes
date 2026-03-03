@@ -67,6 +67,7 @@ export const getAllStudents = async (req: Request, res: Response) => {
 }
 
 export const getStudentById = async (req: Request, res: Response) => {
+    console.log(req.user);
     try {
         const student = await Student.findById(req.user?.id)
             .populate('enrolledSubjects', 'name stream')

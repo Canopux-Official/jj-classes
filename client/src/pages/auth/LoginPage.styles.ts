@@ -23,9 +23,9 @@ export const loginStyles: Record<string, SxProps<Theme>> = {
     '&::before': {
       content: '""',
       position: 'absolute',
-      top: 0, 
-      left: 0, 
-      right: 0, 
+      top: 0,
+      left: 0,
+      right: 0,
       bottom: 0,
       zIndex: -1,
     }
@@ -65,16 +65,16 @@ export const loginStyles: Record<string, SxProps<Theme>> = {
     textAlign: 'center',
   },
   // The Logo on the Form Side
- // Find 'brandLogo' in your existing styles and update it:
-brandLogo: {
-  fontFamily: '"Montserrat", sans-serif',
-  fontWeight: 800,
-  fontSize: { xs: '1.8rem', md: '2rem' }, // Responsive font size
-  mb: 1,
-  color: '#0b2021',
-  letterSpacing: '-1px',
-  cursor: 'pointer',
-},
+  // Find 'brandLogo' in your existing styles and update it:
+  brandLogo: {
+    fontFamily: '"Montserrat", sans-serif',
+    fontWeight: 800,
+    fontSize: { xs: '1.8rem', md: '2rem' }, // Responsive font size
+    mb: 1,
+    color: '#0b2021',
+    letterSpacing: '-1px',
+    cursor: 'pointer',
+  },
   inputField: {
     mb: 3,
     '& .MuiOutlinedInput-root': {
@@ -90,6 +90,34 @@ brandLogo: {
     textTransform: 'none',
     mb: 3,
     boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+  },
+  adminActionBtn: {
+    py: 1.5,
+    borderRadius: 3,
+    fontSize: '1rem',
+    fontWeight: 700,
+    textTransform: 'none',
+    mb: 3,
+    boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+    backgroundColor: '#0b2021', // Dark teal matching the left section
+    color: 'white',
+    '&:hover': {
+      backgroundColor: '#113335',
+    }
+  },
+  superAdminActionBtn: {
+    py: 1.5,
+    borderRadius: 3,
+    fontSize: '1rem',
+    fontWeight: 700,
+    textTransform: 'none',
+    mb: 3,
+    boxShadow: '0 8px 16px rgba(0,0,0,0.2)',
+    backgroundColor: '#8b0000', // Deep red for super admin
+    color: 'white',
+    '&:hover': {
+      backgroundColor: '#a50000',
+    }
   },
   backLink: {
     cursor: 'pointer',

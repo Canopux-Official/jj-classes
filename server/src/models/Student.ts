@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IStudent extends Document {
   name: string;
-  dob: Date; 
+  dob: Date;
   phoneNumber: string;
   parentPhoneNumber?: string;
   email: string;
@@ -26,14 +26,14 @@ const StudentSchema: Schema = new Schema({
   password: { type: String, required: true },
 
   // Academic Standing
-  currentClass: { 
-    type: String, 
+  currentClass: {
+    type: String,
     required: true,
-    enum: ['9', '10', '11', '12', 'dropper-1', 'dropper-2'] 
+    enum: ['9', '10', '11', '12', 'dropper-1', 'dropper-2']
   },
 
-  stream: { 
-    type: Schema.Types.ObjectId, 
+  stream: {
+    type: Schema.Types.ObjectId,
     ref: 'Stream',
     default: null
     // Comment: Dynamic reference to Stream model.
@@ -48,11 +48,11 @@ const StudentSchema: Schema = new Schema({
   }],
 
   // Granular Access
-  enrolledSubjects: [{ 
-    type: Schema.Types.ObjectId, 
+  enrolledSubjects: [{
+    type: Schema.Types.ObjectId,
     ref: 'Subject',
     required: true
-  }], 
+  }],
 
   // Administrative
   academicSession: { type: String, required: true },

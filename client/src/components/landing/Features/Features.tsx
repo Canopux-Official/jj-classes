@@ -17,7 +17,7 @@ const Features = () => {
     <Box sx={featureStyles.section} id="features">
       <Container maxWidth="lg">
         <Box sx={featureStyles.header}>
-          <Typography variant="overline" color="secondary.main" fontWeight={700}>WHY CHOOSE US</Typography>
+          <Typography variant="overline" color="secondary.contrastText" fontWeight={700} sx={{ fontSize: { xs: '1.1rem', md: '1.2rem' } }}>WHY CHOOSE US</Typography>
           <Typography variant="h3" fontWeight={700} sx={{ mt: 1 }}>Our Key Features</Typography>
         </Box>
 

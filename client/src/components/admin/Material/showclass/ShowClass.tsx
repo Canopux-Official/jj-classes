@@ -920,7 +920,7 @@ import {
 } from '../services/FolderServiceApi';
 import { deleteFileFromDrive } from '../utils/googleDriveService';
 import EditClassDialog from '../DialogForm/EditClassDialog';
-import { getTargetExams, getStreams } from '../../../../api/apiFunctions';
+import { getTargetExams, getActiveStreams } from '../../../../api/apiFunctions';
 import ClassFilters from '../classcardUtils/ClassFilters';
 import ClassTableRow from '../classcardUtils/ClassTableRow';
 
@@ -1009,7 +1009,7 @@ const ShowClass: React.FC = () => {
       try {
         const [targetExamsResponse, streamsResponse] = await Promise.all([
           getTargetExams(),
-          getStreams(),
+          getActiveStreams(),
         ]);
 
         setTargetExams((targetExamsResponse.data as TargetExam[]) ?? []);
@@ -1033,16 +1033,19 @@ const ShowClass: React.FC = () => {
   // Get root classes
   const rootClasses = allNodes.filter((node) => node.parentId === null);
 
-  // Helper functions
-  const getTargetExamName = (id: string): string => {
-    const exam = targetExams.find((exam) => exam._id === id);
-    return exam?.name || id;
+  // Safely extract stream/targetExam name from populated object or raw string/ID
+  const getNameFromField = (field: { _id?: string; name?: string } | string | null | undefined): string => {
+    if (!field) return '';
+    if (typeof field === 'object' && field.name) return field.name;
+    if (typeof field === 'string') {
+      // It's a raw ID string — look it up in the loaded lists
+      return field;
+    }
+    return '';
   };
 
-  const getStreamName = (id: string): string => {
-    const stream = streams.find((stream) => stream._id === id);
-    return stream?.name || id;
-  };
+  const getTargetExamName = (field: typeof allNodes[0]['targetExam']): string => getNameFromField(field as { _id?: string; name?: string } | string);
+  const getStreamName = (field: typeof allNodes[0]['stream']): string => getNameFromField(field as { _id?: string; name?: string } | string | null);
 
   // Filter logic
   const filteredClasses = rootClasses.filter((node) => {
@@ -1053,8 +1056,8 @@ const ShowClass: React.FC = () => {
       getStreamName(node.stream).toLowerCase().includes(searchTerm.toLowerCase()) ||
       node.description?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesTargetExam = filterTargetExam === '' || node.targetExam === filterTargetExam;
-    const matchesStream = filterStream === '' || node.stream === filterStream;
+    const matchesTargetExam = filterTargetExam === '' || getTargetExamName(node.targetExam) === filterTargetExam;
+    const matchesStream = filterStream === '' || getStreamName(node.stream) === filterStream;
     const matchesClassType = filterClassType === '' || node.classType === filterClassType;
 
     return matchesSearch && matchesTargetExam && matchesStream && matchesClassType;
@@ -1160,10 +1163,17 @@ const ShowClass: React.FC = () => {
         stream: streamId,
       };
 
-      const result = await updateFolder(editingNode._id, updatedNode);
+      interface UpdateFolderResponse {
+        success: boolean;
+        message?: string;
+        data?: Node;
+        breadcrumb?: string;
+      }
 
-      if ((result as { success: string }).success) {
-        const returnedData = (result as { data: Node }).data;
+      const result = (await updateFolder(editingNode._id, updatedNode)) as UpdateFolderResponse;
+
+      if (result.success) {
+        const returnedData = result.data as Node;
 
         const updatedNodes = allNodes.map((node) =>
           node._id === editingNode._id ? returnedData : node
@@ -1172,7 +1182,7 @@ const ShowClass: React.FC = () => {
         setAllNodes(updatedNodes);
         handleCloseEditDialog();
 
-        const breadcrumb = (result as any).breadcrumb;
+        const breadcrumb = result.breadcrumb;
         const message = breadcrumb ? `Updated: ${breadcrumb}` : 'Class updated successfully';
 
         setSnackbar({
@@ -1183,7 +1193,7 @@ const ShowClass: React.FC = () => {
       } else {
         setSnackbar({
           open: true,
-          message: (result as { message: string }).message || 'Failed to update class',
+          message: result.message || 'Failed to update class',
           severity: 'error',
         });
       }
@@ -1559,8 +1569,16 @@ const ShowClass: React.FC = () => {
           onClose={handleCloseEditDialog}
           onSave={handleSaveEdit}
           initialClassType={editingNode.heading}
-          initialTargetExamId={editingNode.targetExam}
-          initialStreamId={editingNode.stream}
+          initialTargetExamId={
+            typeof editingNode.targetExam === 'object' && editingNode.targetExam
+              ? (editingNode.targetExam as { _id: string })._id
+              : (editingNode.targetExam as string) ?? ''
+          }
+          initialStreamId={
+            typeof editingNode.stream === 'object' && editingNode.stream
+              ? (editingNode.stream as { _id: string })._id
+              : (editingNode.stream as string) ?? ''
+          }
           targetExams={targetExams}
           streams={streams}
         />

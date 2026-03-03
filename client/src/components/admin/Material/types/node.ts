@@ -7,12 +7,18 @@ export interface Subject {
 }
 
 
+export interface NamedEntity {
+  _id: string;
+  name: string;
+}
+
+
 export interface Node {
   _id: string;
   heading: string;
-  targetExam: string;
+  targetExam: NamedEntity | string;
   subject?: Subject | string;  // Can be populated object or just ID
-  stream: string;
+  stream: NamedEntity | string | null;
   type: 'folder' | 'file';
   parentId: string | null;
   classType: string,

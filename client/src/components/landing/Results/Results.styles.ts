@@ -1,93 +1,101 @@
 import type { SxProps, Theme } from '@mui/material';
 
+// Define the Keyframes for the scrolling animation
+const marqueeKeyframes = {
+  '@keyframes scroll': {
+    '0%': { transform: 'translateX(0)' },
+    '100%': { transform: 'translateX(-50%)' }, // Moves half the width
+  },
+};
+
 export const resultStyles: Record<string, SxProps<Theme>> = {
   section: {
     py: { xs: 6, md: 8 },
     bgcolor: 'background.paper',
+    overflow: 'hidden',
+    ...marqueeKeyframes,
   },
   header: {
     textAlign: 'center',
     mb: 6,
   },
+  // The Track Container
+  marqueeWrapper: {
+    display: 'flex',
+    overflow: 'hidden',
+    userSelect: 'none',
+    width: '100%',
+    // REMOVED: maskImage (fading effect)
+  },
+  // The Moving Track
+  marqueeTrack: {
+    display: 'flex',
+    gap: '2rem',
+    width: 'max-content',
+    animation: 'scroll 20s linear infinite', // INCREASED SPEED (40s -> 20s)
+    '&:hover': {
+      animationPlayState: 'paused',
+    },
+    pl: '2rem',
+  },
+  // The Card Component
   imageCard: {
+    position: 'relative',
     borderRadius: 4,
     overflow: 'hidden',
-    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-    transition: 'transform 0.3s ease',
-    bgcolor: '#f5f5f5', // Light grey background for the "empty" space if image is narrow
-    height: '400px',    // FIXED HEIGHT to prevent scrolling
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    height: '450px',
+    width: '300px',
+    flexShrink: 0,
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 8px 20px rgba(0,0,0,0.08)',
     '&:hover': {
-      transform: 'scale(1.02)',
-      boxShadow: '0 12px 32px rgba(0,0,0,0.2)',
+      transform: 'translateY(-5px)',
+      boxShadow: '0 15px 30px rgba(0,0,0,0.15)',
+      '& .play-overlay': { opacity: 1 },
+      '& .card-image': { transform: 'scale(1.05)' }
     },
   },
   image: {
     width: '100%',
     height: '100%',
-    objectFit: 'contain', // Ensures the whole image is visible inside the 400px box
-    display: 'block',
-  },
-  // Carousel Specifics
-  carouselWrapper: {
-    mt: 6,
-    '.slick-slide': {
-      padding: '0 16px', // Increased gap
-    },
-    '.slick-track': {
-      display: 'flex',
-      alignItems: 'stretch',
-    },
-  },
-  studentCard: {
-    bgcolor: 'background.paper',
-    borderRadius: 5, // Softer curves
-    overflow: 'hidden',
-    boxShadow: '0 10px 30px -10px rgba(0,0,0,0.1)', // Softer, deeper shadow
-    cursor: 'pointer',
-    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)', // Bouncy effect
-    height: '100%',
-    position: 'relative',
-    border: '1px solid rgba(0,0,0,0.05)',
-    '&:hover': {
-      transform: 'translateY(-12px)',
-      boxShadow: '0 20px 40px -10px rgba(0,0,0,0.2)',
-    },
-  },
-  studentImage: {
-    width: '100%',
-    height: '280px', // Taller image
     objectFit: 'cover',
     transition: 'transform 0.5s ease',
-    display: 'block',
   },
-  cardContent: {
-    p: 3,
-    pt: 5, // Extra top padding for the rank badge
-    textAlign: 'center',
-    position: 'relative',
+  playOverlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    bgcolor: 'rgba(11, 32, 33, 0.4)',
     display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: 0,
+    transition: 'opacity 0.3s ease',
+    zIndex: 1,
   },
+  // Rank Badge
   rankBadge: {
     position: 'absolute',
-    top: -20,
-    left: '50%',
-    transform: 'translateX(-50%)',
-    background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)', // Gold gradient
+    top: 20,
+    right: 20,
+    background: '#6404ffb1',
     color: '#fff',
-    px: 3,
-    py: 0.8,
+    px: 2,
+    py: 0.5,
     borderRadius: '50px',
-    fontSize: '0.85rem',
-    fontWeight: 800,
-    boxShadow: '0 4px 10px rgba(255, 165, 0, 0.4)',
+    fontSize: '1rem',
+    fontWeight: 700,
+    boxShadow: '0 4px 10px rgba(0, 137, 123, 0.3)',
     zIndex: 2,
-    whiteSpace: 'nowrap',
+  },
+  nameTag: {
+    position: 'absolute',
+    bottom: 0, left: 0, right: 0,
+    background: 'linear-gradient(to top, rgba(11,32,33,0.95) 0%, rgba(11,32,33,0) 100%)',
+    p: 3,
+    pt: 8,
+    color: 'white',
+    zIndex: 2,
   },
   // Modal Styles
   modalContent: {
@@ -95,24 +103,28 @@ export const resultStyles: Record<string, SxProps<Theme>> = {
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
-    width: { xs: '95%', sm: '80%', md: '900px' },
+    width: { xs: '95%', md: '900px' },
+    maxWidth: '95vw',
     bgcolor: 'background.paper',
-    borderRadius: 4,
     boxShadow: 24,
+    borderRadius: 4,
+    outline: 'none',
     display: 'flex',
     flexDirection: { xs: 'column', md: 'row' },
     overflow: 'hidden',
-    maxHeight: { xs: '90vh', md: '80vh' },
+    maxHeight: '90vh',
   },
-  videoContainer: {
-    width: { xs: '100%', md: '40%' }, // 9:16 aspect ratio roughly maintained
-    bgcolor: 'black',
+  videoSection: {
+    flex: { xs: 'none', md: '0 0 350px' },
+    bgcolor: '#000',
     position: 'relative',
-    minHeight: { xs: '300px', md: 'auto' },
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  detailsContainer: {
-    width: { xs: '100%', md: '60%' },
-    p: 4,
+  detailsSection: {
+    flex: 1,
+    p: { xs: 3, md: 5 },
     overflowY: 'auto',
-  },
+  }
 };

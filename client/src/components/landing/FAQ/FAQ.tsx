@@ -53,7 +53,7 @@ const FAQ = () => {
         
         {/* Header */}
         <Box sx={faqStyles.header}>
-          <Typography variant="overline" color="secondary.main" fontWeight={700} letterSpacing={1.5}>
+          <Typography variant="overline" color="secondary.contrastText" fontWeight={800} letterSpacing={1.5} sx={{ fontSize: { xs: '1.1rem', md: '1.2rem' } }}>
             COMMON QUERIES
           </Typography>
           

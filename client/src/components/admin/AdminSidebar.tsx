@@ -12,6 +12,8 @@ import SchoolIcon from '@mui/icons-material/School'; // For Streams
 import QuizIcon from '@mui/icons-material/Quiz';     // For Target Exams
 import EditCalendarIcon from '@mui/icons-material/EditCalendar';
 import PushPinIcon from '@mui/icons-material/PushPin';
+import VpnKeyIcon from '@mui/icons-material/VpnKey'; // For Access Control
+import { getAdminProfile } from '../../api/apiFunctions';
 
 import { LogoContainer, drawerPaperStyles } from './AdminSidebar.styles';
 import LogoImg from '../../assets/logo.jpeg';
@@ -26,23 +28,47 @@ const DRAWER_WIDTH = 260;
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen, handleDrawerToggle }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [role, setRole] = React.useState<string>('');
+  const [permissions, setPermissions] = React.useState<Record<string, boolean> | null>(null);
 
-  const menuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/admin' },
-    { text: 'Students Directory', icon: <PeopleIcon />, path: '/admin/students' },
-    
+  React.useEffect(() => {
+    const fetchProfile = async () => {
+      const res = await getAdminProfile();
+      if (res.success && res.admin) {
+        const adminData = res.admin as { role: string; permissions?: Record<string, boolean> };
+        setRole(adminData.role);
+        setPermissions(adminData.permissions || {});
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  const allMenuItems = [
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/admin', permissionKey: null },
+    { text: 'Students Directory', icon: <PeopleIcon />, path: '/admin/students', permissionKey: 'students' },
+
     // Academic Configuration Group
-    { text: 'Streams Manager', icon: <SchoolIcon />, path: '/admin/streams' },
-    { text: 'Target Exams Manager', icon: <QuizIcon />, path: '/admin/target-exams' },
-    { text: 'Subjects Manager', icon: <LibraryBooksIcon />, path: '/admin/subjects' },
-    
-    // Management Group
-    { text: 'Session Manager', icon: <SettingsSuggestIcon />, path: '/admin/session' },
-    { text: 'Upload Material', icon: <UploadFileIcon />, path: '/admin/upload' },
-    { text: 'Add Notice', icon: <PushPinIcon />, path: '/admin/notice' },
+    { text: 'Streams Manager', icon: <SchoolIcon />, path: '/admin/streams', permissionKey: 'streams' },
+    { text: 'Target Exams Manager', icon: <QuizIcon />, path: '/admin/target-exams', permissionKey: 'targetExams' },
+    { text: 'Subjects Manager', icon: <LibraryBooksIcon />, path: '/admin/subjects', permissionKey: 'subjects' },
 
-    { text: 'Attendance', icon: <EditCalendarIcon />, path: '/admin/attendance' },
+    // Management Group
+    { text: 'Session Manager', icon: <SettingsSuggestIcon />, path: '/admin/session', permissionKey: 'session' },
+    { text: 'Upload Material', icon: <UploadFileIcon />, path: '/admin/upload', permissionKey: 'upload' },
+    { text: 'Add Notice', icon: <PushPinIcon />, path: '/admin/notice', permissionKey: 'notice' },
+
+    { text: 'Attendance', icon: <EditCalendarIcon />, path: '/admin/attendance', permissionKey: 'attendance' },
   ];
+
+  if (role === 'superadmin') {
+    allMenuItems.push({ text: 'Admin Access Control', icon: <VpnKeyIcon />, path: '/admin/control', permissionKey: null });
+  }
+
+  const menuItems = allMenuItems.filter(item => {
+    if (role === 'superadmin') return true;
+    if (!item.permissionKey) return true; // Always show things like Dashboard
+    return permissions && permissions[item.permissionKey] === true;
+  });
 
   // Common content for both drawers
   const drawerContent = (
@@ -95,9 +121,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen, handleDrawerTog
           </Typography>
         </Box>
       </LogoContainer>
-      
+
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
-      
+
       <List>
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path;
@@ -136,13 +162,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen, handleDrawerTog
         variant="temporary"
         open={mobileOpen}
         onClose={handleDrawerToggle}
-        ModalProps={{ keepMounted: true }} 
+        ModalProps={{ keepMounted: true }}
         sx={{
-          display: { xs: 'block', sm: 'none' }, 
+          display: { xs: 'block', sm: 'none' },
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
             width: DRAWER_WIDTH,
-            ...drawerPaperStyles 
+            ...drawerPaperStyles
           },
         }}
       >
@@ -153,11 +179,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen, handleDrawerTog
       <Drawer
         variant="permanent"
         sx={{
-          display: { xs: 'none', sm: 'block' }, 
+          display: { xs: 'none', sm: 'block' },
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
             width: DRAWER_WIDTH,
-            ...drawerPaperStyles 
+            ...drawerPaperStyles
           },
         }}
         open
