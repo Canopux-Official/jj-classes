@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState, useRef } from 'react';
-import * as XLSX from 'xlsx'; 
+import { useState, useRef, useMemo } from 'react';
+import * as XLSX from 'xlsx';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Typography, Button, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, IconButton,
@@ -22,9 +22,9 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import EditIcon from '@mui/icons-material/Edit';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever'; 
-import VisibilityIcon from '@mui/icons-material/Visibility'; 
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'; 
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -60,8 +60,8 @@ interface IStudentUI {
   name: string;
   phoneNumber: string;
   parentPhoneNumber: string;
-  email: string;      
-  dob: string;        
+  email: string;
+  dob: string;
   currentClass: string;
   stream?: INamedEntity | null;
   targetExams: INamedEntity[];
@@ -82,32 +82,13 @@ interface IStudentFormData {
   enrolledSubjects: string[];
   academicSession: string;
   isActive: boolean;
+  password?: string;
 }
 
 const CLASS_OPTIONS = ['9', '10', '11', '12', 'dropper-1', 'dropper-2'];
 
 const StudentsPage: React.FC = () => {
-  // --- State ---
-  const [students, setStudents] = useState<IStudentUI[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  // Dropdown Data Options
-  const [subjectOptions, setSubjectOptions] = useState<string[]>([]); 
-  const [streamOptions, setStreamOptions] = useState<string[]>([]);
-  const [examOptions, setExamOptions] = useState<string[]>([]);
-
-  const [searchTerm, setSearchTerm] = useState('');
-
-  // Filters
-  const [classFilter, setClassFilter] = useState('All');
-  const [streamFilter, setStreamFilter] = useState('All'); // New Stream Filter
-  const [subjectFilter, setSubjectFilter] = useState<string[]>([]); // New Subject Filter
-  const [examFilter, setExamFilter] = useState<string[]>([]);
-  const [statusFilter, setStatusFilter] = useState('All');
-
-  // Pagination
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const queryClient = useQueryClient();
 
   // Dialogs
   const [openDialog, setOpenDialog] = useState(false);
@@ -117,181 +98,198 @@ const StudentsPage: React.FC = () => {
   // Import State
   const [importData, setImportData] = useState<Record<string, unknown>[]>([]);
   const [importFileName, setImportFileName] = useState<string | null>(null);
-  const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Filters
+  const [searchTerm, setSearchTerm] = useState('');
+  const [classFilter, setClassFilter] = useState('All');
+  const [streamFilter, setStreamFilter] = useState('All');
+  const [subjectFilter, setSubjectFilter] = useState<string[]>([]);
+  const [examFilter, setExamFilter] = useState<string[]>([]);
+  const [statusFilter, setStatusFilter] = useState('All');
+
+  // Pagination
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Queries
+  const { data: studentsResponse, isLoading: studentsLoading } = useQuery({
+    queryKey: ['students'],
+    queryFn: getStudents
+  });
+
+  const { data: subjectsResponse, isLoading: subjectsLoading } = useQuery({
+    queryKey: ['activeSubjects'],
+    queryFn: getActiveSubjects
+  });
+
+  const { data: streamsResponse, isLoading: streamsLoading } = useQuery({
+    queryKey: ['activeStreams'],
+    queryFn: getActiveStreams
+  });
+
+  const { data: examsResponse, isLoading: examsLoading } = useQuery({
+    queryKey: ['activeTargetExams'],
+    queryFn: getActiveTargetExams
+  });
+
+  // Derived Native State
+  const students = useMemo(() =>
+    studentsResponse?.success ? (studentsResponse.data as IStudentUI[]) : [],
+    [studentsResponse]);
+
+  const subjectOptions = useMemo(() => {
+    const data = subjectsResponse?.data as { subjects: INamedEntity[] } | undefined;
+    return (subjectsResponse?.success && data?.subjects) ? data.subjects.map(s => s.name) : [];
+  }, [subjectsResponse]);
+
+  const streamOptions = useMemo(() => {
+    const data = streamsResponse?.data as { streams: INamedEntity[] } | undefined;
+    return (streamsResponse?.success && data?.streams) ? data.streams.map(s => s.name) : [];
+  }, [streamsResponse]);
+
+  const examOptions = useMemo(() =>
+    examsResponse?.success && Array.isArray(examsResponse.data) ? (examsResponse.data as INamedEntity[]).map(e => e.name) : [],
+    [examsResponse]);
+
+  const loading = studentsLoading || subjectsLoading || streamsLoading || examsLoading;
 
   // Form State
   const [formData, setFormData] = useState<IStudentFormData>({
-    name: '', 
-    phoneNumber: '', 
-    parentPhoneNumber: '',
-    email: '',          
-    dob: '',            
-    currentClass: '', 
-    stream: '', 
-    targetExams: [], 
-    enrolledSubjects: [],
-    academicSession: '2024-2025', 
-    isActive: true
+    name: '', phoneNumber: '', parentPhoneNumber: '', email: '', dob: '',
+    currentClass: '', stream: '', targetExams: [], enrolledSubjects: [],
+    academicSession: '2024-2025', isActive: true, password: ''
   });
 
   // Check if Stream is applicable (Class 11, 12, or Droppers)
   const isStreamApplicable = ['11', '12', 'dropper-1', 'dropper-2'].includes(formData.currentClass);
-
-  // --- Effects ---
-  useEffect(() => {
-    const fetchAllData = async () => {
-      setLoading(true);
-      await Promise.all([
-          fetchStudentsList(),
-          fetchDropdownOptions()
-      ]);
-      setLoading(false);
-    };
-
-    fetchAllData();
-  }, []);
-
-  const fetchStudentsList = async () => {
-    try {
-      const response = await getStudents();
-      if(response.success && response.data) {
-          setStudents(response.data as IStudentUI[]);
-      }
-    } catch (error) {
-      console.error('Error fetching students:', error);
-    }
-  };
-
-  const fetchDropdownOptions = async () => {
-    try {
-        const subRes = await getActiveSubjects();
-        if (subRes.success && (subRes.data as any).subjects) {
-            setSubjectOptions((subRes.data as any).subjects.map((s: any) => s.name));
-        }
-
-        const streamRes = await getActiveStreams();
-        if (streamRes.success && Array.isArray(streamRes.data)) {
-            setStreamOptions(streamRes.data.map((s: any) => s.name));
-        }
-
-        const examRes = await getActiveTargetExams();
-        if (examRes.success && Array.isArray(examRes.data)) {
-            setExamOptions(examRes.data.map((e: any) => e.name));
-        }
-    } catch (error) {
-        console.error('Error fetching options:', error);
-    }
-  };
 
   // --- Handlers ---
 
   const handleOpenDialog = (student?: IStudentUI) => {
     if (student) {
       setEditingStudentId(student._id);
-      
+
       let formattedDob = '';
       if (student.dob) {
-          try {
-             formattedDob = new Date(student.dob).toISOString().split('T')[0];
-          } catch (e) { console.error("Invalid Date", e) }
+        try {
+          formattedDob = new Date(student.dob).toISOString().split('T')[0];
+        } catch (e) { console.error("Invalid Date", e) }
       }
 
-      setFormData({ 
-          name: student.name,
-          phoneNumber: student.phoneNumber,
-          parentPhoneNumber: student.parentPhoneNumber || '',
-          email: student.email || '',
-          dob: formattedDob,
-          currentClass: student.currentClass,
-          stream: student.stream ? student.stream.name : '',
-          targetExams: student.targetExams.map(t => t.name),
-          enrolledSubjects: student.enrolledSubjects.map(s => s.name),
-          academicSession: student.academicSession,
-          isActive: student.isActive
+      setFormData({
+        name: student.name,
+        phoneNumber: student.phoneNumber,
+        parentPhoneNumber: student.parentPhoneNumber || '',
+        email: student.email || '',
+        dob: formattedDob,
+        currentClass: student.currentClass,
+        stream: student.stream ? student.stream.name : '',
+        targetExams: student.targetExams.map(t => t.name),
+        enrolledSubjects: student.enrolledSubjects.map(s => s.name),
+        academicSession: student.academicSession,
+        isActive: student.isActive,
+        password: ''
       });
     } else {
       setEditingStudentId(null);
       setFormData({
         name: '', phoneNumber: '', parentPhoneNumber: '',
-        email: '', dob: '', 
+        email: '', dob: '',
         currentClass: '', stream: '', targetExams: [], enrolledSubjects: [],
-        academicSession: '2024-2025', isActive: true
+        academicSession: '2024-2025', isActive: true,
+        password: ''
       });
     }
+    setShowPassword(false);
     setOpenDialog(true);
   };
 
-  const handleSave = async () => {
-    try {
-      if (
-          !formData.name || 
-          !formData.phoneNumber || 
-          !formData.currentClass || 
-          !formData.dob ||
-          !formData.academicSession ||
-          !formData.targetExams || formData.targetExams.length === 0
-      ) {
-          alert("Please fill in all mandatory fields.");
-          return;
-      }
-
-      // If stream is required but missing
-      if (isStreamApplicable && !formData.stream) {
-          alert("Stream is required for the selected class.");
-          return;
-      }
-
-      let response;
-      const payload = { ...formData };
-
-      if (editingStudentId) {
-        response = await updateStudent(editingStudentId, payload);
-      } else {
-        response = await addStudent(payload);
-      }
-
-      if (response.success) {
+  const addStudentMutation = useMutation({
+    mutationFn: (payload: IStudentFormData) => addStudent(payload),
+    onSuccess: (res) => {
+      if (res.success) {
         setOpenDialog(false);
-        fetchStudentsList();
+        queryClient.invalidateQueries({ queryKey: ['students'] });
       } else {
-        alert("Error: " + response.message);
+        alert("Error: " + res.message);
       }
-    } catch (error) {
-      console.error(error);
-      alert("An unexpected error occurred.");
+    }
+  });
+
+  const updateStudentMutation = useMutation({
+    mutationFn: (params: { id: string, payload: IStudentFormData }) => updateStudent(params.id, params.payload),
+    onSuccess: (res) => {
+      if (res.success) {
+        setOpenDialog(false);
+        queryClient.invalidateQueries({ queryKey: ['students'] });
+      } else {
+        alert("Error: " + res.message);
+      }
+    }
+  });
+
+  const handleSave = async () => {
+    if (
+      !formData.name ||
+      !formData.phoneNumber ||
+      !formData.currentClass ||
+      !formData.dob ||
+      !formData.academicSession ||
+      !formData.targetExams || formData.targetExams.length === 0
+    ) {
+      alert("Please fill in all mandatory fields.");
+      return;
+    }
+
+    if (isStreamApplicable && !formData.stream) {
+      alert("Stream is required for the selected class.");
+      return;
+    }
+
+    const payload = { ...formData };
+
+    if (editingStudentId) {
+      updateStudentMutation.mutate({ id: editingStudentId, payload });
+    } else {
+      addStudentMutation.mutate(payload);
     }
   };
 
-  const handleToggleStatus = async (id: string, currentStatus: boolean) => {
+  const toggleStatusMutation = useMutation({
+    mutationFn: (id: string) => toggleStudentStatus(id),
+    onSuccess: (res) => {
+      if (res.success) {
+        queryClient.invalidateQueries({ queryKey: ['students'] });
+      } else {
+        alert("Error: " + res.message);
+      }
+    }
+  });
+
+  const deleteStudentMutation = useMutation({
+    mutationFn: (id: string) => deleteStudent(id),
+    onSuccess: (res) => {
+      if (res.success) {
+        queryClient.invalidateQueries({ queryKey: ['students'] });
+      } else {
+        alert("Error deleting student: " + res.message);
+      }
+    }
+  });
+
+  const handleToggleStatus = (id: string, currentStatus: boolean) => {
     const action = currentStatus ? "Deactivate" : "Activate";
     if (!window.confirm(`Are you sure you want to ${action} this student?`)) {
-        return;
+      return;
     }
-
-    const response = await toggleStudentStatus(id);
-    if (response.success) {
-      setStudents(prev => prev.map(s =>
-        s._id === id ? { ...s, isActive: !s.isActive } : s
-      ));
-    } else {
-      alert("Error: " + response.message);
-    }
+    toggleStatusMutation.mutate(id);
   };
 
-  const handleHardDelete = async (id: string) => {
+  const handleHardDelete = (id: string) => {
     if (window.confirm('⚠️ WARNING: This will PERMANENTLY delete the student record from the database.\n\nAre you sure you want to proceed?')) {
-        try {
-            const response = await deleteStudent(id); 
-            if (response.success) {
-                setStudents(prev => prev.filter(s => s._id !== id));
-            } else {
-                alert("Error deleting student: " + response.message);
-            }
-        } catch (error) {
-            console.error(error);
-            alert("Failed to delete student.");
-        }
+      deleteStudentMutation.mutate(id);
     }
   };
 
@@ -299,7 +297,7 @@ const StudentsPage: React.FC = () => {
 
   const handleDownloadTemplate = () => {
     const link = document.createElement("a");
-    link.href = "/Student_Import_Template.xlsx"; 
+    link.href = "/Student_Import_Template.xlsx";
     link.download = "Student_Import_Template.xlsx";
     document.body.appendChild(link);
     link.click();
@@ -320,7 +318,7 @@ const StudentsPage: React.FC = () => {
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet);
-        
+
         if (jsonData.length === 0) {
           alert("File appears to be empty.");
           return;
@@ -331,25 +329,24 @@ const StudentsPage: React.FC = () => {
     reader.readAsArrayBuffer(file);
   };
 
-  const handleImportSubmit = async () => {
-    if (importData.length === 0) return;
-
-    setIsImporting(true);
-    try {
-      const response = await bulkImportStudents(importData);
+  const bulkImportMutation = useMutation({
+    mutationFn: (data: Record<string, unknown>[]) => bulkImportStudents(data),
+    onSuccess: (response) => {
       if (response.success) {
         const msg = (response.data as { message?: string })?.message || "Import Successful";
         alert(msg);
         handleCloseImport();
-        fetchStudentsList();
+        queryClient.invalidateQueries({ queryKey: ['students'] });
       } else {
         alert("Import failed: " + response.message);
       }
-    } catch {
-      alert("Import failed due to server error");
-    } finally {
-      setIsImporting(false);
-    }
+    },
+    onError: () => alert("Import failed due to server error")
+  });
+
+  const handleImportSubmit = () => {
+    if (importData.length === 0) return;
+    bulkImportMutation.mutate(importData);
   };
 
   const handleCloseImport = () => {
@@ -375,19 +372,19 @@ const StudentsPage: React.FC = () => {
 
   const filteredStudents = students.filter((student) => {
     const term = searchTerm.toLowerCase();
-    
+
     // 1. Search (Name/Phone/Email)
-    const matchesSearch = 
-        student.name.toLowerCase().includes(term) || 
-        student.phoneNumber.includes(term) ||
-        (student.email && student.email.toLowerCase().includes(term));
+    const matchesSearch =
+      student.name.toLowerCase().includes(term) ||
+      student.phoneNumber.includes(term) ||
+      (student.email && student.email.toLowerCase().includes(term));
 
     // 2. Class Filter
     const matchesClass = classFilter === 'All' || student.currentClass === classFilter;
-    
+
     // 3. Exam Filter
-    const matchesExam = examFilter.length === 0 || examFilter.some(filter => 
-        student.targetExams.some(t => t.name === filter)
+    const matchesExam = examFilter.length === 0 || examFilter.some(filter =>
+      student.targetExams.some(t => t.name === filter)
     );
 
     // 4. Status Filter
@@ -397,10 +394,10 @@ const StudentsPage: React.FC = () => {
     const matchesStream = streamFilter === 'All' || (student.stream?.name === streamFilter);
 
     // 6. Subject Filter (New - OR logic: student has any of the selected subjects)
-    const matchesSubject = subjectFilter.length === 0 || subjectFilter.some(filter => 
-        student.enrolledSubjects.some(sub => sub.name === filter)
+    const matchesSubject = subjectFilter.length === 0 || subjectFilter.some(filter =>
+      student.enrolledSubjects.some(sub => sub.name === filter)
     );
-    
+
     return matchesSearch && matchesClass && matchesExam && matchesStatus && matchesStream && matchesSubject;
   });
 
@@ -445,7 +442,7 @@ const StudentsPage: React.FC = () => {
       <FilterToolbar elevation={0} sx={{ flexWrap: 'wrap', gap: 2 }}>
         <SearchInput
           size="small"
-          placeholder="Search Name, Phone, or Email..." 
+          placeholder="Search Name, Phone, or Email..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
@@ -524,84 +521,84 @@ const StudentsPage: React.FC = () => {
       <Box sx={{ border: '1px solid #e0e0e0', borderRadius: 2, overflow: 'hidden', bgcolor: 'white' }}>
         <TableContainer>
           {loading ? (
-             <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                <CircularProgress />
-             </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+              <CircularProgress />
+            </Box>
           ) : (
-          <Table sx={{ minWidth: 800 }}>
-            <TableHead sx={{ backgroundColor: '#f8fafc' }}>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Student Profile</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Class & Stream</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Targets</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Enrolled Subjects</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Session</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-                <TableCell sx={{ fontWeight: 600 }} align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {paginatedStudents.map((student) => (
-                <TableRow key={student._id} hover>
-                  <TableCell>
-                    <Box>
-                      <Typography variant="subtitle2" fontWeight={700}>{student.name}</Typography>
-                      <Typography variant="caption" color="text.secondary">{student.phoneNumber}</Typography>
-                      <Typography variant="caption" display="block" color="text.secondary">{student.email}</Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={600}>{student.currentClass}</Typography>
-                    {student.stream && <Typography variant="caption">{student.stream.name}</Typography>}
-                  </TableCell>
-                  <TableCell>
-                    <Stack direction="row" spacing={0.5} flexWrap="wrap">
-                      {student.targetExams.map((exam) => (
-                        <Chip key={exam._id} label={exam.name} size="small" variant="outlined" sx={{ height: 20, fontSize: '0.7rem' }} />
-                      ))}
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="caption" color="text.secondary">
-                      {student.enrolledSubjects.length > 0 
-                        ? student.enrolledSubjects.map((s) => s.name).join(', ') 
-                        : 'None'}
-                    </Typography>
-                  </TableCell>
-                  <TableCell><Chip label={student.academicSession} size="small" sx={{ bgcolor: '#f1f5f9' }} /></TableCell>
-                  <TableCell>
-                    <Chip label={student.isActive ? 'Active' : 'Inactive'} size="small" color={student.isActive ? 'success' : 'default'} />
-                  </TableCell>
-                  
-                  <TableCell align="right">
-                    <ActionButtonContainer>
+            <Table sx={{ minWidth: 800 }}>
+              <TableHead sx={{ backgroundColor: '#f8fafc' }}>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>Student Profile</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Class & Stream</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Targets</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Enrolled Subjects</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Session</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} align="right">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {paginatedStudents.map((student) => (
+                  <TableRow key={student._id} hover>
+                    <TableCell>
+                      <Box>
+                        <Typography variant="subtitle2" fontWeight={700}>{student.name}</Typography>
+                        <Typography variant="caption" color="text.secondary">{student.phoneNumber}</Typography>
+                        <Typography variant="caption" display="block" color="text.secondary">{student.email}</Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={600}>{student.currentClass}</Typography>
+                      {student.stream && <Typography variant="caption">{student.stream.name}</Typography>}
+                    </TableCell>
+                    <TableCell>
+                      <Stack direction="row" spacing={0.5} flexWrap="wrap">
+                        {student.targetExams.map((exam) => (
+                          <Chip key={exam._id} label={exam.name} size="small" variant="outlined" sx={{ height: 20, fontSize: '0.7rem' }} />
+                        ))}
+                      </Stack>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="caption" color="text.secondary">
+                        {student.enrolledSubjects.length > 0
+                          ? student.enrolledSubjects.map((s) => s.name).join(', ')
+                          : 'None'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell><Chip label={student.academicSession} size="small" sx={{ bgcolor: '#f1f5f9' }} /></TableCell>
+                    <TableCell>
+                      <Chip label={student.isActive ? 'Active' : 'Inactive'} size="small" color={student.isActive ? 'success' : 'default'} />
+                    </TableCell>
+
+                    <TableCell align="right">
+                      <ActionButtonContainer>
                         <Tooltip title="Edit">
-                            <IconButton size="small" color="primary" onClick={() => handleOpenDialog(student)}>
-                                <EditIcon fontSize="small" />
-                            </IconButton>
+                          <IconButton size="small" color="primary" onClick={() => handleOpenDialog(student)}>
+                            <EditIcon fontSize="small" />
+                          </IconButton>
                         </Tooltip>
-                        
+
                         <Tooltip title={student.isActive ? "Deactivate" : "Activate"}>
-                            <IconButton 
-                                size="small" 
-                                color={student.isActive ? "success" : "default"} 
-                                onClick={() => handleToggleStatus(student._id, student.isActive)}
-                            >
-                                {student.isActive ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" />}
-                            </IconButton>
+                          <IconButton
+                            size="small"
+                            color={student.isActive ? "success" : "default"}
+                            onClick={() => handleToggleStatus(student._id, student.isActive)}
+                          >
+                            {student.isActive ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" />}
+                          </IconButton>
                         </Tooltip>
 
                         <Tooltip title="Delete Permanently">
-                            <IconButton size="small" color="error" onClick={() => handleHardDelete(student._id)}>
-                                <DeleteForeverIcon fontSize="small" />
-                            </IconButton>
+                          <IconButton size="small" color="error" onClick={() => handleHardDelete(student._id)}>
+                            <DeleteForeverIcon fontSize="small" />
+                          </IconButton>
                         </Tooltip>
-                    </ActionButtonContainer>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                      </ActionButtonContainer>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </TableContainer>
         <TablePagination
@@ -618,138 +615,159 @@ const StudentsPage: React.FC = () => {
       {/* --- ADD / EDIT DIALOG --- */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
         <DialogTitle sx={{ bgcolor: '#f8fafc', fontWeight: 600 }}>
-            {editingStudentId ? 'Edit Student Details' : 'Add New Student'}
+          {editingStudentId ? 'Edit Student Details' : 'Add New Student'}
         </DialogTitle>
         <DialogContent dividers>
-          
+
           <Stack spacing={3} pt={1}>
-            
+
             {/* Section 1: Personal Details */}
             <Box>
-                <Typography variant="subtitle2" color="primary" gutterBottom sx={{ fontWeight: 600 }}>
-                    Personal Information
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
+              <Typography variant="subtitle2" color="primary" gutterBottom sx={{ fontWeight: 600 }}>
+                Personal Information
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
 
-                <Stack spacing={2}>
-                    <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
-                        <MuiTextField 
-                            label="Full Name" required fullWidth 
-                            value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
-                        />
-                        <MuiTextField 
-                            required label="Date of Birth" type="date" fullWidth 
-                            InputLabelProps={{ shrink: true }}
-                            value={formData.dob} onChange={(e) => setFormData({ ...formData, dob: e.target.value })} 
-                        />
-                    </Box>
+              <Stack spacing={2}>
+                <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
+                  <MuiTextField
+                    label="Full Name" required fullWidth
+                    value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
+                  <MuiTextField
+                    required label="Date of Birth" type="date" fullWidth
+                    InputLabelProps={{ shrink: true }}
+                    value={formData.dob} onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                  />
+                </Box>
 
-                    <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
-                        <MuiTextField 
-                            label="Phone Number" required fullWidth 
-                            value={formData.phoneNumber} onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })} 
-                        />
-                         <MuiTextField 
-                            label="Parent Phone" fullWidth 
-                            value={formData.parentPhoneNumber} onChange={(e) => setFormData({ ...formData, parentPhoneNumber: e.target.value })} 
-                        />
-                    </Box>
-                    
-                    <MuiTextField 
-                        label="Email Address" fullWidth 
-                        value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} 
-                    />
-                </Stack>
+                <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
+                  <MuiTextField
+                    label="Phone Number" required fullWidth
+                    value={formData.phoneNumber} onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                  />
+                  <MuiTextField
+                    label="Parent Phone" fullWidth
+                    value={formData.parentPhoneNumber} onChange={(e) => setFormData({ ...formData, parentPhoneNumber: e.target.value })}
+                  />
+                </Box>
+
+                <MuiTextField
+                  label="Email Address" fullWidth
+                  value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
+
+                <MuiTextField
+                  label={editingStudentId ? "Reset Password (leave blank to keep current)" : "Password"}
+                  fullWidth
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={() => setShowPassword(!showPassword)}
+                          edge="end"
+                        >
+                          {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Stack>
             </Box>
 
             {/* Section 2: Academic Details */}
             <Box>
-                <Typography variant="subtitle2" color="primary" gutterBottom sx={{ fontWeight: 600 }}>
-                    Academic Details
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-                
-                <Stack spacing={2}>
-                    {/* Row 1: Session, Class, Stream */}
-                    <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
-                         <MuiTextField 
-                            label="Academic Session" required fullWidth 
-                            value={formData.academicSession} onChange={(e) => setFormData({ ...formData, academicSession: e.target.value })} 
-                            sx={{ flex: 2 }}
-                        />
-                        <FormControl fullWidth required sx={{ flex: 1 }}>
-                            <InputLabel>Class</InputLabel>
-                            <Select 
-                                value={formData.currentClass} 
-                                label="Class" 
-                                onChange={(e) => {
-                                    const newClass = e.target.value as string;
-                                    setFormData({ 
-                                        ...formData, 
-                                        currentClass: newClass,
-                                        // Reset stream if not Class 11, 12, or Dropper
-                                        stream: ['11', '12', 'dropper-1', 'dropper-2'].includes(newClass) ? formData.stream : ''
-                                    });
-                                }}
-                            >
-                              {CLASS_OPTIONS.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
-                            </Select>
-                        </FormControl>
-                        
-                        {/* Stream (Disabled for Class 9/10) */}
-                        <FormControl 
-                            fullWidth 
-                            required={isStreamApplicable} 
-                            disabled={!isStreamApplicable} 
-                            sx={{ flex: 1 }}
-                        >
-                            <InputLabel>Stream</InputLabel>
-                            <Select value={formData.stream} label="Stream" onChange={(e) => setFormData({ ...formData, stream: e.target.value as string })}>
-                                <MenuItem value=""><em>None</em></MenuItem>
-                                {streamOptions.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
-                            </Select>
-                        </FormControl>
-                    </Box>
+              <Typography variant="subtitle2" color="primary" gutterBottom sx={{ fontWeight: 600 }}>
+                Academic Details
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
 
-                    {/* Row 2: Targets */}
-                    <FormControl fullWidth required>
-                        <InputLabel>Target Exams</InputLabel>
-                        <Select
-                            multiple
-                            value={formData.targetExams}
-                            onChange={(e) => setFormData({ ...formData, targetExams: typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[] })}
-                            input={<OutlinedInput label="Target Exams" />}
-                            renderValue={(selected) => (selected as string[]).join(', ')}
-                        >
-                            {examOptions.map((name) => (
-                            <MenuItem key={name} value={name}>
-                                <Checkbox checked={(formData.targetExams || []).indexOf(name) > -1} />
-                                <ListItemText primary={name} />
-                            </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                    
-                    {/* Row 3: Subjects */}
-                    <FormControl fullWidth required>
-                        <InputLabel>Enrolled Subjects</InputLabel>
-                        <Select
-                            multiple
-                            value={formData.enrolledSubjects}
-                            onChange={(e) => setFormData({ ...formData, enrolledSubjects: typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[] })}
-                            input={<OutlinedInput label="Enrolled Subjects" />}
-                            renderValue={(selected) => (selected as string[]).join(', ')}
-                        >
-                            {subjectOptions.map((name) => (
-                            <MenuItem key={name} value={name}>
-                                <Checkbox checked={(formData.enrolledSubjects || []).indexOf(name) > -1} />
-                                <ListItemText primary={name} />
-                            </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
+              <Stack spacing={2}>
+                {/* Row 1: Session, Class, Stream */}
+                <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
+                  <MuiTextField
+                    label="Academic Session" required fullWidth
+                    value={formData.academicSession} onChange={(e) => setFormData({ ...formData, academicSession: e.target.value })}
+                    sx={{ flex: 2 }}
+                  />
+                  <FormControl fullWidth required sx={{ flex: 1 }}>
+                    <InputLabel>Class</InputLabel>
+                    <Select
+                      value={formData.currentClass}
+                      label="Class"
+                      onChange={(e) => {
+                        const newClass = e.target.value as string;
+                        setFormData({
+                          ...formData,
+                          currentClass: newClass,
+                          // Reset stream if not Class 11, 12, or Dropper
+                          stream: ['11', '12', 'dropper-1', 'dropper-2'].includes(newClass) ? formData.stream : ''
+                        });
+                      }}
+                    >
+                      {CLASS_OPTIONS.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+                    </Select>
+                  </FormControl>
 
-                </Stack>
+                  {/* Stream (Disabled for Class 9/10) */}
+                  <FormControl
+                    fullWidth
+                    required={isStreamApplicable}
+                    disabled={!isStreamApplicable}
+                    sx={{ flex: 1 }}
+                  >
+                    <InputLabel>Stream</InputLabel>
+                    <Select value={formData.stream} label="Stream" onChange={(e) => setFormData({ ...formData, stream: e.target.value as string })}>
+                      <MenuItem value=""><em>None</em></MenuItem>
+                      {streamOptions.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                    </Select>
+                  </FormControl>
+                </Box>
+
+                {/* Row 2: Targets */}
+                <FormControl fullWidth required>
+                  <InputLabel>Target Exams</InputLabel>
+                  <Select
+                    multiple
+                    value={formData.targetExams}
+                    onChange={(e) => setFormData({ ...formData, targetExams: typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[] })}
+                    input={<OutlinedInput label="Target Exams" />}
+                    renderValue={(selected) => (selected as string[]).join(', ')}
+                  >
+                    {examOptions.map((name) => (
+                      <MenuItem key={name} value={name}>
+                        <Checkbox checked={(formData.targetExams || []).indexOf(name) > -1} />
+                        <ListItemText primary={name} />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                {/* Row 3: Subjects */}
+                <FormControl fullWidth required>
+                  <InputLabel>Enrolled Subjects</InputLabel>
+                  <Select
+                    multiple
+                    value={formData.enrolledSubjects}
+                    onChange={(e) => setFormData({ ...formData, enrolledSubjects: typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[] })}
+                    input={<OutlinedInput label="Enrolled Subjects" />}
+                    renderValue={(selected) => (selected as string[]).join(', ')}
+                  >
+                    {subjectOptions.map((name) => (
+                      <MenuItem key={name} value={name}>
+                        <Checkbox checked={(formData.enrolledSubjects || []).indexOf(name) > -1} />
+                        <ListItemText primary={name} />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+              </Stack>
             </Box>
 
           </Stack>
@@ -774,7 +792,7 @@ const StudentsPage: React.FC = () => {
             ref={fileInputRef}
             onChange={handleFileSelect}
           />
-          
+
           <Box
             onClick={() => fileInputRef.current?.click()}
             sx={{
@@ -794,8 +812,8 @@ const StudentsPage: React.FC = () => {
                 <CheckCircleIcon sx={{ fontSize: 48, color: 'success.main', mb: 1 }} />
                 <Typography variant="h6" color="success.main">File Selected</Typography>
                 <Stack direction="row" alignItems="center" justifyContent="center" spacing={1} mt={1}>
-                    <InsertDriveFileIcon color="action" fontSize="small"/>
-                    <Typography variant="body1" fontWeight="500">{importFileName}</Typography>
+                  <InsertDriveFileIcon color="action" fontSize="small" />
+                  <Typography variant="body1" fontWeight="500">{importFileName}</Typography>
                 </Stack>
                 <Typography variant="caption" display="block" mt={1} color="text.secondary">Click to change file</Typography>
               </>
@@ -817,16 +835,16 @@ const StudentsPage: React.FC = () => {
             </Button>
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseImport}>Cancel</Button>
-          <Button 
-            variant="contained" 
-            color="primary" 
+        <DialogActions sx={{ p: 2, bgcolor: '#f8fafc' }}>
+          <Button onClick={handleCloseImport} color="inherit" disabled={bulkImportMutation.isPending}>Cancel</Button>
+          <Button
             onClick={handleImportSubmit}
-            disabled={!importFileName || isImporting}
-            startIcon={isImporting ? <CircularProgress size={20} color="inherit"/> : null}
+            variant="contained"
+            disableElevation
+            disabled={importData.length === 0 || bulkImportMutation.isPending}
+            startIcon={bulkImportMutation.isPending ? <CircularProgress size={20} color="inherit" /> : <CloudUploadIcon />}
           >
-            {isImporting ? 'Importing...' : 'Upload & Process'}
+            {bulkImportMutation.isPending ? 'Importing...' : 'Upload & Import'}
           </Button>
         </DialogActions>
       </Dialog>

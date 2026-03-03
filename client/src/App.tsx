@@ -1,7 +1,17 @@
 import { useState, useEffect, type ReactNode } from 'react'; // Import ReactNode
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider, CssBaseline, CircularProgress, Box } from '@mui/material';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import theme from './theme/theme';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false, // Prevents background refetching which might confuse users
+      retry: 1, // Only retry once on failure
+    },
+  },
+});
 
 // Import Pages
 import LandingPage from './pages/landing/LandingPage';
@@ -32,7 +42,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('authToken');
-      
+
       if (!token) {
         setIsAuthenticated(false);
         return;
@@ -41,8 +51,8 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       // Verify with backend
       const isValid = await validateToken();
       if (!isValid) {
-        localStorage.removeItem('authToken'); 
-        localStorage.removeItem('authEmail'); 
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('authEmail');
         setIsAuthenticated(false);
       } else {
         setIsAuthenticated(true);
@@ -72,39 +82,41 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Router>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/courses" element={<CoursesPage />} />
-          <Route path="/login" element={<LoginPage />} />
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Router>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/courses" element={<CoursesPage />} />
+            <Route path="/login" element={<LoginPage />} />
 
-          {/* 🔒 Protected Routes */}
-          <Route 
-            path="/admin/*" 
-            element={
-              <ProtectedRoute>
-                <AdminDashboard />
-              </ProtectedRoute>
-            } 
-          />
+            {/* 🔒 Protected Routes */}
+            <Route
+              path="/admin/*"
+              element={
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route 
-            path="/student/*" 
-            element={
-              <ProtectedRoute>
-                <StudentPage />
-              </ProtectedRoute>
-            } 
-          />
+            <Route
+              path="/student/*"
+              element={
+                <ProtectedRoute>
+                  <StudentPage />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* 404 Handler */}
-          <Route path="*" element={<h1 style={{textAlign:'center', marginTop:'50px'}}>404: Page Not Found</h1>} />
-        </Routes>
-      </Router>
-    </ThemeProvider>
+            {/* 404 Handler */}
+            <Route path="*" element={<h1 style={{ textAlign: 'center', marginTop: '50px' }}>404: Page Not Found</h1>} />
+          </Routes>
+        </Router>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 

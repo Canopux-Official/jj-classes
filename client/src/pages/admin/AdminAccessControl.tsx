@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     Box,
     Typography,
@@ -27,7 +28,8 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import { getAllAdmins, updateAdminPermissions, addAdmin, deleteAdmin } from '../../api/apiFunctions';
+import EditIcon from '@mui/icons-material/Edit';
+import { getAllAdmins, updateAdminPermissions, addAdmin, deleteAdmin, updateAdminDetails } from '../../api/apiFunctions';
 
 interface AdminPermissions {
     students: boolean;
@@ -61,38 +63,82 @@ const permissionLabels: Record<keyof AdminPermissions, string> = {
 };
 
 const AdminAccessControl: React.FC = () => {
-    const [admins, setAdmins] = useState<AdminUser[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
+    const queryClient = useQueryClient();
 
     // Add Admin State
     const [openAddDialog, setOpenAddDialog] = useState(false);
-    const [submitting, setSubmitting] = useState(false);
     const [newAdmin, setNewAdmin] = useState({
         name: '', email: '', phoneNumber: '', password: '', role: 'admin'
     });
 
-    useEffect(() => {
-        fetchAdmins();
-    }, []);
+    // Edit Admin State
+    const [openEditDialog, setOpenEditDialog] = useState(false);
+    const [editingAdmin, setEditingAdmin] = useState({
+        id: '', name: '', email: '', phoneNumber: '', password: '', role: 'admin'
+    });
 
-    const fetchAdmins = async () => {
-        try {
-            setLoading(true);
-            const res = await getAllAdmins();
-            if (res.success && res.data) {
-                setAdmins((res.data as { admins: AdminUser[] }).admins || []);
-            } else {
-                setError(res.message || "Failed to load admins");
-            }
-        } catch {
-            setError("An error occurred while fetching admins.");
-        } finally {
-            setLoading(false);
+    // React Query: Fetch Admins
+    const { data: adminsResponse, isLoading: loading, isError } = useQuery({
+        queryKey: ['admins'],
+        queryFn: getAllAdmins
+    });
+
+    const admins = adminsResponse?.success && adminsResponse?.data
+        ? (adminsResponse.data as { admins: AdminUser[] }).admins || []
+        : [];
+    const error = isError ? "An error occurred while fetching admins." : (adminsResponse && !adminsResponse.success ? adminsResponse.message : null);
+
+    // React Query: Mutations
+    const togglePermissionMutation = useMutation({
+        mutationFn: (params: { adminId: string, updatedPermissions: AdminPermissions }) => updateAdminPermissions(params.adminId, params.updatedPermissions),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admins'] });
         }
-    };
+    });
 
-    const handleTogglePermission = async (adminId: string, currentPermissions: AdminPermissions | undefined, key: keyof AdminPermissions) => {
+    const addAdminMutation = useMutation({
+        mutationFn: (data: typeof newAdmin & { permissions?: AdminPermissions }) => addAdmin(data),
+        onSuccess: (res) => {
+            if (res.success) {
+                setOpenAddDialog(false);
+                setNewAdmin({ name: '', email: '', phoneNumber: '', password: '', role: 'admin' });
+                queryClient.invalidateQueries({ queryKey: ['admins'] });
+            } else {
+                alert(res.message || "Failed to add admin");
+            }
+        },
+        onError: () => alert("An error occurred adding the admin.")
+    });
+
+    const editAdminMutation = useMutation({
+        mutationFn: (params: { id: string, data: Partial<typeof editingAdmin> }) => updateAdminDetails(params.id, params.data),
+        onSuccess: (res) => {
+            if (res.success) {
+                setOpenEditDialog(false);
+                setEditingAdmin({ id: '', name: '', email: '', phoneNumber: '', password: '', role: 'admin' });
+                queryClient.invalidateQueries({ queryKey: ['admins'] });
+            } else {
+                alert(res.message || "Failed to edit admin");
+            }
+        },
+        onError: () => alert("An error occurred editing the admin.")
+    });
+
+    const deleteAdminMutation = useMutation({
+        mutationFn: (id: string) => deleteAdmin(id),
+        onSuccess: (res) => {
+            if (res.success) {
+                queryClient.invalidateQueries({ queryKey: ['admins'] });
+            } else {
+                alert(res.message || "Failed to delete admin");
+            }
+        },
+        onError: () => alert("An error occurred deleting the admin.")
+    });
+
+    const handleTogglePermission = async (adminId: string, currentPermissions: AdminPermissions | undefined, key: keyof AdminPermissions, adminRole: string) => {
+        if (adminRole === 'superadmin') return; // Cannot toggle superadmin permissions
+
         const updatedPermissions = {
             ...(currentPermissions || {
                 students: false, streams: false, targetExams: false,
@@ -102,44 +148,51 @@ const AdminAccessControl: React.FC = () => {
             [key]: currentPermissions ? !currentPermissions[key] : true
         };
 
-        // Optimistic UI Update
-        setAdmins((prev) =>
-            prev.map(admin =>
-                admin._id === adminId
-                    ? { ...admin, permissions: updatedPermissions }
-                    : admin
-            )
-        );
-
-        const res = await updateAdminPermissions(adminId, updatedPermissions);
-        if (!res.success) {
-            alert("Failed to update permissions: " + res.message);
-            // Revert if failed
-            fetchAdmins();
-        }
+        togglePermissionMutation.mutate({ adminId, updatedPermissions });
     };
 
     const handleAddAdminSubmit = async () => {
-        setSubmitting(true);
-        const res = await addAdmin(newAdmin);
-        setSubmitting(false);
-        if (res.success) {
-            setOpenAddDialog(false);
-            setNewAdmin({ name: '', email: '', phoneNumber: '', password: '', role: 'admin' });
-            fetchAdmins();
-        } else {
-            alert(res.message || "Failed to add admin");
+        const adminDataToSubmit: typeof newAdmin & { permissions?: AdminPermissions } = { ...newAdmin };
+        if (adminDataToSubmit.role === 'superadmin') {
+            adminDataToSubmit.permissions = {
+                students: true, streams: true, targetExams: true,
+                subjects: true, session: true, upload: true,
+                notice: true, attendance: true
+            };
         }
+        addAdminMutation.mutate(adminDataToSubmit);
+    };
+
+    const handleEditClick = (admin: AdminUser) => {
+        setEditingAdmin({
+            id: admin._id,
+            name: admin.name,
+            email: admin.email,
+            phoneNumber: admin.phoneNumber,
+            password: '', // blank unless they want to change it
+            role: admin.role
+        });
+        setOpenEditDialog(true);
+    };
+
+    const handleEditAdminSubmit = async () => {
+        const adminDataToSubmit: Partial<typeof editingAdmin> = {
+            name: editingAdmin.name,
+            email: editingAdmin.email,
+            phoneNumber: editingAdmin.phoneNumber,
+            role: editingAdmin.role
+        };
+        // Only send password if it was filled out
+        if (editingAdmin.password.trim() !== '') {
+            adminDataToSubmit.password = editingAdmin.password;
+        }
+
+        editAdminMutation.mutate({ id: editingAdmin.id, data: adminDataToSubmit });
     };
 
     const handleDeleteAdmin = async (id: string, name: string) => {
         if (!window.confirm(`Are you sure you want to delete administrator ${name}?`)) return;
-        const res = await deleteAdmin(id);
-        if (res.success) {
-            fetchAdmins();
-        } else {
-            alert(res.message || "Failed to delete admin");
-        }
+        deleteAdminMutation.mutate(id);
     };
 
     if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}><CircularProgress /></Box>;
@@ -191,7 +244,12 @@ const AdminAccessControl: React.FC = () => {
                                         <TableRow key={admin._id} hover>
                                             <TableCell>
                                                 <Typography fontWeight={600}>{admin.name}</Typography>
-                                                <Chip label={admin.role} size="small" color="primary" sx={{ mt: 0.5 }} />
+                                                <Chip
+                                                    label={admin.role === 'superadmin' ? 'Super Admin' : 'Admin'}
+                                                    size="small"
+                                                    color={admin.role === 'superadmin' ? "error" : "primary"}
+                                                    sx={{ mt: 0.5 }}
+                                                />
                                             </TableCell>
                                             <TableCell>
                                                 <Typography variant="body2">{admin.email}</Typography>
@@ -201,7 +259,8 @@ const AdminAccessControl: React.FC = () => {
                                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                                                     {Object.keys(permissionLabels).map((key) => {
                                                         const permKey = key as keyof AdminPermissions;
-                                                        const isChecked = admin.permissions ? admin.permissions[permKey] : false;
+                                                        const isSuperAdmin = admin.role === 'superadmin';
+                                                        const isChecked = isSuperAdmin ? true : (admin.permissions ? admin.permissions[permKey] : false);
                                                         return (
                                                             <Box
                                                                 key={permKey}
@@ -213,13 +272,15 @@ const AdminAccessControl: React.FC = () => {
                                                                     px: 1,
                                                                     border: '1px solid',
                                                                     borderColor: isChecked ? 'rgba(6, 100, 102, 0.2)' : 'transparent',
-                                                                    minWidth: 180
+                                                                    minWidth: 180,
+                                                                    opacity: isSuperAdmin ? 0.7 : 1
                                                                 }}
                                                             >
                                                                 <Switch
                                                                     size="small"
                                                                     checked={isChecked}
-                                                                    onChange={() => handleTogglePermission(admin._id, admin.permissions, permKey)}
+                                                                    disabled={isSuperAdmin}
+                                                                    onChange={() => handleTogglePermission(admin._id, admin.permissions, permKey, admin.role)}
                                                                     inputProps={{ 'aria-label': 'controlled' }}
                                                                 />
                                                                 <Typography variant="body2" sx={{ ml: 1, fontWeight: isChecked ? 600 : 400, color: isChecked ? '#0b2021' : 'text.secondary' }}>
@@ -231,6 +292,9 @@ const AdminAccessControl: React.FC = () => {
                                                 </Box>
                                             </TableCell>
                                             <TableCell align="right">
+                                                <IconButton color="primary" onClick={() => handleEditClick(admin)} title="Edit Admin">
+                                                    <EditIcon />
+                                                </IconButton>
                                                 <IconButton color="error" onClick={() => handleDeleteAdmin(admin._id, admin.name)} title="Delete Admin">
                                                     <DeleteOutlineIcon />
                                                 </IconButton>
@@ -292,10 +356,66 @@ const AdminAccessControl: React.FC = () => {
                     <Button
                         onClick={handleAddAdminSubmit}
                         variant="contained"
-                        disabled={submitting || !newAdmin.name || !newAdmin.email || !newAdmin.phoneNumber || !newAdmin.password}
+                        disabled={addAdminMutation.isPending || !newAdmin.name || !newAdmin.email || !newAdmin.phoneNumber || !newAdmin.password}
                         sx={{ bgcolor: '#0b2021', '&:hover': { bgcolor: '#1a3a3a' } }}
                     >
-                        {submitting ? <CircularProgress size={24} color="inherit" /> : 'Create'}
+                        {addAdminMutation.isPending ? <CircularProgress size={24} color="inherit" /> : 'Create'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Edit Admin Dialog */}
+            <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} maxWidth="sm" fullWidth>
+                <DialogTitle sx={{ fontWeight: 700 }}>Edit Administrator</DialogTitle>
+                <DialogContent>
+                    <Stack spacing={2} sx={{ mt: 1 }}>
+                        <TextField
+                            label="Full Name"
+                            fullWidth
+                            value={editingAdmin.name}
+                            onChange={e => setEditingAdmin({ ...editingAdmin, name: e.target.value })}
+                        />
+                        <TextField
+                            label="Email Address"
+                            type="email"
+                            fullWidth
+                            value={editingAdmin.email}
+                            onChange={e => setEditingAdmin({ ...editingAdmin, email: e.target.value })}
+                        />
+                        <TextField
+                            label="Phone Number"
+                            fullWidth
+                            value={editingAdmin.phoneNumber}
+                            onChange={e => setEditingAdmin({ ...editingAdmin, phoneNumber: e.target.value })}
+                        />
+                        <TextField
+                            label="New Password (Leave blank to keep unchanged)"
+                            type="password"
+                            fullWidth
+                            defaultValue=""
+                            onChange={e => setEditingAdmin({ ...editingAdmin, password: e.target.value })}
+                        />
+                        <TextField
+                            select
+                            label="Role"
+                            value={editingAdmin.role}
+                            onChange={e => setEditingAdmin({ ...editingAdmin, role: e.target.value })}
+                            fullWidth
+                        >
+                            <MenuItem value="admin">Admin</MenuItem>
+                            <MenuItem value="superadmin">Super Admin</MenuItem>
+                        </TextField>
+                    </Stack>
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button onClick={() => setOpenEditDialog(false)} color="inherit">Cancel</Button>
+                    <Button
+                        onClick={handleEditAdminSubmit}
+                        variant="contained"
+                        disabled={editAdminMutation.isPending || !editingAdmin.name || !editingAdmin.email || !editingAdmin.phoneNumber}
+                        sx={{ bgcolor: '#0b2021', '&:hover': { bgcolor: '#1a3a3a' } }}
+                    >
+                        {editAdminMutation.isPending ? <CircularProgress size={24} color="inherit" /> : 'Save Changes'}
                     </Button>
                 </DialogActions>
             </Dialog>

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Container,
   Box,
@@ -35,12 +36,9 @@ import { getStreams, getTargetExams } from '../../api/apiFunctions';
 import NoticeModal from '../../components/admin/Notice/modals/NoticeModel';
 import type { Notice, NoticeFormData, Stream, TargetExam } from '../../components/admin/Notice/types/types';
 
-const AdminNoticePage: React.FC = () => {
-  const [notices, setNotices] = useState<Notice[]>([]);
-  const [filteredNotices, setFilteredNotices] = useState<Notice[]>([]);
-  const [streams, setStreams] = useState<Stream[]>([]);
-  const [targetExams, setTargetExams] = useState<TargetExam[]>([]);
-  const [loading, setLoading] = useState(true);
+const AdminNoticePage = () => {
+  const queryClient = useQueryClient();
+
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
   const [page, setPage] = useState(0);
@@ -56,33 +54,29 @@ const AdminNoticePage: React.FC = () => {
     severity: 'success' as 'success' | 'error',
   });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // Queries
+  const { data: noticesResponse, isLoading: loadingNotices } = useQuery({
+    queryKey: ['notices'],
+    queryFn: () => noticeService.getAllNotices()
+  });
 
-  useEffect(() => {
-    filterNotices();
-  }, [notices, searchQuery, filterTag, filterClassType, filterStream, filterTargetExam]);
+  const { data: streamsResponse, isLoading: loadingStreams } = useQuery({
+    queryKey: ['streams'],
+    queryFn: getStreams
+  });
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [noticesRes, streamsRes, examsRes] = await Promise.all([
-        noticeService.getAllNotices(),
-        getStreams(),
-        getTargetExams(),
-      ]);
-      setNotices(noticesRes.data || []);
-      setTargetExams((examsRes.data as TargetExam[]) ?? []);
-      setStreams((streamsRes.data as Stream[]) ?? []);
-    } catch (error) {
-      showSnackbar('Failed to fetch data', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: examsResponse, isLoading: loadingExams } = useQuery({
+    queryKey: ['targetExams'],
+    queryFn: getTargetExams
+  });
 
-  const filterNotices = () => {
+  const notices: Notice[] = useMemo(() => noticesResponse?.data || [], [noticesResponse]);
+  const streams: Stream[] = useMemo(() => (streamsResponse?.data as Stream[]) || [], [streamsResponse]);
+  const targetExams: TargetExam[] = useMemo(() => (examsResponse?.data as TargetExam[]) || [], [examsResponse]);
+
+  const loading = loadingNotices || loadingStreams || loadingExams;
+
+  const filteredNotices = useMemo(() => {
     let filtered = notices;
 
     // Search filter
@@ -109,21 +103,23 @@ const AdminNoticePage: React.FC = () => {
 
     // Stream filter
     if (filterStream !== 'All') {
-      filtered = filtered.filter((notice) => 
+      filtered = filtered.filter((notice) =>
         notice.streams?.some(stream => stream.name === filterStream)
       );
     }
 
     // Target Exam filter
     if (filterTargetExam !== 'All') {
-      filtered = filtered.filter((notice) => 
+      filtered = filtered.filter((notice) =>
         notice.targetExams?.some(exam => exam.name === filterTargetExam)
       );
     }
 
-    setFilteredNotices(filtered);
-    setPage(0); // Reset to first page when filters change
-  };
+    return filtered;
+  }, [notices, searchQuery, filterTag, filterClassType, filterStream, filterTargetExam]);
+
+  // Reset page when filters change
+  useMemo(() => setPage(0), [searchQuery, filterTag, filterClassType, filterStream, filterTargetExam]);
 
   const showSnackbar = (message: string, severity: 'success' | 'error') => {
     setSnackbar({ open: true, message, severity });
@@ -139,35 +135,49 @@ const AdminNoticePage: React.FC = () => {
     setModalOpen(true);
   };
 
+  const createNoticeMutation = useMutation({
+    mutationFn: (data: NoticeFormData) => noticeService.createNotice(data),
+    onSuccess: () => {
+      showSnackbar('Notice created successfully', 'success');
+      setModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['notices'] });
+    },
+    onError: () => showSnackbar('Failed to create notice', 'error')
+  });
+
+  const updateNoticeMutation = useMutation({
+    mutationFn: (params: { id: string; data: NoticeFormData }) => noticeService.updateNotice(params.id, params.data),
+    onSuccess: () => {
+      showSnackbar('Notice updated successfully', 'success');
+      setModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['notices'] });
+    },
+    onError: () => showSnackbar('Failed to update notice', 'error')
+  });
+
+  const deleteNoticeMutation = useMutation({
+    mutationFn: (id: string) => noticeService.deleteNotice(id),
+    onSuccess: () => {
+      showSnackbar('Notice deleted successfully', 'success');
+      queryClient.invalidateQueries({ queryKey: ['notices'] });
+    },
+    onError: () => showSnackbar('Failed to delete notice', 'error')
+  });
+
   const handleDelete = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this notice?')) return;
-
-    try {
-      await noticeService.deleteNotice(id);
-      setNotices((prev) => prev.filter((notice) => notice._id !== id));
-      showSnackbar('Notice deleted successfully', 'success');
-    } catch (error) {
-      showSnackbar('Failed to delete notice', 'error');
-    }
+    deleteNoticeMutation.mutate(id);
   };
 
   const handleSubmit = async (data: NoticeFormData) => {
-    try {
-      if (selectedNotice) {
-        await noticeService.updateNotice(selectedNotice._id, data);
-        showSnackbar('Notice updated successfully', 'success');
-      } else {
-        await noticeService.createNotice(data);
-        showSnackbar('Notice created successfully', 'success');
-      }
-      setModalOpen(false);
-      fetchData();
-    } catch (error) {
-      showSnackbar('Failed to save notice', 'error');
+    if (selectedNotice) {
+      updateNoticeMutation.mutate({ id: selectedNotice._id, data });
+    } else {
+      createNoticeMutation.mutate(data);
     }
   };
 
-  const handleChangePage = (_:unknown,newPage: number) => {
+  const handleChangePage = (_: unknown, newPage: number) => {
     setPage(newPage);
   };
 
@@ -193,7 +203,7 @@ const AdminNoticePage: React.FC = () => {
 
   // Get unique tags and class types for filters
   const uniqueTags = Array.from(new Set(notices.map(n => n.tag).filter(Boolean)));
-  const uniqueClassTypes = ['9','10','11','12', 'Dropper 1', 'Dropper 2'];
+  const uniqueClassTypes = ['9', '10', '11', '12', 'Dropper 1', 'Dropper 2'];
 
   return (
     <Box sx={{ bgcolor: '#fafbfc', minHeight: '100vh' }}>
@@ -209,11 +219,11 @@ const AdminNoticePage: React.FC = () => {
                 Manage and organize all notices for students and staff
               </Typography>
             </Box>
-            <Button 
-              variant="contained" 
-              startIcon={<AddIcon />} 
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
               onClick={handleCreate}
-              sx={{ 
+              sx={{
                 bgcolor: '#1a1a1a',
                 color: 'white',
                 '&:hover': { bgcolor: '#333' },
@@ -237,8 +247,8 @@ const AdminNoticePage: React.FC = () => {
               placeholder="Search heading, description, tag..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              sx={{ 
-                flex: 1, 
+              sx={{
+                flex: 1,
                 minWidth: 300,
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 1.5,
@@ -316,7 +326,7 @@ const AdminNoticePage: React.FC = () => {
             </FormControl>
 
             <Tooltip title="Clear Filters">
-              <IconButton 
+              <IconButton
                 onClick={() => {
                   setSearchQuery('');
                   setFilterTag('All');
@@ -324,7 +334,7 @@ const AdminNoticePage: React.FC = () => {
                   setFilterStream('All');
                   setFilterTargetExam('All');
                 }}
-                sx={{ 
+                sx={{
                   bgcolor: '#f8f9fa',
                   '&:hover': { bgcolor: '#e9ecef' }
                 }}
@@ -387,9 +397,9 @@ const AdminNoticePage: React.FC = () => {
                     </TableRow>
                   ) : (
                     paginatedNotices.map((notice, index) => (
-                      <TableRow 
+                      <TableRow
                         key={notice._id}
-                        sx={{ 
+                        sx={{
                           '&:hover': { bgcolor: '#fafbfc' },
                           borderBottom: index === paginatedNotices.length - 1 ? 'none' : '1px solid #f0f0f0'
                         }}
@@ -401,8 +411,8 @@ const AdminNoticePage: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <Tooltip title={notice.description || 'No description'} arrow>
-                            <Typography 
-                              variant="body2" 
+                            <Typography
+                              variant="body2"
                               color="text.secondary"
                               sx={{
                                 maxWidth: 250,
@@ -417,11 +427,11 @@ const AdminNoticePage: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           {notice.tag ? (
-                            <Chip 
-                              label={notice.tag} 
+                            <Chip
+                              label={notice.tag}
                               color={getTagColor(notice.tag)}
                               size="small"
-                              sx={{ 
+                              sx={{
                                 fontWeight: 500,
                                 fontSize: '0.75rem',
                                 height: 24
@@ -441,12 +451,12 @@ const AdminNoticePage: React.FC = () => {
                             {notice.streams && notice.streams.length > 0 ? (
                               <>
                                 {notice.streams.slice(0, 2).map((stream, idx) => (
-                                  <Chip 
-                                    key={idx} 
-                                    label={stream.name} 
-                                    size="small" 
+                                  <Chip
+                                    key={idx}
+                                    label={stream.name}
+                                    size="small"
                                     variant="outlined"
-                                    sx={{ 
+                                    sx={{
                                       fontSize: '0.7rem',
                                       height: 22,
                                       borderColor: '#e0e0e0'
@@ -454,11 +464,11 @@ const AdminNoticePage: React.FC = () => {
                                   />
                                 ))}
                                 {notice.streams.length > 2 && (
-                                  <Chip 
-                                    label={`+${notice.streams.length - 2}`} 
-                                    size="small" 
+                                  <Chip
+                                    label={`+${notice.streams.length - 2}`}
+                                    size="small"
                                     variant="outlined"
-                                    sx={{ 
+                                    sx={{
                                       fontSize: '0.7rem',
                                       height: 22,
                                       borderColor: '#e0e0e0'
@@ -476,11 +486,11 @@ const AdminNoticePage: React.FC = () => {
                             {notice.targetExams && notice.targetExams.length > 0 ? (
                               <>
                                 {notice.targetExams.slice(0, 2).map((exam, idx) => (
-                                  <Chip 
-                                    key={idx} 
-                                    label={exam.name} 
-                                    size="small" 
-                                    sx={{ 
+                                  <Chip
+                                    key={idx}
+                                    label={exam.name}
+                                    size="small"
+                                    sx={{
                                       fontSize: '0.7rem',
                                       height: 22,
                                       bgcolor: '#f0f4ff',
@@ -490,10 +500,10 @@ const AdminNoticePage: React.FC = () => {
                                   />
                                 ))}
                                 {notice.targetExams.length > 2 && (
-                                  <Chip 
-                                    label={`+${notice.targetExams.length - 2}`} 
+                                  <Chip
+                                    label={`+${notice.targetExams.length - 2}`}
                                     size="small"
-                                    sx={{ 
+                                    sx={{
                                       fontSize: '0.7rem',
                                       height: 22,
                                       bgcolor: '#f0f4ff',
@@ -511,10 +521,10 @@ const AdminNoticePage: React.FC = () => {
                         <TableCell align="center">
                           <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
                             <Tooltip title="Edit" arrow>
-                              <IconButton 
+                              <IconButton
                                 onClick={() => handleEdit(notice)}
                                 size="small"
-                                sx={{ 
+                                sx={{
                                   color: '#666',
                                   '&:hover': { bgcolor: '#f5f5f5', color: '#1a1a1a' }
                                 }}
@@ -523,10 +533,10 @@ const AdminNoticePage: React.FC = () => {
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Delete" arrow>
-                              <IconButton 
+                              <IconButton
                                 onClick={() => handleDelete(notice._id)}
                                 size="small"
-                                sx={{ 
+                                sx={{
                                   color: '#666',
                                   '&:hover': { bgcolor: '#fff5f5', color: '#d32f2f' }
                                 }}
@@ -550,7 +560,7 @@ const AdminNoticePage: React.FC = () => {
               page={page}
               onPageChange={handleChangePage}
               onRowsPerPageChange={handleChangeRowsPerPage}
-              sx={{ 
+              sx={{
                 borderTop: '1px solid #f0f0f0',
                 bgcolor: '#fafbfc'
               }}
@@ -573,8 +583,8 @@ const AdminNoticePage: React.FC = () => {
           onClose={() => setSnackbar({ ...snackbar, open: false })}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         >
-          <Alert 
-            severity={snackbar.severity} 
+          <Alert
+            severity={snackbar.severity}
             onClose={() => setSnackbar({ ...snackbar, open: false })}
             sx={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
           >

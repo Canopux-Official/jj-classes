@@ -53,7 +53,7 @@ export const getAdminAttendanceView = async (req: Request, res: Response) => {
     // Build student filter based on provided parameters
     const studentFilter: any = {
       isActive: true,
-      admissionDate: { $lte: new Date(selectedYear, selectedMonth - 1, lastDayToShow) }
+      admissionDate: { $lte: new Date(selectedYear, selectedMonth - 1, lastDayToShow, 23, 59, 59, 999) }
     };
 
     // Add currentClass filter (required - enum value, not ObjectId)
@@ -69,8 +69,8 @@ export const getAdminAttendanceView = async (req: Request, res: Response) => {
     // Class 9 & 10: No stream (stream should be null)
     // Class 11, 12, droppers: Stream is required
     if (['9', '10'].includes(currentClass as string)) {
-      // For class 9 and 10, stream must be null
-      studentFilter.stream = null;
+      // For class 9 and 10, stream must be null or missing
+      studentFilter.stream = { $in: [null, undefined] };
 
       // If streamId is provided for class 9/10, return error
       if (streamId) {
@@ -89,6 +89,8 @@ export const getAdminAttendanceView = async (req: Request, res: Response) => {
       }
       studentFilter.stream = new mongoose.Types.ObjectId(streamId as string);
     }
+
+    console.log(`[DEBUG] Fetching attendance view with filter:`, JSON.stringify(studentFilter, null, 2));
 
     // Aggregation pipeline to merge students with their attendance
     const result = await Student.aggregate([

@@ -450,6 +450,23 @@ export async function addAdmin(adminData: unknown): Promise<ApiResponse> {
   }
 }
 
+export async function updateAdminDetails(id: string, adminData: unknown): Promise<ApiResponse> {
+  try {
+    const config: AxiosRequestConfig = {
+      method: "put",
+      url: `${import.meta.env.VITE_SERVER_LINK}/admin/control/updateAdmin/${id}`,
+      data: adminData,
+      headers: getAuthHeaders()
+    };
+    const response = await axios(config);
+    return { success: true, data: response.data, status: response.status };
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    // @ts-expect-error response.data is not typed
+    return { success: false, message: axiosError.response?.data?.message || "Failed to update admin" };
+  }
+}
+
 export async function deleteAdmin(id: string): Promise<ApiResponse> {
   try {
     const config: AxiosRequestConfig = {

@@ -150,7 +150,8 @@ export const addStudent = async (req: Request, res: Response) => {
                 console.error("Reference lookup failed", err);
             }
 
-            const hashedPassword = await hashPassword(phoneNumber);
+            const passwordToHash = student.password || phoneNumber;
+            const hashedPassword = await hashPassword(String(passwordToHash));
 
             const existingStudent = await Student.findOne({
                 name: name,
@@ -253,6 +254,14 @@ export const updateStudent = async (req: Request, res: Response) => {
             if (isName) {
                 updates.targetExams = await getTargetExamIds(updates.targetExams);
             }
+        }
+
+        // 4. Hash Password if provided
+        if (updates.password && updates.password.trim() !== "") {
+            updates.password = await hashPassword(updates.password.trim());
+        } else {
+            // Delete password from updates if it's empty or not provided to avoid overwriting with null/empty
+            delete updates.password;
         }
 
         const updatedStudent = await Student.findByIdAndUpdate(id, updates, { new: true })
@@ -368,7 +377,8 @@ export const bulkAddStudents = async (req: Request, res: Response) => {
                 const targetExamIds = await getTargetExamIds(rawTargetExams);
 
                 // --- 5. Password Hashing ---
-                const hashedPassword = await hashPassword(phoneNumber);
+                const passwordToHash = s.password || phoneNumber;
+                const hashedPassword = await hashPassword(String(passwordToHash));
 
                 // --- 6. Duplicate Check ---
                 const existingStudent = await Student.findOne({

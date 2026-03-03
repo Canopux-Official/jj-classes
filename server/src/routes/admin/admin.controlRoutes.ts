@@ -24,7 +24,7 @@ const requireSuperAdmin = (req: AuthRequest, res: express.Response, next: expres
  */
 router.get('/getAllAdmins', verifyAuth, requireSuperAdmin, async (req: AuthRequest, res: express.Response): Promise<void> => {
     try {
-        const admins = await Admin.find({ role: 'admin' }).select('-password');
+        const admins = await Admin.find({ role: { $in: ['admin', 'superadmin'] } }).select('-password');
         res.status(200).json({ success: true, count: admins.length, admins });
     } catch (error) {
         console.error("Error fetching admins:", error);
@@ -48,7 +48,7 @@ router.put('/updatePermissions/:id', verifyAuth, requireSuperAdmin, async (req: 
         }
 
         const updatedAdmin = await Admin.findOneAndUpdate(
-            { _id: id, role: 'admin' },
+            { _id: id, role: { $in: ['admin', 'superadmin'] } },
             { $set: { permissions } },
             { new: true }
         ).select('-password');
@@ -105,6 +105,58 @@ router.post('/addAdmin', verifyAuth, requireSuperAdmin, async (req: AuthRequest,
     } catch (error) {
         console.error("Error creating admin:", error);
         res.status(500).json({ success: false, message: 'Failed to create admin.', error });
+    }
+});
+
+/**
+ * @route   PUT /admin/control/updateAdmin/:id
+ * @desc    Update admin details
+ * @access  SuperAdmin Only
+ */
+router.put('/updateAdmin/:id', verifyAuth, requireSuperAdmin, async (req: AuthRequest, res: express.Response): Promise<void> => {
+    try {
+        const { id } = req.params;
+        const { name, phoneNumber, email, role, password } = req.body;
+
+        const admin = await Admin.findById(id);
+        if (!admin) {
+            res.status(404).json({ success: false, message: 'Admin not found.' });
+            return;
+        }
+
+        const existingAdmin = await Admin.findOne({
+            _id: { $ne: id },
+            $or: [{ email }, { phoneNumber }]
+        });
+
+        if (existingAdmin) {
+            res.status(400).json({ success: false, message: 'An admin with this email or phone number already exists.' });
+            return;
+        }
+
+        if (name) admin.name = name;
+        if (phoneNumber) admin.phoneNumber = phoneNumber;
+        if (email) admin.email = email;
+        if (role) admin.role = role;
+
+        if (password) {
+            const salt = await bcrypt.genSalt(10);
+            admin.password = await bcrypt.hash(password, salt);
+        }
+
+        if (admin.role === 'superadmin') {
+            admin.permissions = {
+                students: true, streams: true, targetExams: true,
+                subjects: true, session: true, upload: true,
+                notice: true, attendance: true
+            };
+        }
+
+        await admin.save();
+        res.status(200).json({ success: true, message: 'Admin updated successfully.', admin });
+    } catch (error) {
+        console.error("Error updating admin:", error);
+        res.status(500).json({ success: false, message: 'Failed to update admin.', error });
     }
 });
 

@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Typography, Button, Box, Table, TableBody, TableCell, 
-  TableContainer, TableHead, TableRow, Checkbox, 
-  Select, MenuItem, FormControl, InputLabel, Chip, 
+import { useState, useEffect, useCallback } from 'react';
+import {
+  Typography, Button, Box, Table, TableBody, TableCell,
+  TableContainer, TableHead, TableRow, Checkbox,
+  Select, MenuItem, FormControl, InputLabel, Chip,
   Dialog, DialogTitle, DialogContent, DialogActions,
   Stack, IconButton, Tooltip, TextField,
   OutlinedInput, ListItemText, InputAdornment, TablePagination,
@@ -12,15 +12,15 @@ import {
 } from '@mui/material';
 
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import AltRouteIcon from '@mui/icons-material/AltRoute'; 
+import AltRouteIcon from '@mui/icons-material/AltRoute';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
 // API
-import { 
-  getStudents, updateStudent, getStreams, getTargetExams, getAllSubjects 
+import {
+  getStudents, updateStudent, getStreams, getTargetExams, getAllSubjects
 } from '../../api/apiFunctions';
 
 // --- Types ---
@@ -48,13 +48,13 @@ const validateSessionString = (session: string): { isValid: boolean; error?: str
   if (!regex.test(session)) {
     return { isValid: false, error: "Format must be YYYY-YYYY (e.g. 2024-2025)" };
   }
-  
+
   const [start, end] = session.split('-').map(Number);
-  
+
   if (end <= start) {
     return { isValid: false, error: "End year must be greater than start year." };
   }
-  
+
   if (end - start !== 1) {
     return { isValid: false, error: "Standard sessions must be 1 year long." };
   }
@@ -69,9 +69,9 @@ const calculateNextClass = (currentClass: string, action: PromotionStatus): stri
 
   // Logic for taking a drop
   if (action === 'ToDropper') {
-      if (currentClass === '12') return 'dropper-1';
-      if (currentClass === 'dropper-1') return 'dropper-2';
-      return currentClass; // Fallback
+    if (currentClass === '12') return 'dropper-1';
+    if (currentClass === 'dropper-1') return 'dropper-2';
+    return currentClass; // Fallback
   }
 
   // Logic for Promotion
@@ -79,8 +79,8 @@ const calculateNextClass = (currentClass: string, action: PromotionStatus): stri
     case '9': return '10';
     case '10': return '11';
     case '11': return '12';
-    case '12': return 'graduated'; 
-    case 'dropper-1': return 'graduated'; 
+    case '12': return 'graduated';
+    case 'dropper-1': return 'graduated';
     case 'dropper-2': return 'graduated';
     default: return 'graduated';
   }
@@ -90,11 +90,11 @@ const SessionPage: React.FC = () => {
   // --- State ---
   const [fromSession, setFromSession] = useState('2024-2025');
   const [toSession, setToSession] = useState('2025-2026');
-  
+
   // Validation State for UI feedback
   const [sessionErrors, setSessionErrors] = useState<{ from?: string; to?: string }>({});
 
-  const [targetBatchClass, setTargetBatchClass] = useState('11'); 
+  const [targetBatchClass, setTargetBatchClass] = useState('11');
 
   // Data
   const [allStudents, setAllStudents] = useState<IStudentSessionUI[]>([]);
@@ -111,7 +111,7 @@ const SessionPage: React.FC = () => {
   // Selection & Filters
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All'); 
+  const [statusFilter, setStatusFilter] = useState('All');
 
   // Pagination
   const [page, setPage] = useState(0);
@@ -120,10 +120,10 @@ const SessionPage: React.FC = () => {
   // Customization Dialog
   const [openCustomize, setOpenCustomize] = useState(false);
   const [customizingId, setCustomizingId] = useState<string | null>(null);
-  const [tempProfile, setTempProfile] = useState({ 
-    stream: '', 
-    subjects: [] as string[], 
-    exams: [] as string[] 
+  const [tempProfile, setTempProfile] = useState({
+    stream: '',
+    subjects: [] as string[],
+    exams: [] as string[]
   });
 
   const canMoveToDropper = ['12', 'dropper-1'].includes(targetBatchClass);
@@ -133,10 +133,10 @@ const SessionPage: React.FC = () => {
     // Real-time validation for UI feedback
     const fromCheck = validateSessionString(fromSession);
     const toCheck = validateSessionString(toSession);
-    
+
     setSessionErrors({
-        from: fromCheck.isValid ? undefined : fromCheck.error,
-        to: toCheck.isValid ? undefined : toCheck.error
+      from: fromCheck.isValid ? undefined : fromCheck.error,
+      to: toCheck.isValid ? undefined : toCheck.error
     });
   }, [fromSession, toSession]);
 
@@ -193,25 +193,25 @@ const SessionPage: React.FC = () => {
 
   useEffect(() => {
     const filterData = () => {
-        let temp = allStudents.filter(s => 
-          s.currentClass === targetBatchClass && 
-          s.academicSession === fromSession
+      let temp = allStudents.filter(s =>
+        s.currentClass === targetBatchClass &&
+        s.academicSession === fromSession
+      );
+
+      if (searchTerm) {
+        const lower = searchTerm.toLowerCase();
+        temp = temp.filter(s =>
+          s.name.toLowerCase().includes(lower) ||
+          s.phoneNumber.includes(lower)
         );
-    
-        if (searchTerm) {
-          const lower = searchTerm.toLowerCase();
-          temp = temp.filter(s => 
-            s.name.toLowerCase().includes(lower) || 
-            s.phoneNumber.includes(lower)
-          );
-        }
-    
-        if (statusFilter !== 'All') {
-          temp = temp.filter(s => s.nextAction === statusFilter);
-        }
-    
-        setFilteredStudents(temp);
-      };
+      }
+
+      if (statusFilter !== 'All') {
+        temp = temp.filter(s => s.nextAction === statusFilter);
+      }
+
+      setFilteredStudents(temp);
+    };
 
     filterData();
   }, [allStudents, targetBatchClass, fromSession, searchTerm, statusFilter]);
@@ -264,7 +264,7 @@ const SessionPage: React.FC = () => {
 
   const saveCustomization = () => {
     if (customizingId) {
-      setAllStudents(prev => prev.map(s => 
+      setAllStudents(prev => prev.map(s =>
         s._id === customizingId ? {
           ...s,
           nextStream: tempProfile.stream,
@@ -290,24 +290,24 @@ const SessionPage: React.FC = () => {
     const toStartYear = parseInt(toSession.split('-')[0]);
 
     if (toStartYear <= fromStartYear) {
-        return alert("Validation Error: Next Session year must be greater than Current Session year.");
+      return alert("Validation Error: Next Session year must be greater than Current Session year.");
     }
-    
+
     // Optional: Ensure sequential flow (Next Session starts when Current ends)
     // E.g. 2024-2025 -> 2025-2026
     const fromEndYear = parseInt(fromSession.split('-')[1]);
     if (toStartYear !== fromEndYear) {
-       if(!window.confirm(`Warning: There is a gap or overlap between sessions.\nCurrent ends: ${fromEndYear}\nNext starts: ${toStartYear}\n\nAre you sure this is correct?`)) {
-           return;
-       }
+      if (!window.confirm(`Warning: There is a gap or overlap between sessions.\nCurrent ends: ${fromEndYear}\nNext starts: ${toStartYear}\n\nAre you sure this is correct?`)) {
+        return;
+      }
     }
 
     const studentsToProcess = allStudents.filter(s => selectedIds.includes(s._id));
-    
+
     if (studentsToProcess.length === 0) return alert("No students selected.");
-    
+
     // 2. Stream Validation
-    const missingStream = studentsToProcess.find(s => 
+    const missingStream = studentsToProcess.find(s =>
       s.currentClass === '10' && s.nextAction === 'Promote' && !s.nextStream && !s.stream
     );
     if (missingStream) {
@@ -332,14 +332,14 @@ const SessionPage: React.FC = () => {
         if (student.nextAction === 'Promote' || student.nextAction === 'ToDropper') {
           payload.currentClass = student.nextClass;
           if (student.nextStream) payload.stream = student.nextStream;
-          payload.enrolledSubjects = student.enrolledSubjects; 
+          payload.enrolledSubjects = student.enrolledSubjects;
           payload.targetExams = student.targetExams;
 
           // If leaving the institute (graduating), mark inactive
           if (student.nextClass === 'graduated') {
             payload.isActive = false;
           }
-        } 
+        }
         else if (student.nextAction === 'Discontinue') {
           payload.isActive = false;
         }
@@ -369,7 +369,7 @@ const SessionPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-      
+
       <Box mb={3}>
         <Typography variant="h5" fontWeight="700">Session & Promotion Manager</Typography>
         <Typography variant="body2" color="text.secondary">Upgrade batches and roll over academic sessions.</Typography>
@@ -378,33 +378,33 @@ const SessionPage: React.FC = () => {
       {/* 1. Control Panel */}
       <Paper elevation={0} sx={{ p: 2, mb: 3, border: '1px solid #e0e0e0', borderRadius: 2 }}>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="flex-start">
-          
+
           <Box display="flex" gap={2} alignItems="flex-start" flex={1}>
-            <TextField 
-                label="Current Session" 
-                value={fromSession} 
-                onChange={(e) => setFromSession(e.target.value)} 
-                size="small" 
-                sx={{ width: 160 }} 
-                error={!!sessionErrors.from}
-                helperText={sessionErrors.from}
+            <TextField
+              label="Current Session"
+              value={fromSession}
+              onChange={(e) => setFromSession(e.target.value)}
+              size="small"
+              sx={{ width: 160 }}
+              error={!!sessionErrors.from}
+              helperText={sessionErrors.from}
             />
             <Box pt={1}><ArrowForwardIcon color="action" /></Box>
-            <TextField 
-                label="Next Session" 
-                value={toSession} 
-                onChange={(e) => setToSession(e.target.value)} 
-                size="small" 
-                sx={{ width: 160 }} 
-                error={!!sessionErrors.to}
-                helperText={sessionErrors.to}
+            <TextField
+              label="Next Session"
+              value={toSession}
+              onChange={(e) => setToSession(e.target.value)}
+              size="small"
+              sx={{ width: 160 }}
+              error={!!sessionErrors.to}
+              helperText={sessionErrors.to}
             />
           </Box>
 
           <FormControl size="small" sx={{ minWidth: 200 }}>
             <InputLabel>Target Batch</InputLabel>
-            <Select 
-              value={targetBatchClass} 
+            <Select
+              value={targetBatchClass}
               label="Target Batch"
               onChange={(e) => { setTargetBatchClass(e.target.value); setPage(0); setSelectedIds([]); }}
             >
@@ -423,41 +423,41 @@ const SessionPage: React.FC = () => {
       {/* 2. Actions & Filters */}
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
         <Stack direction="row" spacing={2}>
-           <TextField
-              size="small"
-              placeholder="Search Name..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
-            />
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>Planned Action</InputLabel>
-              <Select value={statusFilter} label="Planned Action" onChange={(e) => setStatusFilter(e.target.value)}>
-                <MenuItem value="All">All</MenuItem>
-                <MenuItem value="Promote">Promote / Grad</MenuItem>
-                {canMoveToDropper && <MenuItem value="ToDropper">To Dropper</MenuItem>}
-                <MenuItem value="Retain">Retain</MenuItem>
-                <MenuItem value="Discontinue">Discontinue</MenuItem>
-              </Select>
-            </FormControl>
+          <TextField
+            size="small"
+            placeholder="Search Name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
+          />
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Planned Action</InputLabel>
+            <Select value={statusFilter} label="Planned Action" onChange={(e) => setStatusFilter(e.target.value)}>
+              <MenuItem value="All">All</MenuItem>
+              <MenuItem value="Promote">Promote / Grad</MenuItem>
+              {canMoveToDropper && <MenuItem value="ToDropper">To Dropper</MenuItem>}
+              <MenuItem value="Retain">Retain</MenuItem>
+              <MenuItem value="Discontinue">Discontinue</MenuItem>
+            </Select>
+          </FormControl>
         </Stack>
 
         <Stack direction="row" spacing={1}>
           <Button variant="outlined" color="success" size="small" onClick={() => handleBulkAction('Promote')} disabled={selectedIds.length === 0}>
-             Set Promote
+            Set Promote
           </Button>
           {canMoveToDropper && (
             <Button variant="outlined" color="secondary" size="small" onClick={() => handleBulkAction('ToDropper')} disabled={selectedIds.length === 0}>
               Set To Dropper
             </Button>
           )}
-          <Button 
-            variant="contained" 
-            startIcon={<SaveIcon />} 
-            onClick={handleCommit} 
+          <Button
+            variant="contained"
+            startIcon={<SaveIcon />}
+            onClick={handleCommit}
             disabled={selectedIds.length === 0 || processing || !!sessionErrors.from || !!sessionErrors.to}
           >
-             Confirm Updates
+            Confirm Updates
           </Button>
         </Stack>
       </Stack>
@@ -475,7 +475,7 @@ const SessionPage: React.FC = () => {
           <TableHead sx={{ '& th': { bgcolor: '#f8fafc', fontWeight: 700 } }}>
             <TableRow>
               <TableCell padding="checkbox">
-                <Checkbox 
+                <Checkbox
                   checked={selectedIds.length > 0 && selectedIds.length === filteredStudents.length}
                   indeterminate={selectedIds.length > 0 && selectedIds.length < filteredStudents.length}
                   onChange={(e) => handleSelectAll(e.target.checked)}
@@ -491,9 +491,9 @@ const SessionPage: React.FC = () => {
           </TableHead>
           <TableBody>
             {loading ? (
-               <TableRow><TableCell colSpan={7} align="center"><CircularProgress /></TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} align="center"><CircularProgress /></TableCell></TableRow>
             ) : paginatedData.length === 0 ? (
-               <TableRow><TableCell colSpan={7} align="center">No students found for this batch/session.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} align="center">No students found for this batch/session.</TableCell></TableRow>
             ) : (
               paginatedData.map((student) => {
                 const isSelected = selectedIds.includes(student._id);
@@ -514,9 +514,9 @@ const SessionPage: React.FC = () => {
                       {student.stream && <Typography variant="caption" display="block">{student.stream}</Typography>}
                     </TableCell>
                     <TableCell>
-                      <Select 
-                        size="small" 
-                        value={student.nextAction} 
+                      <Select
+                        size="small"
+                        value={student.nextAction}
                         onChange={(e) => handleActionChange(student._id, e.target.value as PromotionStatus)}
                         sx={{ fontSize: '0.8125rem', py: 0, height: 30, minWidth: 120 }}
                       >
@@ -535,26 +535,26 @@ const SessionPage: React.FC = () => {
                       </Box>
                     </TableCell>
                     <TableCell>
-                       {(student.nextAction === 'Promote' || student.nextAction === 'ToDropper') && student.nextClass !== 'graduated' && (
-                         <Box>
-                            {needsStream ? (
-                                <Chip label="Stream Missing!" color="error" size="small" icon={<ErrorOutlineIcon />} />
-                            ) : (
-                                student.nextStream && <Chip label={student.nextStream} size="small" sx={{ mr: 0.5 }} />
-                            )}
-                            <Typography variant="caption" color="text.secondary" display="block">
-                               {student.targetExams.join(', ')}
-                            </Typography>
-                         </Box>
-                       )}
-                       {student.nextClass === 'graduated' && <Chip label="Inactive" size="small" />}
+                      {(student.nextAction === 'Promote' || student.nextAction === 'ToDropper') && student.nextClass !== 'graduated' && (
+                        <Box>
+                          {needsStream ? (
+                            <Chip label="Stream Missing!" color="error" size="small" icon={<ErrorOutlineIcon />} />
+                          ) : (
+                            student.nextStream && <Chip label={student.nextStream} size="small" sx={{ mr: 0.5 }} />
+                          )}
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            {student.targetExams.join(', ')}
+                          </Typography>
+                        </Box>
+                      )}
+                      {student.nextClass === 'graduated' && <Chip label="Inactive" size="small" />}
                     </TableCell>
                     <TableCell align="right">
-                       <Tooltip title="Customize for Next Session">
-                         <IconButton size="small" color="primary" onClick={() => openCustomization(student)}>
-                           <AltRouteIcon fontSize="small" />
-                         </IconButton>
-                       </Tooltip>
+                      <Tooltip title="Customize for Next Session">
+                        <IconButton size="small" color="primary" onClick={() => openCustomization(student)}>
+                          <AltRouteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 );
@@ -563,7 +563,7 @@ const SessionPage: React.FC = () => {
           </TableBody>
         </Table>
       </TableContainer>
-      
+
       <TablePagination
         component="div"
         count={filteredStudents.length}
@@ -580,15 +580,15 @@ const SessionPage: React.FC = () => {
         <DialogContent sx={{ mt: 2 }}>
           <Stack spacing={3}>
             <Alert severity="info" icon={<CheckCircleIcon />}>
-               Changes made here will only apply when you click "Confirm Updates" on the main screen.
+              Changes made here will only apply when you click "Confirm Updates" on the main screen.
             </Alert>
 
             <FormControl fullWidth>
               <InputLabel>Stream (Next Session)</InputLabel>
-              <Select 
-                value={tempProfile.stream} 
+              <Select
+                value={tempProfile.stream}
                 label="Stream (Next Session)"
-                onChange={(e) => setTempProfile({...tempProfile, stream: e.target.value})}
+                onChange={(e) => setTempProfile({ ...tempProfile, stream: e.target.value })}
               >
                 <MenuItem value=""><em>None</em></MenuItem>
                 {streamOptions.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}

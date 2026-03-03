@@ -286,7 +286,6 @@ export const useAttendance = () => {
         const { students: fetchedStudents, dayHeaders, monthName, isCurrentMonth } =
           response.data;
 
-        console.log(`Fetched ${fetchedStudents.length} students for ${monthName} ${filters.year}`);
 
         // Save to localStorage
         await saveStudents(fetchedStudents, filters.month!, filters.year!);

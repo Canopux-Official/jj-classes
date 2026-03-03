@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+
 import { Typography, Box, CircularProgress } from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
 import PeopleIcon from '@mui/icons-material/People';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
@@ -24,39 +25,29 @@ interface IDashboardStats {
 
 const DashboardHome: React.FC = () => {
   const navigate = useNavigate(); // Initialize hook
-  const [statsData, setStatsData] = useState<IDashboardStats>({
-    streamCount: 0,
-    studentCount: 0,
-    subjectCount: 0,
-    targetExamCount: 0,
+
+  const { data: response, isLoading: loading } = useQuery({
+    queryKey: ['dashboardStats'],
+    queryFn: getAdminDashboardDetails
   });
-  const [loading, setLoading] = useState(true);
+
+  const statsData: IDashboardStats = response?.success && response?.data
+    ? response.data.data
+    : {
+      streamCount: 0,
+      studentCount: 0,
+      subjectCount: 0,
+      targetExamCount: 0,
+    };
 
   // Helper to calculate current academic session (e.g., 2025-2026)
   const getCurrentSession = () => {
     const now = new Date();
     const currentYear = now.getFullYear();
     // Assuming session changes in April. If currently Jan-March, session started previous year.
-    const startYear = now.getMonth() < 3 ? currentYear - 1 : currentYear; 
+    const startYear = now.getMonth() < 3 ? currentYear - 1 : currentYear;
     return `${startYear}-${(startYear + 1).toString().slice(-2)}`;
   };
-
-  useEffect(() => {
-    const fetchAllData = async () => {
-      try {
-        const response = await getAdminDashboardDetails();
-        if (response.success && response.data) {
-          setStatsData(response.data.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch dashboard details:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAllData();
-  }, []);
 
   // Defined links for each card
   const stats = [
@@ -110,17 +101,17 @@ const DashboardHome: React.FC = () => {
       ) : (
         <StatsFlexContainer>
           {stats.map((stat, index) => (
-            <StatCardWrapper 
-                key={index} 
-                onClick={() => stat.link && navigate(stat.link)}
-                sx={{ 
-                    cursor: stat.link ? 'pointer' : 'default',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    '&:hover': stat.link ? { 
-                        transform: 'translateY(-4px)',
-                        boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
-                    } : {}
-                }}
+            <StatCardWrapper
+              key={index}
+              onClick={() => stat.link && navigate(stat.link)}
+              sx={{
+                cursor: stat.link ? 'pointer' : 'default',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                '&:hover': stat.link ? {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
+                } : {}
+              }}
             >
               <CardHeader>
                 <Typography variant="subtitle2" color="text.secondary" fontWeight="700" textTransform="uppercase" fontSize="0.75rem">
