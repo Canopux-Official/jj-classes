@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import {
   Box,
@@ -114,6 +113,8 @@ export const AttendanceGrid: React.FC<AttendanceGridProps> = ({
         overflow: 'auto',
         backgroundColor: 'background.default',
         borderRadius: 2,
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       <TableContainer sx={{ height: '100%' }}>
@@ -276,10 +277,11 @@ export const AttendanceGrid: React.FC<AttendanceGridProps> = ({
           sx={{
             p: 4,
             textAlign: 'center',
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '200%',        // fill the parent's height
+            minHeight: 20,        // fallback if parent has no fixed height
           }}
         >
           <Typography variant="body1" color="text.secondary">
