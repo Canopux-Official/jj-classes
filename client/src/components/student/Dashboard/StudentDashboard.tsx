@@ -170,193 +170,196 @@
 // export default StudentDashboard;
 
 
-import React, { useEffect, useState } from 'react';
-import { Typography, Box, Stack, Divider, CircularProgress } from '@mui/material';
 
-import EventNoteIcon from '@mui/icons-material/EventNote';
-import EmojiObjectsIcon from '@mui/icons-material/EmojiObjects';
+// main one
 
-import {
-  WelcomeCard, InfoCard, NoticePreview, QuoteBox
-} from './StudentDashboard.styles';
-import RecentlyAddedMaterials from '../Material/stats/RecentlyAddedMaterials';
-import MaterialStatsCard from '../Material/stats/MaterialStatsCard';
-import { useNavigate } from 'react-router-dom';
-import { getStudentProfile, getStudentNotices } from '../../../api/apiFunctions';
+// import React, { useEffect, useState } from 'react';
+// import { Typography, Box, Stack, Divider, CircularProgress } from '@mui/material';
 
-interface StudentData {
-  name?: string;
-  targetExams?: { name?: string }[];
-  currentClass?: string;
-  stream?: { name?: string };
-}
+// import EventNoteIcon from '@mui/icons-material/EventNote';
+// import EmojiObjectsIcon from '@mui/icons-material/EmojiObjects';
 
-interface NoticeData {
-  _id: string;
-  title?: string;
-  heading?: string;
-  createdAt?: string;
-}
+// import {
+//   WelcomeCard, InfoCard, NoticePreview, QuoteBox
+// } from './StudentDashboard.styles';
+// import RecentlyAddedMaterials from '../Material/stats/RecentlyAddedMaterials';
+// import MaterialStatsCard from '../Material/stats/MaterialStatsCard';
+// import { useNavigate } from 'react-router-dom';
+// import { getStudentProfile, getStudentNotices } from '../../../api/apiFunctions';
 
-const StudentDashboard: React.FC = () => {
-  const [student, setStudent] = useState<StudentData | null>(null);
-  const [notices, setNotices] = useState<NoticeData[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const navigate = useNavigate();
+// interface StudentData {
+//   name?: string;
+//   targetExams?: { name?: string }[];
+//   currentClass?: string;
+//   stream?: { name?: string };
+// }
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [profileRes, noticesRes] = await Promise.all([
-          getStudentProfile(),
-          getStudentNotices()
-        ]);
+// interface NoticeData {
+//   _id: string;
+//   title?: string;
+//   heading?: string;
+//   createdAt?: string;
+// }
+
+// const StudentDashboard: React.FC = () => {
+//   const [student, setStudent] = useState<StudentData | null>(null);
+//   const [notices, setNotices] = useState<NoticeData[]>([]);
+//   const [loading, setLoading] = useState<boolean>(true);
+//   const navigate = useNavigate();
+
+//   useEffect(() => {
+//     const fetchData = async () => {
+//       try {
+//         setLoading(true);
+//         const [profileRes, noticesRes] = await Promise.all([
+//           getStudentProfile(),
+//           getStudentNotices()
+//         ]);
         
-        if (profileRes.success && profileRes.data) {
-          // Backend returns the student document directly (not wrapped in { student })
-          setStudent(profileRes.data as StudentData);
-        }
+//         if (profileRes.success && profileRes.data) {
+//           // Backend returns the student document directly (not wrapped in { student })
+//           setStudent(profileRes.data as StudentData);
+//         }
         
-        if (noticesRes.success && noticesRes.data) {
-          // Backend returns { success, data: [...notices], count }
-          const payload = noticesRes.data as { data?: NoticeData[] };
-          if (Array.isArray(payload.data)) {
-            setNotices(payload.data);
-          }
-        }
-      } catch (error) {
-        console.error("Error loading dashboard data", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+//         if (noticesRes.success && noticesRes.data) {
+//           // Backend returns { success, data: [...notices], count }
+//           const payload = noticesRes.data as { data?: NoticeData[] };
+//           if (Array.isArray(payload.data)) {
+//             setNotices(payload.data);
+//           }
+//         }
+//       } catch (error) {
+//         console.error("Error loading dashboard data", error);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
     
-    fetchData();
-  }, []);
+//     fetchData();
+//   }, []);
 
-  // Handler for when student clicks on a material
-  const handleNavigateToMaterial = (fullPath: Array<{ id: string; heading: string }>) => {
-    console.log('Navigating to:', fullPath.map(p => p.heading).join(' → '));
+//   // Handler for when student clicks on a material
+//   const handleNavigateToMaterial = (fullPath: Array<{ id: string; heading: string }>) => {
+//     console.log('Navigating to:', fullPath.map(p => p.heading).join(' → '));
 
-    // Navigate to materials page with the full path
-    navigate('/student/material', {
-      state: {
-        navigateToPath: fullPath,
-        shouldNavigate: true,
-        timestamp: Date.now() // Add timestamp to ensure navigation triggers
-      }
-    });
-  };
+//     // Navigate to materials page with the full path
+//     navigate('/student/material', {
+//       state: {
+//         navigateToPath: fullPath,
+//         shouldNavigate: true,
+//         timestamp: Date.now() // Add timestamp to ensure navigation triggers
+//       }
+//     });
+//   };
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+//   if (loading) {
+//     return (
+//       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
+//         <CircularProgress />
+//       </Box>
+//     );
+//   }
 
-  // Fallback defaults if APIs fail
-  const studentName = student?.name || "Student";
-  const studentTargets = student?.targetExams?.length
-    ? student.targetExams.map(t => t.name || '').filter(Boolean).join(', ')
-    : "Your upcoming exams";
+//   // Fallback defaults if APIs fail
+//   const studentName = student?.name || "Student";
+//   const studentTargets = student?.targetExams?.length
+//     ? student.targetExams.map(t => t.name || '').filter(Boolean).join(', ')
+//     : "Your upcoming exams";
 
-  return (
-    <Box>
-      {/* 1. Welcome Header */}
-      <WelcomeCard elevation={3}>
-        <Box>
-          <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: -0.5 }}>
-            Hello, {studentName}!
-          </Typography>
-          <Typography variant="body1" sx={{ opacity: 0.9, mt: 0.5 }}>
-            Stay focused. <strong>{studentTargets}</strong> is closer than you think.
-          </Typography>
-        </Box>
-        <Box sx={{ display: { xs: 'none', sm: 'block' }, opacity: 0.8 }}>
-          <EmojiObjectsIcon sx={{ fontSize: 60, color: '#ffca28' }} />
-        </Box>
-      </WelcomeCard>
+//   return (
+//     <Box>
+//       {/* 1. Welcome Header */}
+//       <WelcomeCard elevation={3}>
+//         <Box>
+//           <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: -0.5 }}>
+//             Hello, {studentName}!
+//           </Typography>
+//           <Typography variant="body1" sx={{ opacity: 0.9, mt: 0.5 }}>
+//             Stay focused. <strong>{studentTargets}</strong> is closer than you think.
+//           </Typography>
+//         </Box>
+//         <Box sx={{ display: { xs: 'none', sm: 'block' }, opacity: 0.8 }}>
+//           <EmojiObjectsIcon sx={{ fontSize: 60, color: '#ffca28' }} />
+//         </Box>
+//       </WelcomeCard>
 
-      {/* 2. Motivational Quote */}
-      <QuoteBox mb={3}>
-        <Typography variant="body2" fontWeight={600}>
-          "Success is the sum of small efforts, repeated day in and day out."
-        </Typography>
-        <Typography variant="caption" display="block" mt={0.5}>
-          — Robert Collier
-        </Typography>
-      </QuoteBox>
+//       {/* 2. Motivational Quote */}
+//       <QuoteBox mb={3}>
+//         <Typography variant="body2" fontWeight={600}>
+//           "Success is the sum of small efforts, repeated day in and day out."
+//         </Typography>
+//         <Typography variant="caption" display="block" mt={0.5}>
+//           — Robert Collier
+//         </Typography>
+//       </QuoteBox>
 
-      {/* 4. Material Statistics Section (FULL WIDTH) */}
-      <Box mb={3}>
-        <InfoCard elevation={0}>
-          <MaterialStatsCard />
-        </InfoCard>
-      </Box>
+//       {/* 4. Material Statistics Section (FULL WIDTH) */}
+//       <Box mb={3}>
+//         <InfoCard elevation={0}>
+//           <MaterialStatsCard />
+//         </InfoCard>
+//       </Box>
 
-      {/* 5. Main Content Row (Recent Materials & Notices) */}
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
-        {/* Left: Recent Materials */}
-        <Box flex={2}>
-          <InfoCard elevation={0}>
-            <RecentlyAddedMaterials
-              onNavigateToMaterial={handleNavigateToMaterial}
-              maxItems={5}
-              showHeader={false}
-              containerStyles={{ padding: 0 }}
-            />
-          </InfoCard>
-        </Box>
+//       {/* 5. Main Content Row (Recent Materials & Notices) */}
+//       <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
+//         {/* Left: Recent Materials */}
+//         <Box flex={2}>
+//           <InfoCard elevation={0}>
+//             <RecentlyAddedMaterials
+//               onNavigateToMaterial={handleNavigateToMaterial}
+//               maxItems={5}
+//               showHeader={false}
+//               containerStyles={{ padding: 0 }}
+//             />
+//           </InfoCard>
+//         </Box>
 
-        {/* Right: Notices */}
-        <Box flex={1}>
-          <InfoCard elevation={0}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-              <Typography variant="h6" fontWeight={700}>Notice Board</Typography>
-              <Typography variant="caption" color="primary" sx={{ cursor: 'pointer', fontWeight: 600 }}>
-                VIEW ALL
-              </Typography>
-            </Box>
+//         {/* Right: Notices */}
+//         <Box flex={1}>
+//           <InfoCard elevation={0}>
+//             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+//               <Typography variant="h6" fontWeight={700}>Notice Board</Typography>
+//               <Typography variant="caption" color="primary" sx={{ cursor: 'pointer', fontWeight: 600 }}>
+//                 VIEW ALL
+//               </Typography>
+//             </Box>
 
-            {notices.length === 0 ? (
-              <Typography variant="body2" color="text.secondary">No active notices.</Typography>
-            ) : (
-              notices.slice(0, 3).map((notice) => (
-                <NoticePreview key={notice._id}>
-                  <Typography variant="subtitle2" fontWeight={600}>{notice.title || notice.heading}</Typography>
-                  <Stack direction="row" alignItems="center" spacing={1} mt={0.5}>
-                    <EventNoteIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
-                    <Typography variant="caption" color="text.secondary">
-                       {notice.createdAt ? new Date(notice.createdAt).toLocaleDateString() : ''}
-                    </Typography>
-                  </Stack>
-                </NoticePreview>
-              ))
-            )}
+//             {notices.length === 0 ? (
+//               <Typography variant="body2" color="text.secondary">No active notices.</Typography>
+//             ) : (
+//               notices.slice(0, 3).map((notice) => (
+//                 <NoticePreview key={notice._id}>
+//                   <Typography variant="subtitle2" fontWeight={600}>{notice.title || notice.heading}</Typography>
+//                   <Stack direction="row" alignItems="center" spacing={1} mt={0.5}>
+//                     <EventNoteIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+//                     <Typography variant="caption" color="text.secondary">
+//                        {notice.createdAt ? new Date(notice.createdAt).toLocaleDateString() : ''}
+//                     </Typography>
+//                   </Stack>
+//                 </NoticePreview>
+//               ))
+//             )}
 
-            <Divider sx={{ my: 2 }} />
+//             <Divider sx={{ my: 2 }} />
 
-            {/* Institute Contact Info */}
-            <Typography variant="subtitle2" fontWeight={700} color="text.secondary" mb={1}>
-              Institute Contact
-            </Typography>
-            <Typography variant="caption" display="block" color="text.secondary">
-              Email: support@jjinstitute.com
-            </Typography>
-            <Typography variant="caption" display="block" color="text.secondary">
-              Phone: +91 98765 43210
-            </Typography>
-          </InfoCard>
-        </Box>
-      </Stack>
-    </Box>
-  );
-};
+//             {/* Institute Contact Info */}
+//             <Typography variant="subtitle2" fontWeight={700} color="text.secondary" mb={1}>
+//               Institute Contact
+//             </Typography>
+//             <Typography variant="caption" display="block" color="text.secondary">
+//               Email: support@jjinstitute.com
+//             </Typography>
+//             <Typography variant="caption" display="block" color="text.secondary">
+//               Phone: +91 98765 43210
+//             </Typography>
+//           </InfoCard>
+//         </Box>
+//       </Stack>
+//     </Box>
+//   );
+// };
 
-export default StudentDashboard;
+// export default StudentDashboard;
 
 
 
@@ -633,3 +636,280 @@ export default StudentDashboard;
 // };
 
 // export default StudentDashboard;
+
+
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Box, Typography, Paper, Stack, Chip,
+  IconButton, Divider, useMediaQuery, useTheme,
+} from '@mui/material';
+import {
+  NotificationsNoneOutlined as BellIcon,
+  MenuBookOutlined as BookIcon,
+  TrendingUp as TrendIcon,
+  ArrowForward as ArrowIcon,
+  SupportAgentOutlined as SupportIcon,
+  ChevronRight as ChevronIcon,
+} from '@mui/icons-material';
+import { getStudentProfile, getStudentNotices } from '../../../api/apiFunctions';
+import MaterialStatsCard from '../Material/stats/MaterialStatsCard';
+import RecentlyAddedMaterials from '../Material/stats/RecentlyAddedMaterials';
+
+interface StudentData { name?: string; targetExams?: { name?: string }[] }
+interface NoticeData  { _id: string; title?: string; heading?: string; createdAt?: string }
+
+const StudentDashboard: React.FC = () => {
+  const [student, setStudent] = useState<StudentData | null>(null);
+  const [notices, setNotices] = useState<NoticeData[]>([]);
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [p, n] = await Promise.all([getStudentProfile(), getStudentNotices()]);
+        if (p.success) setStudent(p.data as StudentData);
+        if (n.success) {
+          const d = (n.data as any)?.data;
+          if (Array.isArray(d)) setNotices(d);
+        }
+      } catch {}
+    })();
+  }, []);
+
+  const firstName = student?.name?.split(' ')[0] || 'Student';
+  const targets   = student?.targetExams?.map(t => t.name).filter(Boolean).join(', ') || '';
+  const today     = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  const goToMaterial = (path: Array<{ id: string; heading: string }>) =>
+    navigate('/student/material', { state: { navigateToPath: path, shouldNavigate: true, timestamp: Date.now() } });
+
+  return (
+    <Box sx={{ bgcolor: 'grey.50', minHeight: '100vh' }}>
+
+      {/* ── Top Header ──────────────────────────────────────────────────────── */}
+      <Paper
+        elevation={0}
+        sx={{
+          px: 3, height: 56,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          borderBottom: '1px solid', borderColor: 'grey.200',
+          borderRadius: 0, bgcolor: 'background.paper',
+        }}
+      >
+        <Stack direction="row" alignItems="center" spacing={1.25}>
+          <Typography variant="body1" fontWeight={600}>
+            Good morning, {firstName} 👋
+          </Typography>
+          {!isMobile && (
+            <Typography variant="body2" color="text.disabled">{today}</Typography>
+          )}
+        </Stack>
+
+        <Stack direction="row" alignItems="center" spacing={1}>
+          {targets && !isMobile && (
+            <Chip
+              icon={<TrendIcon sx={{ fontSize: '14px !important' }} />}
+              label={targets}
+              size="small"
+              sx={{
+                bgcolor: 'primary.50', color: 'primary.main',
+                fontWeight: 600, fontSize: '0.75rem',
+                '& .MuiChip-icon': { color: 'primary.main' },
+              }}
+            />
+          )}
+          <Box sx={{ position: 'relative' }}>
+            <IconButton
+              size="small"
+              sx={{ border: '1px solid', borderColor: 'grey.200', borderRadius: 2, p: 0.75 }}
+            >
+              <BellIcon fontSize="small" />
+            </IconButton>
+            {notices.length > 0 && (
+              <Box sx={{
+                position: 'absolute', top: 6, right: 6,
+                width: 6, height: 6, borderRadius: '50%',
+                bgcolor: 'error.main', border: '2px solid white',
+              }} />
+            )}
+          </Box>
+        </Stack>
+      </Paper>
+
+      {/* ── Page Body ───────────────────────────────────────────────────────── */}
+      <Box sx={{ p: { xs: 2, md: 2.5 }, display: 'flex', flexDirection: 'column', gap: 2 }}>
+
+        {/* Stats */}
+        <MaterialStatsCard />
+
+        {/* 70 / 30 grid */}
+        <Box sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '7fr 3fr' },
+          gap: 2,
+          alignItems: 'start',
+        }}>
+
+          {/* ── Study Materials ─────────────────────────────────────────── */}
+          <Paper
+            elevation={0}
+            sx={{ border: '1px solid', borderColor: 'grey.200', borderRadius: 3, overflow: 'hidden' }}
+          >
+            {/* Panel header */}
+            <Box sx={{
+              px: 2.5, py: 1.75,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              borderBottom: '1px solid', borderColor: 'grey.100',
+            }}>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <BookIcon sx={{ fontSize: 18, color: 'primary.main' }} />
+                <Typography variant="body2" fontWeight={600}>Study Materials</Typography>
+                <Chip
+                  label="Latest"
+                  size="small"
+                  sx={{
+                    height: 20, fontSize: '0.65rem', fontWeight: 600,
+                    bgcolor: 'grey.100', color: 'text.secondary',
+                    '& .MuiChip-label': { px: 1 },
+                  }}
+                />
+              </Stack>
+              <Box
+                component="button"
+                onClick={() => navigate('/student/material')}
+                sx={{
+                  display: 'flex', alignItems: 'center', gap: 0.5,
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'primary.main', fontSize: '0.8rem', fontWeight: 600,
+                  fontFamily: 'inherit', p: 0,
+                  '&:hover': { opacity: 0.75 },
+                }}
+              >
+                View all <ArrowIcon sx={{ fontSize: 14 }} />
+              </Box>
+            </Box>
+
+            {/* Materials grid */}
+            <Box sx={{ p: 2 }}>
+              <RecentlyAddedMaterials
+                onNavigateToMaterial={goToMaterial}
+                maxItems={isMobile ? 4 : 8}
+                showHeader={false}
+                containerStyles={{}}
+              />
+            </Box>
+          </Paper>
+
+          {/* ── Right column ────────────────────────────────────────────── */}
+          <Stack spacing={2}>
+
+            {/* Announcements */}
+            <Paper
+              elevation={0}
+              sx={{ border: '1px solid', borderColor: 'grey.200', borderRadius: 3, overflow: 'hidden' }}
+            >
+              <Box sx={{
+                px: 2.5, py: 1.75,
+                display: 'flex', alignItems: 'center',
+                borderBottom: '1px solid', borderColor: 'grey.100',
+                gap: 1,
+              }}>
+                <BellIcon sx={{ fontSize: 17, color: 'warning.main' }} />
+                <Typography variant="body2" fontWeight={600} sx={{ flex: 1 }}>
+                  Announcements
+                </Typography>
+                {notices.length > 0 && (
+                  <Chip
+                    label={`${notices.length} new`}
+                    size="small"
+                    sx={{
+                      height: 20, fontSize: '0.65rem', fontWeight: 700,
+                      bgcolor: 'warning.50', color: 'warning.dark',
+                      '& .MuiChip-label': { px: 1 },
+                    }}
+                  />
+                )}
+              </Box>
+
+              <Box sx={{ px: 2.5, py: 1.25 }}>
+                {notices.length === 0 ? (
+                  <Typography variant="body2" color="text.disabled" sx={{ textAlign: 'center', py: 3 }}>
+                    No announcements
+                  </Typography>
+                ) : (
+                  <Stack divider={<Divider />}>
+                    {notices.slice(0, isMobile ? 3 : 5).map(n => (
+                      <Box key={n._id} sx={{ py: 1.25 }}>
+                        <Stack direction="row" spacing={1} alignItems="flex-start">
+                          <Box sx={{
+                            width: 5, height: 5, borderRadius: '50%',
+                            bgcolor: 'primary.main', flexShrink: 0, mt: 0.75,
+                          }} />
+                          <Box>
+                            <Typography variant="body2" fontWeight={500} sx={{ lineHeight: 1.5 }}>
+                              {n.title || n.heading || '—'}
+                            </Typography>
+                            <Typography variant="caption" color="text.disabled">
+                              {n.createdAt
+                                ? new Date(n.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                                : 'Date unavailable'}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </Box>
+                    ))}
+                  </Stack>
+                )}
+              </Box>
+            </Paper>
+
+            {/* Support */}
+            <Paper
+              elevation={0}
+              sx={{ border: '1px solid', borderColor: 'grey.200', borderRadius: 3, p: 2.5 }}
+            >
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
+                <SupportIcon sx={{ fontSize: 17, color: 'text.secondary' }} />
+                <Typography variant="body2" fontWeight={600}>Need Help?</Typography>
+              </Stack>
+
+              <Stack spacing={1}>
+                {[
+                  { label: 'support@jjinstitute.com', href: 'mailto:support@jjinstitute.com', color: 'primary.main' },
+                  { label: '+91 98765 43210',          href: 'tel:+919876543210',              color: 'text.primary'  },
+                ].map(item => (
+                  <Box
+                    key={item.href}
+                    component="a"
+                    href={item.href}
+                    sx={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      px: 1.5, py: 1,
+                      bgcolor: 'grey.50', borderRadius: 2,
+                      border: '1px solid', borderColor: 'grey.200',
+                      color: item.color, fontSize: '0.8rem', fontWeight: 500,
+                      textDecoration: 'none',
+                      transition: 'border-color 0.15s',
+                      '&:hover': { borderColor: 'primary.light' },
+                    }}
+                  >
+                    <Typography variant="caption" sx={{ fontWeight: 500, color: 'inherit' }}>
+                      {item.label}
+                    </Typography>
+                    <ChevronIcon sx={{ fontSize: 16, opacity: 0.45 }} />
+                  </Box>
+                ))}
+              </Stack>
+            </Paper>
+
+          </Stack>
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
+export default StudentDashboard;

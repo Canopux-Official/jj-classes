@@ -1,28 +1,26 @@
 // LandingPage.tsx
-import Navbar from '../../components/landing/Navbar/Navbar';
-import Hero from '../../components/landing/Hero/Hero';
-import Results from '../../components/landing/Results/Results';
-import About from '../../components/landing/About/About';
-import Faculty from '../../components/landing/Faculty/Faculty'; // IMPORT THIS
-import Features from '../../components/landing/Features/Features';
-import FAQ from '../../components/landing/FAQ/FAQ';
-import Contact from '../../components/landing/Contact/Contact';
-import Footer from '../../components/landing/Footer/Footer';
-import { Box } from '@mui/material';
+import { ThemeProvider, CssBaseline } from '@mui/material'
+import Header from '../../components/landing_new/Header';
+import Hero from '../../components/landing_new/Hero';
+import Results from '../../components/landing_new/Results';
+import Courses from '../../components/landing_new/Courses';
+import Faculty from '../../components/landing_new/Faculty';
+import FAQ from '../../components/landing_new/FAQ';
+import Footer from '../../components/landing_new/Footer';
+import theme from '../../components/landing_new/theme/theme';
 
 const LandingPage = () => {
   return (
-    <Box sx={{ overflowX: 'hidden' }}>
-      <Navbar />
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Header />
       <Hero />
       <Results />
-      <About />
-      <Faculty /> {/* Added Section */}
-      <Features />
+      <Courses />
+      <Faculty />
       <FAQ />
-      <Contact />
       <Footer />
-    </Box>
+    </ThemeProvider>
   );
 };
 
