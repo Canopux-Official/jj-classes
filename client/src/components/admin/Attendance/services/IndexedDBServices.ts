@@ -304,19 +304,19 @@ class LocalStorageService {
     try {
       const key = this.getStorageKey(month, year);
       const data = localStorage.getItem(key);
-      
+
       if (!data) {
         console.log(`No data found for key: ${key}`);
         return null;
       }
 
       const parsed = JSON.parse(data) as StorageData;
-      
+
       // Convert dirtyDays arrays back to Sets
       parsed.students = parsed.students.map(s => ({
         ...s,
-        dirtyDays: Array.isArray(s.dirtyDays) 
-          ? new Set(s.dirtyDays) 
+        dirtyDays: Array.isArray(s.dirtyDays)
+          ? new Set(s.dirtyDays)
           : new Set<number>(),
       }));
 
@@ -331,7 +331,7 @@ class LocalStorageService {
   private setData(data: StorageData): void {
     try {
       const key = this.getStorageKey(data.month, data.year);
-      
+
       // Convert Sets to Arrays for JSON serialization
       const dataToStore = {
         ...data,
@@ -349,31 +349,51 @@ class LocalStorageService {
     }
   }
 
-  async saveStudents(
-    students: StudentWithDirtyFlag[],
-    month: number,
-    year: number
-  ): Promise<void> {
-    const studentsWithFlags = students.map(s => ({
-      ...s,
-      month,
-      year,
-      isDirty: false,
-      dirtyDays: new Set<number>(),
-    }));
+  // async saveStudents(
+  //   students: StudentWithDirtyFlag[],
+  //   month: number,
+  //   year: number
+  // ): Promise<void> {
+  //   const studentsWithFlags = students.map(s => ({
+  //     ...s,
+  //     month,
+  //     year,
+  //     isDirty: false,
+  //     dirtyDays: new Set<number>(),
+  //   }));
 
-    this.setData({
-      students: studentsWithFlags,
-      month,
-      year,
+  //   this.setData({
+  //     students: studentsWithFlags,
+  //     month,
+  //     year,
+  //   });
+
+  //   return Promise.resolve();
+  // }
+
+  async saveStudents(students: StudentWithDirtyFlag[], month: number, year: number): Promise<void> {
+    const existing = this.getData(month, year);
+    const existingMap = new Map(existing?.students.map(s => [s.studentId, s]) ?? []);
+
+    const studentsToSave = students.map(s => {
+      const existingStudent = existingMap.get(s.studentId);
+      // Preserve dirty flags if student already has unsaved changes
+      if (existingStudent?.isDirty) {
+        return existingStudent;
+      }
+      return {
+        ...s,
+        isDirty: false,
+        dirtyDays: new Set<number>(),
+      };
     });
 
-    return Promise.resolve();
+    this.setData({ students: studentsToSave, month, year });
   }
 
   async getStudent(studentId: string, month: number, year: number): Promise<StudentWithDirtyFlag | null> {
     const data = this.getData(month, year);
-    
+
     if (!data) {
       return Promise.resolve(null);
     }
@@ -399,7 +419,7 @@ class LocalStorageService {
     try {
       // Get current data for this month/year
       const data = this.getData(month, year);
-      
+
       if (!data) {
         console.error(`No data found for ${month}/${year}`);
         return Promise.reject(new Error(`No data found for ${month}/${year}`));
@@ -407,14 +427,14 @@ class LocalStorageService {
 
       // Find student
       const studentIndex = data.students.findIndex(s => s.studentId === studentId);
-      
+
       if (studentIndex === -1) {
         console.error(`Student ${studentId} not found`);
         return Promise.reject(new Error('Student not found'));
       }
 
       const student = data.students[studentIndex];
-      
+
       console.log(`Before update:`, {
         studentId: student.studentId,
         day,
@@ -426,7 +446,7 @@ class LocalStorageService {
 
       // Update attendance
       student.attendance.days[day.toString()] = status;
-      
+
       // Mark as dirty
       student.isDirty = true;
       if (!student.dirtyDays) {
@@ -437,7 +457,7 @@ class LocalStorageService {
       // Recalculate stats
       let presentCount = 0;
       let absentCount = 0;
-      
+
       Object.entries(student.attendance.days).forEach(([_, dayStatus]) => {
         if (dayStatus === true) presentCount++;
         if (dayStatus === false) absentCount++;
@@ -459,9 +479,9 @@ class LocalStorageService {
 
       // Save back to localStorage
       this.setData(data);
-      
+
       console.log(`✅ Successfully updated attendance for student ${studentId}`);
-      
+
       return Promise.resolve();
     } catch (error) {
       console.error('Update attendance error:', error);
@@ -471,14 +491,14 @@ class LocalStorageService {
 
   async getDirtyStudents(month: number, year: number): Promise<StudentWithDirtyFlag[]> {
     const data = this.getData(month, year);
-    
+
     if (!data) {
       return Promise.resolve([]);
     }
 
     const dirtyStudents = data.students.filter(s => s.isDirty);
     console.log(`Found ${dirtyStudents.length} dirty students`);
-    
+
     return Promise.resolve(dirtyStudents);
   }
 
@@ -497,7 +517,7 @@ class LocalStorageService {
 
     this.setData(data);
     console.log(`Cleared dirty flags for ${month}/${year}`);
-    
+
     return Promise.resolve();
   }
 
@@ -511,7 +531,7 @@ class LocalStorageService {
   async clearAll(): Promise<void> {
     // Remove all attendance-related keys
     const keysToRemove: string[] = [];
-    
+
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key && key.startsWith(STORAGE_KEY)) {
@@ -521,7 +541,7 @@ class LocalStorageService {
 
     keysToRemove.forEach(key => localStorage.removeItem(key));
     console.log(`Cleared ${keysToRemove.length} attendance keys`);
-    
+
     return Promise.resolve();
   }
 }

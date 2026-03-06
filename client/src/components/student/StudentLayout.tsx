@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box, IconButton, List, ListItem, ListItemButton,
@@ -15,9 +15,18 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 
 import { RootContainer, StyledDrawer, StyledAppBar, MainContent, LogoSection } from './StudentLayout.styles';
 import LogoImg from '../../assets/logo.jpeg';
+import { getStudentProfile } from '../../api/apiFunctions';
+
+interface StudentData {
+  name?: string;
+  targetExams?: { name?: string }[];
+  currentClass?: string;
+  stream?: { name?: string };
+}
 
 const StudentLayout: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [student, setStudent] = useState<StudentData | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -30,6 +39,31 @@ const StudentLayout: React.FC = () => {
     { text: 'Notice Board', icon: <NotificationsIcon />, path: '/student/notices' },
     { text: 'Attendance', icon: <CalendarMonthIcon />, path: '/student/attendance' },
   ];
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [profileRes] = await Promise.all([
+          getStudentProfile()
+        ]);
+
+        if (profileRes.success && profileRes.data) {
+          // Backend returns the student document directly (not wrapped in { student })
+          setStudent(profileRes.data as StudentData);
+        }
+      } catch (error) {
+        console.error("Error loading dashboard data", error);
+      } finally {
+
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  console.log(student)
+
+  const studentName = student?.name || "Student";
 
   const drawerContent = (
     <>
@@ -79,10 +113,10 @@ const StudentLayout: React.FC = () => {
             {/* Profile Preview */}
             <Box display="flex" alignItems="center" gap={1} sx={{ display: { xs: 'none', sm: 'flex' } }}>
               <Box textAlign="right">
-                <Typography variant="body2" fontWeight={600}>Anjali Singh</Typography>
-                <Typography variant="caption" color="text.secondary">Class 12 - Science</Typography>
+                <Typography variant="body2" fontWeight={600}>{studentName}</Typography>
+                <Typography variant="caption" color="text.secondary">Class {student?.currentClass || "0"} - {student?.stream?.name || 'General'}</Typography>
               </Box>
-              <Avatar sx={{ bgcolor: 'secondary.main', color: 'primary.main', width: 36, height: 36, fontSize: '0.9rem' }}>AS</Avatar>
+              <Avatar sx={{ bgcolor: 'secondary.main', color: 'primary.main', width: 36, height: 36, fontSize: '0.9rem' }}>{student?.name ? student.name.charAt(0).toUpperCase() : 'S'}</Avatar>
             </Box>
 
             {/* Logout Button (Directly in Navbar) */}
