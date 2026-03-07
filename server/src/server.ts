@@ -24,29 +24,48 @@ import cron from 'node-cron';
 
 const port = process.env.PORT || 3000;
 
-const allowedOrigins = [
-  process.env.CLIENT_LINK,
-  "https://jj-classes.vercel.app",
-  "http://localhost:5173"
-].filter(Boolean) as string[];
+// const allowedOrigins = [
+//   process.env.CLIENT_LINK,
+//   "https://jj-classes.vercel.app",
+//   "http://localhost:5173"
+// ].filter(Boolean) as string[];
 
-const corsOptions = {
-  origin: function (origin: any, callback: any) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error("CORS not allowed by origin"));
-    }
-  },
-  methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
-  credentials: true,
-  optionsSuccessStatus: 200, 
-};
+// const corsOptions = {
+//   origin: function (origin: any, callback: any) {
+//     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error("CORS not allowed by origin"));
+//     }
+//   },
+//   methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
+//   credentials: true,
+//   optionsSuccessStatus: 200, 
+// };
 
 const app = express();
 
+// app.use(cors(corsOptions));
+// app.options("*", cors(corsOptions));
+
+const corsOptions = {
+  origin: "https://jj-classes.vercel.app",
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+  credentials: true,
+};
+
+// 2. Use the middleware
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+
+// 3. THE FIX: Explicitly handle OPTIONS requests for ALL routes
+app.options('*', (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "https://jj-classes.vercel.app");
+  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS,PATCH,DELETE,POST,PUT");
+  res.setHeader("Access-Control-Allow-Headers", "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  return res.status(200).end(); 
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
