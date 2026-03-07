@@ -62,7 +62,7 @@ app.use(cors(corsOptions));
 
 // 3. THE FIX: Explicitly handle OPTIONS requests for ALL routes
 app.options('*', (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "https://jj-classes.vercel.app");
+  res.setHeader("Access-Control-Allow-Origin", "https://jj-classes.vercel.app/");
   res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS,PATCH,DELETE,POST,PUT");
   res.setHeader("Access-Control-Allow-Headers", "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization");
   res.setHeader("Access-Control-Allow-Credentials", "true");
