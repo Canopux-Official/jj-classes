@@ -906,7 +906,6 @@ import {
   Add as AddIcon,
   Warning,
   FilterList,
-  ConnectingAirportsOutlined,
 } from '@mui/icons-material';
 import ShowSubnode from '../showsubnode/ShowSubNode';
 
