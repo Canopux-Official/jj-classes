@@ -18,21 +18,35 @@ import adminDashboardRoutes from './routes/admin/admin.dashboardRoutes';
 import adminAttendanceRoutes from './routes/admin/admin.attendanceRoutes';
 import adminControlRoutes from './routes/admin/admin.controlRoutes';
 import studentAttendanceRoutes from './routes/student/student.attendanceRoutes';
-
-import materialController from './controllers/materialcontroller';
-import cron from 'node-cron';
+import cronRoutes from './routes/cronRoutes'
 
 const port = process.env.PORT || 3000;
 
+// const app = express();
+
+// // Simple CORS wildcard
+// app.use(cors({ origin: process.env.CLIENT_LINK }));
+
+// app.use(express.json());
+// app.use(express.urlencoded({ extended: true }));
+
+// connectDB();
+
 const app = express();
 
-// Simple CORS wildcard
 app.use(cors({ origin: process.env.CLIENT_LINK }));
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-connectDB();
+// Middleware to ensure DB is connected
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    res.status(500).send("Database Connection Error");
+  }
+});
 
 app.use('/auth', authRoutes);
 
@@ -54,15 +68,7 @@ app.use('/student/notice', studentNoticeRoutes);
 app.use('/student/attendance', studentAttendanceRoutes);
 
 // Cron Jobs
-cron.schedule('0 0 * * *', async () => {
-  console.log('Running scheduled cleanup of inactive materials...');
-  try {
-    await materialController.cleanupInactiveMaterials();
-    console.log('Cleanup completed successfully');
-  } catch (error) {
-    console.error('Error during scheduled cleanup:', error);
-  }
-});
+app.use('/api/cron', cronRoutes);
 
 console.log('Cron job for material cleanup has been scheduled');
 
