@@ -28,19 +28,30 @@ const allowedOrigins = [
   process.env.CLIENT_LINK,
   "https://jj-classes.vercel.app",
   "http://localhost:5173"
-].filter(Boolean) as string[];
+].filter(Boolean).map(origin => (origin as string).replace(/\/$/, ""));
 
-const corsOptions = {
-  origin: function (origin: any, callback: any) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+const corsOptions: cors.CorsOptions = {
+  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+
+    const isAllowed = allowedOrigins.includes(origin) ||
+      origin.endsWith(".vercel.app") && origin.includes("jj-classes") ||
+      origin.includes("localhost");
+
+    if (isAllowed) {
       callback(null, true);
     } else {
-      callback(new Error("CORS not allowed by origin"));
+      console.warn(`CORS blocked for origin: ${origin}`);
+      callback(null, false);
     }
   },
   methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
   credentials: true,
-  optionsSuccessStatus: 200, 
+  optionsSuccessStatus: 200,
 };
 
 const app = express();
