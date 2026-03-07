@@ -24,15 +24,31 @@ import materialController from './controllers/materialcontroller';
 import cron from 'node-cron';
 
 
-const corsOptions = {
-  origin: `${process.env.CLIENT_LINK}`,
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-};
+const allowedOrigins = [
+  process.env.CLIENT_LINK,
+  "https://jj-classes.vercel.app",
+  "http://localhost:5173"
+];
 
+const corsOptions = {
+  origin: function (origin: any, callback: any) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS not allowed"));
+    }
+  },
+  methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
+  credentials: true,
+};
 const app = express();
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors(corsOptions));
+
 
 connectDB();
 
