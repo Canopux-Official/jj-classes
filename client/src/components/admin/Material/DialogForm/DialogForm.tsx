@@ -1958,6 +1958,10 @@ const NodeDialogForm: React.FC<NodeDialogFormProps> = ({
     }
   };
 
+  // check whether the given url is a valid url or a simple text
+  const isValidUrl = (url: string) =>
+    /^(https?:\/\/)[\w\-]+(\.[\w\-]+)+(\/\S*)?$/.test(url.trim())
+
   return (
     <Dialog open={open} onClose={handleCancel} maxWidth="md" fullWidth>
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -2320,12 +2324,23 @@ const NodeDialogForm: React.FC<NodeDialogFormProps> = ({
                   value={newReference.referenceLink}
                   onChange={(e) => setNewReference({ ...newReference, referenceLink: e.target.value })}
                   placeholder="e.g., https://example.com/resource"
+                  error={!!newReference.referenceLink && !isValidUrl(newReference.referenceLink)}
+                  helperText={
+                    !!newReference.referenceLink && !isValidUrl(newReference.referenceLink)
+                      ? 'Please enter a valid URL starting with http:// or https://'
+                      : ''
+                  }
                 />
+
                 <Button
                   variant="contained"
                   onClick={handleAddReference}
                   startIcon={<AddIcon />}
-                  disabled={!newReference.fileName.trim() || !newReference.referenceLink.trim()}
+                  disabled={
+                    !newReference.fileName.trim() ||
+                    !newReference.referenceLink.trim() ||
+                    !isValidUrl(newReference.referenceLink)  // ← added
+                  }
                   size="small"
                 >
                   Add Reference

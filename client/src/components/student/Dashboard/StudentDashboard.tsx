@@ -215,12 +215,12 @@
 //           getStudentProfile(),
 //           getStudentNotices()
 //         ]);
-        
+
 //         if (profileRes.success && profileRes.data) {
 //           // Backend returns the student document directly (not wrapped in { student })
 //           setStudent(profileRes.data as StudentData);
 //         }
-        
+
 //         if (noticesRes.success && noticesRes.data) {
 //           // Backend returns { success, data: [...notices], count }
 //           const payload = noticesRes.data as { data?: NoticeData[] };
@@ -234,7 +234,7 @@
 //         setLoading(false);
 //       }
 //     };
-    
+
 //     fetchData();
 //   }, []);
 
@@ -441,7 +441,7 @@
 //   return (
 //     <Box sx={{ flexGrow: 1, pb: 4, bgcolor: '#f4f6f8', minHeight: '100vh' }}>
 //       <Container maxWidth="xl" sx={{ pt: 3 }}>
-        
+
 //         {/* HEADER SECTION */}
 //         <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4}>
 //           <Box>
@@ -460,7 +460,7 @@
 //         {/* TOP ROW: Welcome & Countdown */}
 //         {/* Uses Stack with flex-basis for responsive sizing without Grid */}
 //         <Stack direction={isMobile ? 'column' : 'row'} spacing={3} mb={4}>
-          
+
 //           {/* Left: Welcome Card (Takes 66% width on desktop) */}
 //           <Box flexBasis={isMobile ? '100%' : '66.66%'} flexGrow={1}>
 //             <WelcomeCard elevation={0}>
@@ -511,7 +511,7 @@
 
 //         {/* MIDDLE SECTION: Stats & Quick Actions */}
 //         <Stack direction={isMobile ? 'column' : 'row'} spacing={3} mb={4}>
-          
+
 //           {/* Material Stats (Takes 66%) */}
 //           <Box flexBasis={isMobile ? '100%' : '66.66%'} flexGrow={1}>
 //              <SectionContainer elevation={0}>
@@ -526,7 +526,7 @@
 //                     </Box>
 //                   </Stack>
 //                 </SectionHeader>
-                
+
 //                 {/* Padding Wrapper to contain the Stats Card */}
 //                 <Box p={3}>
 //                    <MaterialStatsCard /> 
@@ -537,7 +537,7 @@
 //           {/* Quick Actions (Takes 33%) */}
 //           <Box flexBasis={isMobile ? '100%' : '33.33%'} flexGrow={1} display="flex" flexDirection="column">
 //              <Typography variant="h6" fontWeight={700} color="text.primary" mb={2}>Quick Access</Typography>
-             
+
 //              {/* Using CSS Grid for the 2x2 Layout within the flex item */}
 //              <Box display="grid" gridTemplateColumns="repeat(2, 1fr)" gap={2} flexGrow={1}>
 //                {quickLinks.map((link, index) => (
@@ -552,7 +552,7 @@
 
 //         {/* BOTTOM SECTION: Library & Notices */}
 //         <Stack direction={isMobile ? 'column' : 'row'} spacing={3}>
-          
+
 //           {/* Recent Materials (Takes 70%) */}
 //           <Box flexBasis={isMobile ? '100%' : '70%'} flexGrow={1}>
 //             <SectionContainer elevation={0} sx={{ minHeight: '400px' }}>
@@ -576,7 +576,7 @@
 //                   VIEW LIBRARY
 //                 </Typography>
 //               </SectionHeader>
-              
+
 //               <Box p={2}>
 //                 <RecentlyAddedMaterials
 //                   onNavigateToMaterial={handleNavigateToMaterial}
@@ -657,7 +657,7 @@ import MaterialStatsCard from '../Material/stats/MaterialStatsCard';
 import RecentlyAddedMaterials from '../Material/stats/RecentlyAddedMaterials';
 
 interface StudentData { name?: string; targetExams?: { name?: string }[] }
-interface NoticeData  { _id: string; title?: string; heading?: string; createdAt?: string }
+interface NoticeData { _id: string; title?: string; heading?: string; createdAt?: string }
 
 const StudentDashboard: React.FC = () => {
   const [student, setStudent] = useState<StudentData | null>(null);
@@ -675,16 +675,23 @@ const StudentDashboard: React.FC = () => {
           const d = (n.data as any)?.data;
           if (Array.isArray(d)) setNotices(d);
         }
-      } catch {}
+      } catch { }
     })();
   }, []);
 
   const firstName = student?.name?.split(' ')[0] || 'Student';
-  const targets   = student?.targetExams?.map(t => t.name).filter(Boolean).join(', ') || '';
-  const today     = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  const targets = student?.targetExams?.map(t => t.name).filter(Boolean).join(', ') || '';
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
   const goToMaterial = (path: Array<{ id: string; heading: string }>) =>
     navigate('/student/material', { state: { navigateToPath: path, shouldNavigate: true, timestamp: Date.now() } });
+
+  const getGreeting = () => {
+    const hour = new Date().getHours()
+    if (hour < 12) return 'Good morning'
+    if (hour < 17) return 'Good afternoon'
+    return 'Good evening'
+  }
 
   return (
     <Box sx={{ bgcolor: 'grey.50', minHeight: '100vh' }}>
@@ -701,7 +708,7 @@ const StudentDashboard: React.FC = () => {
       >
         <Stack direction="row" alignItems="center" spacing={1.25}>
           <Typography variant="body1" fontWeight={600}>
-            Good morning, {firstName} 👋
+            {getGreeting()}, {firstName} 👋
           </Typography>
           {!isMobile && (
             <Typography variant="body2" color="text.disabled">{today}</Typography>
@@ -879,7 +886,7 @@ const StudentDashboard: React.FC = () => {
               <Stack spacing={1}>
                 {[
                   { label: 'support@jjinstitute.com', href: 'mailto:support@jjinstitute.com', color: 'primary.main' },
-                  { label: '+91 98765 43210',          href: 'tel:+919876543210',              color: 'text.primary'  },
+                  { label: '+91 98765 43210', href: 'tel:+919876543210', color: 'text.primary' },
                 ].map(item => (
                   <Box
                     key={item.href}
