@@ -24,50 +24,10 @@ import cron from 'node-cron';
 
 const port = process.env.PORT || 3000;
 
-const allowedOrigins = [
-  process.env.CLIENT_LINK,
-  "https://jj-classes.vercel.app",
-  "http://localhost:5173"
-].filter(Boolean).map(origin => (origin as string).replace(/\/$/, ""));
-
-const corsOptions: cors.CorsOptions = {
-  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
-    if (!origin) {
-      callback(null, true);
-      return;
-    }
-
-    const isAllowed = allowedOrigins.includes(origin) ||
-      origin.endsWith(".vercel.app") && origin.includes("jj-classes") ||
-      origin.includes("localhost");
-
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      console.warn(`CORS blocked for origin: ${origin}`);
-      callback(null, false);
-    }
-  },
-  methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
-  credentials: true,
-  optionsSuccessStatus: 200,
-};
-
 const app = express();
 
-
-// 2. Use the middleware
-app.use(cors(corsOptions));
-
-// 3. THE FIX: Explicitly handle OPTIONS requests for ALL routes
-app.options('*', (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "https://jj-classes.vercel.app/");
-  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS,PATCH,DELETE,POST,PUT");
-  res.setHeader("Access-Control-Allow-Headers", "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  return res.status(200).end();
-});
+// Simple CORS wildcard
+app.use(cors({ origin: '*' }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
