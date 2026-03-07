@@ -27,7 +27,7 @@ const port = process.env.PORT || 3000;
 const app = express();
 
 // Simple CORS wildcard
-app.use(cors({ origin: '*' }));
+app.use(cors({ origin: process.env.CLIENT_LINK }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
