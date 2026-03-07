@@ -49,7 +49,7 @@ const app = express();
 // app.options("*", cors(corsOptions));
 
 const corsOptions = {
-  origin: "https://jj-classes.vercel.app",
+  origin: "https://jj-classes.vercel.app/",
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
   credentials: true,
@@ -60,7 +60,7 @@ app.use(cors(corsOptions));
 
 // 3. THE FIX: Explicitly handle OPTIONS requests for ALL routes
 app.options('*', (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "https://jj-classes.vercel.app");
+  res.setHeader("Access-Control-Allow-Origin", "https://jj-classes.vercel.app/");
   res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS,PATCH,DELETE,POST,PUT");
   res.setHeader("Access-Control-Allow-Headers", "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization");
   res.setHeader("Access-Control-Allow-Credentials", "true");
