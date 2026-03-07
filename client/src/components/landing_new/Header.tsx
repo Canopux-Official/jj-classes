@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom'
 const navItems = [
   { label: 'Home', href: '#hero' },
   { label: 'Courses', href: '#courses' },
-  { label: 'About', href: '#why-us' },
+  { label: 'Result', href: '#results' },
   { label: 'Faculty', href: '#faculty' },
   { label: 'Contact', href: '#footer' },
 ]
@@ -124,11 +124,39 @@ export default function Header() {
       {/* Mobile Drawer */}
       <Drawer anchor="right" open={mobileOpen} onClose={() => setMobileOpen(false)}>
         <Box sx={{ width: 260, pt: 2 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', px: 2, mb: 1 }}>
+          {/* Drawer Header: Logo + Close Button */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2, mb: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 2,
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Box
+                  component="img"
+                  src={LogoImg}
+                  alt="JJ Institute Logo"
+                  sx={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                />
+              </Box>
+              <Typography
+                variant="subtitle2"
+                sx={{ color: 'primary.main', fontFamily: 'Montserrat', fontWeight: 700, fontSize: 13 }}
+              >
+                JJ Institute Of Science
+              </Typography>
+            </Box>
             <IconButton onClick={() => setMobileOpen(false)}>
               <CloseIcon />
             </IconButton>
           </Box>
+
           <List>
             {navItems.map((item) => (
               <ListItem key={item.href} disablePadding>
@@ -143,7 +171,7 @@ export default function Header() {
               </ListItem>
             ))}
             <ListItem sx={{ mt: 2, px: 2 }}>
-              <Button variant="contained" color="primary" fullWidth>
+              <Button onClick={() => navigate('/login')} variant="contained" sx={{ bgcolor: "#063f26" }} fullWidth>
                 Login
               </Button>
             </ListItem>

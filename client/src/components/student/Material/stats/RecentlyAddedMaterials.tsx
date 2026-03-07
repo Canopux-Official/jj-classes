@@ -347,14 +347,14 @@ const RecentlyAddedMaterials: React.FC<Props> = ({
   containerStyles = {},
 }) => {
   const [materials, setMaterials] = useState<RecentMaterial[]>([]);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState<string | null>(null);
-  const [snack, setSnack]         = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [snack, setSnack] = useState(false);
 
   const load = async () => {
     setLoading(true);
     setError(null);
-    try   { setMaterials(await fetchRecentMaterials(maxItems)); }
+    try { setMaterials(await fetchRecentMaterials(maxItems)); }
     catch (e: any) { setError(e.message || 'Failed to load materials'); }
     finally { setLoading(false); }
   };
