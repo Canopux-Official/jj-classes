@@ -2077,6 +2077,7 @@ const NodeDialogForm: React.FC<NodeDialogFormProps> = ({
             type="date"
             fullWidth
             InputLabelProps={{ shrink: true }}
+            inputProps={{ min: new Date().toISOString().split('T')[0] }}
             value={formData.lastDate || ''}
             onChange={(e) => setFormData({ ...formData, lastDate: e.target.value || undefined })}
           />

@@ -906,6 +906,7 @@ import {
   Add as AddIcon,
   Warning,
   FilterList,
+  ConnectingAirportsOutlined,
 } from '@mui/icons-material';
 import ShowSubnode from '../showsubnode/ShowSubNode';
 
@@ -1044,8 +1045,12 @@ const ShowClass: React.FC = () => {
     return '';
   };
 
+  console.log(allNodes[0])
+
   const getTargetExamName = (field: typeof allNodes[0]['targetExam']): string => getNameFromField(field as { _id?: string; name?: string } | string);
   const getStreamName = (field: typeof allNodes[0]['stream']): string => getNameFromField(field as { _id?: string; name?: string } | string | null);
+
+
 
   // Filter logic
   const filteredClasses = rootClasses.filter((node) => {
@@ -1550,8 +1555,15 @@ const ShowClass: React.FC = () => {
           </Typography>
           <Paper elevation={0} sx={{ p: 2, backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              {CLASS_OPTIONS.find((opt) => opt.value === selectedClassType)?.label} • {getTargetExamName(selectedTargetExamId)} •{' '}
-              {getStreamName(selectedStreamId)}
+              {CLASS_OPTIONS.find((opt) => opt.value === selectedClassType)?.label}
+              {' • '}
+              {targetExams.find((e) => e._id === selectedTargetExamId)?.name ?? selectedTargetExamId}
+              {selectedStreamId && (
+                <>
+                  {' • '}
+                  {streams.find((s) => s._id === selectedStreamId)?.name ?? selectedStreamId}
+                </>
+              )}
             </Typography>
           </Paper>
         </DialogContent>
