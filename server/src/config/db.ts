@@ -19,12 +19,19 @@ const connectDB = async () => {
   }
 
   if (!cached.promise) {
+    // const opts = {
+    //   bufferCommands: false,
+    //   maxPoolSize: 1,
+    //   maxIdleTimeMS: 10000,
+    //   serverSelectionTimeoutMS: 5000,
+    //   socketTimeoutMS: 45000,
+    // };
     const opts = {
       bufferCommands: false,
-      maxPoolSize: 1,
-      maxIdleTimeMS: 10000,
+      maxPoolSize: 1, // Increased slightly for better performance on a persistent server
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
+      family: 4 // Often helps with connection speed in certain environments
     };
 
     cached.promise = mongoose.connect(MONGO_URI, opts).then((mongoose) => {
