@@ -1,0 +1,21 @@
+{
+  "name": "JJ Institute Of Science",
+  "short_name": "JIS App",
+  "description": "In the Pursuit of Excellence",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#1976d2",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/maskable_icon_x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/maskable_icon_x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
