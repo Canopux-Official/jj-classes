@@ -18,19 +18,9 @@ import adminDashboardRoutes from './routes/admin/admin.dashboardRoutes';
 import adminAttendanceRoutes from './routes/admin/admin.attendanceRoutes';
 import adminControlRoutes from './routes/admin/admin.controlRoutes';
 import studentAttendanceRoutes from './routes/student/student.attendanceRoutes';
-import cronRoutes from './routes/cronRoutes'
+import cronRoutes from './routes/cronRoutes';
 
 const port = process.env.PORT || 3000;
-
-// const app = express();
-
-// // Simple CORS wildcard
-// app.use(cors({ origin: process.env.CLIENT_LINK }));
-
-// app.use(express.json());
-// app.use(express.urlencoded({ extended: true }));
-
-// connectDB();
 
 const app = express();
 
@@ -38,13 +28,13 @@ app.use(cors({ origin: process.env.CLIENT_LINK }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Middleware to ensure DB is connected
 app.use(async (req, res, next) => {
   try {
     await connectDB();
     next();
   } catch (err) {
-    res.status(500).send("Database Connection Error");
+    console.error("Database Connection Error:", err);
+    res.status(500).json({ error: "Failed to connect to database" });
   }
 });
 

@@ -21,9 +21,10 @@ const connectDB = async () => {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
-      // CRITICAL: Limit connections per instance
-      maxPoolSize: 5,
+      maxPoolSize: 1,
+      maxIdleTimeMS: 10000,
       serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
     };
 
     cached.promise = mongoose.connect(MONGO_URI, opts).then((mongoose) => {
