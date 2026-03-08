@@ -21,16 +21,13 @@ type RenderSmtpOptions = SMTPTransport.Options & { family?: number };
 
 const mailOptions: RenderSmtpOptions = {
   host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
+  port: 465,        // Changed to SSL port
+  secure: true,     // true for port 465
   auth: {
     user: process.env.MAIL_USER,
     pass: process.env.MAIL_PASS,
   },
-  tls: {
-    rejectUnauthorized: false,
-  },
-  connectionTimeout: 20000,
+  connectionTimeout: 20000, // 20 seconds
   greetingTimeout: 20000,
   family: 4, // Critical for Render
 };
