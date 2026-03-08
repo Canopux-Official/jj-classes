@@ -517,11 +517,8 @@ export const SubfolderRow: React.FC<{
               size="small"
               onClick={handleViewClick}
               sx={{
-                opacity: 0,
-                transition: "opacity 0.15s",
                 color: "#6b7280",
                 bgcolor: "#f3f4f6",
-                "&:hover": { bgcolor: "#e5e7eb", color: "#111827" },
                 width: 30,
                 height: 30,
               }}
