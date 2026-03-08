@@ -3,36 +3,31 @@ import nodemailer from "nodemailer";
 import { authenticator } from "otplib";
 import bcrypt from "bcryptjs";
 import Otp from "../models/Otp";
-import SMTPTransport from "nodemailer/lib/smtp-transport";
 
 const COOLDOWN_MS = 90 * 1000; // 90 seconds
 const MAX_ATTEMPTS = 5;
 
-type RenderSmtpOptions = SMTPTransport.Options & { family?: number };
 
-
-// const transporter = nodemailer.createTransport({
-//   service: "gmail",
-//   auth: {
-//     user: process.env.MAIL_USER,
-//     pass: process.env.MAIL_PASS,
-//   },
-// }); 
-
-const mailOptions: RenderSmtpOptions = {
-  host: "smtp.gmail.com",
-  port: 465,        // Changed to SSL port
-  secure: true,     // true for port 465
+const transporter = nodemailer.createTransport({
+  service: "gmail",
   auth: {
     user: process.env.MAIL_USER,
     pass: process.env.MAIL_PASS,
   },
-  connectionTimeout: 20000, // 20 seconds
-  greetingTimeout: 20000,
-  family: 4, // Critical for Render
-};
+}); 
 
-const transporter = nodemailer.createTransport(mailOptions);
+// const mailOptions: RenderSmtpOptions = {
+//   host: "smtp.gmail.com",
+//   port: 465,        // Changed to SSL port
+//   secure: true,     // true for port 465
+//   auth: {
+//     user: process.env.MAIL_USER,
+//     pass: process.env.MAIL_PASS,
+//   },
+//   connectionTimeout: 20000, // 20 seconds
+//   greetingTimeout: 20000,
+//   family: 4, // Critical for Render
+// };
 
 authenticator.options = { digits: 6, step: 300 };
 

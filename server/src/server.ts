@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import cron from 'node-cron';
 dotenv.config();
 
 import connectDB from './config/db';
@@ -19,8 +18,8 @@ import adminDashboardRoutes from './routes/admin/admin.dashboardRoutes';
 import adminAttendanceRoutes from './routes/admin/admin.attendanceRoutes';
 import adminControlRoutes from './routes/admin/admin.controlRoutes';
 import studentAttendanceRoutes from './routes/student/student.attendanceRoutes';
-// import cronRoutes from './routes/cronRoutes';
-import materialcontroller from './controllers/materialcontroller';
+import cronRoutes from './routes/cronRoutes';
+// import materialcontroller from './controllers/materialcontroller';
 
 const port = process.env.PORT || 3000;
 
@@ -60,15 +59,15 @@ app.use('/student/notice', studentNoticeRoutes);
 app.use('/student/attendance', studentAttendanceRoutes);
 
 // Cron Jobs
-// app.use('/api/cron', cronRoutes);
-cron.schedule('0 0 * * *', async () => {
-  console.log('Running automated material cleanup...');
-  try {
-    await materialcontroller.cleanupInactiveMaterials();
-  } catch (err) {
-    console.error('Cron Cleanup Error:', err);
-  }
-});
+app.use('/api/cron', cronRoutes);
+// cron.schedule('0 0 * * *', async () => {
+//   console.log('Running automated material cleanup...');
+//   try {
+//     await materialcontroller.cleanupInactiveMaterials();
+//   } catch (err) {
+//     console.error('Cron Cleanup Error:', err);
+//   }
+// });
 
 console.log('Cron job for material cleanup has been scheduled');
 
