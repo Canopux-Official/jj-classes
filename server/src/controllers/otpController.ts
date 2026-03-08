@@ -3,25 +3,46 @@ import nodemailer from "nodemailer";
 import { authenticator } from "otplib";
 import bcrypt from "bcryptjs";
 import Otp from "../models/Otp";
+import SMTPTransport from "nodemailer/lib/smtp-transport";
 
 const COOLDOWN_MS = 90 * 1000; // 90 seconds
 const MAX_ATTEMPTS = 5;
 
+type RenderSmtpOptions = SMTPTransport.Options & { family?: number };
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
+
+// const transporter = nodemailer.createTransport({
+//   service: "gmail",
+//   auth: {
+//     user: process.env.MAIL_USER,
+//     pass: process.env.MAIL_PASS,
+//   },
+// }); 
+
+const mailOptions: RenderSmtpOptions = {
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
   auth: {
     user: process.env.MAIL_USER,
     pass: process.env.MAIL_PASS,
   },
-});
+  tls: {
+    rejectUnauthorized: false,
+  },
+  connectionTimeout: 20000,
+  greetingTimeout: 20000,
+  family: 4, // Critical for Render
+};
+
+const transporter = nodemailer.createTransport(mailOptions);
 
 authenticator.options = { digits: 6, step: 300 };
 
 const getEmailTemplate = (otp: string, isResend: boolean, currentAttempts: number) => {
   const title = isResend ? "New Verification Code" : "Login Verification Code";
   const subText = isResend ? "Here is your new login code." : "You requested a secure login.";
-  
+
   // Calculate attempts left
   const attemptsLeft = MAX_ATTEMPTS - currentAttempts;
   const attemptColor = attemptsLeft < 3 ? "#D32F2F" : "#1B5E20"; // Red if low on attempts, Green otherwise
@@ -74,8 +95,8 @@ const handleControllerError = (error: any, context: string) => {
 };
 
 export const sendOtp = async (
-  email: string, 
-  userId: mongoose.Types.ObjectId | string, 
+  email: string,
+  userId: mongoose.Types.ObjectId | string,
   onModel: 'student' | 'admin'
 ) => {
   try {
@@ -85,11 +106,11 @@ export const sendOtp = async (
     // Check if OTP exists -> Treat as Resend
     const existingOtp = await Otp.findOne({ email });
     if (existingOtp) {
-       const resendResult = await resendOtp(email);
-       if (!resendResult.success) {
-           return resendResult;
-       }
-       return { success: true, message: "OTP sent successfully (Resent)" };
+      const resendResult = await resendOtp(email);
+      if (!resendResult.success) {
+        return resendResult;
+      }
+      return { success: true, message: "OTP sent successfully (Resent)" };
     }
 
     // --- NORMAL FLOW (Fresh) ---
@@ -144,9 +165,9 @@ export const verifyOtp = async (email: string, otp: string) => {
     if (!isMatch) {
       otpDoc.attempts += 1;
       await otpDoc.save();
-      
+
       if (otpDoc.attempts >= MAX_ATTEMPTS) {
-          return { success: false, message: "Too many attempts. Maximum limit reached. Please Login again." };
+        return { success: false, message: "Too many attempts. Maximum limit reached. Please Login again." };
       }
 
       return {
@@ -172,9 +193,9 @@ export const resendOtp = async (email: string) => {
     const existingOtp = await Otp.findOne({ email });
 
     if (!existingOtp) {
-      return { 
-        success: false, 
-        message: "OTP expired. Please login again." 
+      return {
+        success: false,
+        message: "OTP expired. Please login again."
       };
     }
 
@@ -199,7 +220,7 @@ export const resendOtp = async (email: string) => {
     // Update OTP but KEEP attempts count (so security isn't bypassed)
     existingOtp.otp = hashedOtp;
     existingOtp.createdAt = new Date();
-    
+
     await existingOtp.save();
 
     await transporter.sendMail({
