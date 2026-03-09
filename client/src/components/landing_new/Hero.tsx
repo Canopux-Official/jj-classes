@@ -1,6 +1,5 @@
 import { Box, Container, Typography, Button, Chip } from '@mui/material'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
-import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline'
 import VerifiedIcon from '@mui/icons-material/Verified'
 import { useEffect, useRef, useState } from 'react'
 import img from '../../assets/results/image.png'
@@ -64,6 +63,11 @@ function StatCard({ stat, animDelay, active, countDelay }: {
       </Typography>
     </Box>
   )
+}
+
+function scrollTo(id: string) {
+  const el = document.getElementById(id)
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 export default function Hero({ data }: { data?: { heading?: React.ReactNode; subheading?: string; stats?: typeof stats; image?: string } | null }) {
@@ -162,6 +166,7 @@ export default function Hero({ data }: { data?: { heading?: React.ReactNode; sub
               <Button
                 variant="contained"
                 size="large"
+                onClick={() => scrollTo('courses')}
                 endIcon={<ArrowForwardIcon sx={{ fontSize: '18px !important' }} />}
                 sx={{
                   px: 3.5, py: 1.4,
@@ -173,20 +178,6 @@ export default function Hero({ data }: { data?: { heading?: React.ReactNode; sub
                 }}
               >
                 Start Your Journey
-              </Button>
-              <Button
-                variant="outlined"
-                size="large"
-                startIcon={<PlayCircleOutlineIcon />}
-                sx={{
-                  px: 3.5, py: 1.4,
-                  borderColor: 'rgba(10,37,64,0.2)', color: '#0a2540',
-                  borderRadius: '12px', fontSize: '0.95rem',
-                  '&:hover': { borderColor: '#0a2540', bgcolor: 'rgba(10,37,64,0.04)' },
-                  transition: 'all 0.25s',
-                }}
-              >
-                Watch Demo
               </Button>
             </Box>
 

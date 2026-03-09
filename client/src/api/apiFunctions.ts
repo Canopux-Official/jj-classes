@@ -166,7 +166,7 @@ export async function verifyOtp(payload: VerifyOtpPayload): Promise<ApiResponse>
     };
   }
 }
-export async function validateToken(): Promise<boolean> {
+export async function validateToken(): Promise<{ isValid: boolean; role?: string }> {
   try {
     const config: AxiosRequestConfig = {
       method: "get",
@@ -175,10 +175,13 @@ export async function validateToken(): Promise<boolean> {
     };
 
     const response = await axios(config);
-    return response.status === 200 && response.data.success;
+    if (response.status === 200 && response.data.success) {
+      return { isValid: true, role: response.data.role };
+    }
+    return { isValid: false };
   } catch {
     // If 401 or network error, token is invalid
-    return false;
+    return { isValid: false };
   }
 }
 

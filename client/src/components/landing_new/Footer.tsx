@@ -1,6 +1,8 @@
 import {
   Box, Container, Typography, Button, Divider, IconButton,
+  Dialog, DialogContent, DialogTitle,
 } from '@mui/material'
+import { useState } from 'react'
 import PhoneIcon from '@mui/icons-material/Phone'
 import EmailIcon from '@mui/icons-material/Email'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
@@ -10,35 +12,39 @@ import LinkedInIcon from '@mui/icons-material/LinkedIn'
 import TwitterIcon from '@mui/icons-material/Twitter'
 import LogoImg from '../../assets/logo.jpeg';
 
-const FOOTER_SECTIONS = [
-  {
-    title: 'Courses',
-    links: [
-      { label: 'JEE Preparation', href: '#courses' },
-      { label: 'NEET Coaching', href: '#courses' },
-      { label: 'Foundation Course', href: '#courses' },
-      { label: 'Board Exams', href: '#courses' },
-    ],
-  },
-  {
-    title: 'Company',
-    links: [
-      { label: 'Result', href: '#results' },
-      { label: 'Our Faculty', href: '#faculty' },
-      { label: 'Contact Us', href: '#footer' },
-      { label: 'FAQ', href: '#faq' },
-    ],
-  },
-]
+interface FooterData {
+  brandDescription?: string;
+  ctaHeading?: string;
+  ctaSubtext?: string;
+  ctaButtonPrimary?: string;
+  ctaButtonSecondary?: string;
+  phones?: string[];
+  email?: string;
+  address?: string;
+  copyrightText?: string;
+  socialLinks?: {
+    facebook?: string;
+    instagram?: string;
+    linkedin?: string;
+    twitter?: string;
+  };
+}
 
-const socials = [
-  { icon: <FacebookIcon fontSize="small" />, href: '#' },
-  { icon: <InstagramIcon fontSize="small" />, href: '#' },
-  { icon: <LinkedInIcon fontSize="small" />, href: '#' },
-  { icon: <TwitterIcon fontSize="small" />, href: '#' },
-]
+interface FooterProps {
+  data?: FooterData;
+}
 
-const handleNavClick = (e, href) => {
+// Static company nav links (Courses link points to #courses section)
+const COMPANY_LINKS = [
+  { label: 'Courses', href: '#courses' },
+  { label: 'Result', href: '#results' },
+  { label: 'Our Faculty', href: '#faculty' },
+  { label: 'Contact Us', href: '#footer' },
+  { label: 'FAQ', href: '#faq' },
+];
+
+
+const handleNavClick = (e: React.MouseEvent, href: string) => {
   if (!href || href === '#') return
   e.preventDefault()
   const id = href.replace('#', '')
@@ -48,7 +54,34 @@ const handleNavClick = (e, href) => {
   }
 }
 
-export default function Footer() {
+export default function Footer({ data }: FooterProps) {
+  const [contactOpen, setContactOpen] = useState(false);
+
+  const d = {
+    brandDescription: data?.brandDescription || 'Transforming academic aspirations into achievements through excellence and dedication.',
+    ctaHeading: data?.ctaHeading || 'Ready to Transform Your Future?',
+    ctaSubtext: data?.ctaSubtext || 'Join thousands of successful students who have achieved their dreams with JJ Institute Of Science.',
+    ctaButtonPrimary: data?.ctaButtonPrimary || 'Enroll Now',
+    ctaButtonSecondary: data?.ctaButtonSecondary || 'Schedule a Demo',
+    phones: (data?.phones && data.phones.length > 0) ? data.phones : ['+91 9876 543 210', '+91 8765 432 109'],
+    email: data?.email || 'contact@elite.com',
+    address: data?.address || '123 Ave, City — 110001',
+    copyrightText: data?.copyrightText || '© 2025 JJ Institute Of Science. All rights reserved.',
+    socialLinks: {
+      facebook: data?.socialLinks?.facebook || '#',
+      instagram: data?.socialLinks?.instagram || '#',
+      linkedin: data?.socialLinks?.linkedin || '#',
+      twitter: data?.socialLinks?.twitter || '#',
+    },
+  };
+
+  const socials = [
+    { icon: <FacebookIcon fontSize="small" />, href: d.socialLinks.facebook || '#' },
+    { icon: <InstagramIcon fontSize="small" />, href: d.socialLinks.instagram || '#' },
+    { icon: <LinkedInIcon fontSize="small" />, href: d.socialLinks.linkedin || '#' },
+    { icon: <TwitterIcon fontSize="small" />, href: d.socialLinks.twitter || '#' },
+  ];
+
   return (
     <Box id="footer" component="footer">
 
@@ -65,7 +98,7 @@ export default function Footer() {
               color: '#001a4d',
             }}
           >
-            Ready to Transform Your Future?
+            {d.ctaHeading}
           </Typography>
           <Typography sx={{
             color: '#4a6741',
@@ -75,13 +108,13 @@ export default function Footer() {
             maxWidth: 520,
             mx: 'auto',
           }}>
-            Join thousands of successful students who have achieved their dreams with JJ Institute Of Science.
+            {d.ctaSubtext}
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Button
               variant="contained"
               size="large"
-              onClick={(e) => handleNavClick(e, '#courses')}
+              onClick={() => setContactOpen(true)}
               sx={{
                 bgcolor: '#2e7d32',
                 color: '#fff',
@@ -95,26 +128,100 @@ export default function Footer() {
                 fontSize: { xs: '0.85rem', md: '1rem' },
               }}
             >
-              Enroll Now
-            </Button>
-            <Button
-              variant="outlined"
-              size="large"
-              sx={{
-                borderColor: '#2e7d32',
-                color: '#2e7d32',
-                px: { xs: 3, md: 5 },
-                py: { xs: 1.2, md: 1.4 },
-                fontFamily: 'Montserrat',
-                fontWeight: 700,
-                borderRadius: 2,
-                fontSize: { xs: '0.85rem', md: '1rem' },
-                '&:hover': { bgcolor: 'rgba(46,125,50,0.06)', borderColor: '#256428' },
-              }}
-            >
-              Schedule a Demo
+              Contact Us to Enroll
             </Button>
           </Box>
+
+          {/* Contact Dialog */}
+          <Dialog
+            open={contactOpen}
+            onClose={() => setContactOpen(false)}
+            maxWidth="xs"
+            fullWidth
+            PaperProps={{ sx: { borderRadius: '20px', overflow: 'hidden' } }}
+          >
+            <DialogTitle sx={{
+              fontFamily: 'Montserrat', fontWeight: 800, fontSize: '1.1rem',
+              bgcolor: '#051911', color: '#d8ede0',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              px: 3, py: 2.5,
+            }}>
+              Contact Us to Enroll
+              <IconButton size="small" onClick={() => setContactOpen(false)}
+                sx={{ color: 'rgba(216,237,224,0.7)', '&:hover': { color: '#fff' } }}>
+                ✕
+              </IconButton>
+            </DialogTitle>
+            <DialogContent sx={{ bgcolor: '#fff', px: 3, py: 3 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+
+                {/* Phones */}
+                {d.phones.length > 0 && (
+                  <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+                    <Box sx={{
+                      width: 38, height: 38, borderRadius: '10px',
+                      bgcolor: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                    }}>
+                      <PhoneIcon sx={{ fontSize: 18, color: '#2e7d32' }} />
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', mb: 0.5, fontWeight: 600 }}>
+                        Phone
+                      </Typography>
+                      {d.phones.map((phone, i) => (
+                        <Typography key={i} component="a" href={`tel:${phone.replace(/\s/g, '')}`}
+                          sx={{ display: 'block', fontSize: '0.95rem', fontWeight: 600, color: '#0a2540', textDecoration: 'none', lineHeight: 1.6, '&:hover': { color: '#2e7d32' } }}>
+                          {phone}
+                        </Typography>
+                      ))}
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Email */}
+                {d.email && (
+                  <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+                    <Box sx={{
+                      width: 38, height: 38, borderRadius: '10px',
+                      bgcolor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                    }}>
+                      <EmailIcon sx={{ fontSize: 18, color: '#2563eb' }} />
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', mb: 0.5, fontWeight: 600 }}>
+                        Email
+                      </Typography>
+                      <Typography component="a" href={`mailto:${d.email}`}
+                        sx={{ fontSize: '0.95rem', fontWeight: 600, color: '#0a2540', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>
+                        {d.email}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Address */}
+                {d.address && (
+                  <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+                    <Box sx={{
+                      width: 38, height: 38, borderRadius: '10px',
+                      bgcolor: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                    }}>
+                      <LocationOnIcon sx={{ fontSize: 18, color: '#ea580c' }} />
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', mb: 0.5, fontWeight: 600 }}>
+                        Address
+                      </Typography>
+                      <Typography sx={{ fontSize: '0.9rem', fontWeight: 500, color: '#374151', lineHeight: 1.6 }}>
+                        {d.address}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+
+              </Box>
+            </DialogContent>
+          </Dialog>
         </Container>
       </Box>
 
@@ -159,7 +266,7 @@ export default function Footer() {
                 mb: 3,
                 maxWidth: { xs: '100%', sm: 280 },
               }}>
-                Transforming academic aspirations into achievements through excellence and dedication.
+                {d.brandDescription}
               </Typography>
 
               <Box sx={{ display: 'flex', gap: 0.8 }}>
@@ -168,6 +275,8 @@ export default function Footer() {
                     key={i}
                     component="a"
                     href={s.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     size="small"
                     sx={{
                       color: 'rgba(216,237,224,0.7)',
@@ -185,48 +294,17 @@ export default function Footer() {
               </Box>
             </Box>
 
-            {/* Courses */}
+            {/* Company Column (includes Courses link) */}
             <Box>
               <Typography sx={{
                 fontFamily: 'Montserrat', fontWeight: 700, mb: 2.5,
                 fontSize: { xs: 11, md: 12 }, color: '#fff',
                 textTransform: 'uppercase', letterSpacing: 1,
               }}>
-                {FOOTER_SECTIONS[0].title}
+                Company
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.6 }}>
-                {FOOTER_SECTIONS[0].links.map((link, i) => (
-                  <Typography
-                    key={i}
-                    component="a"
-                    href={link.href}
-                    onClick={(e) => handleNavClick(e, link.href)}
-                    sx={{
-                      color: 'rgba(216,237,224,0.6)',
-                      textDecoration: 'none',
-                      fontSize: { xs: 13, md: 14 },
-                      cursor: 'pointer',
-                      '&:hover': { color: '#fff' },
-                      transition: 'color 0.2s',
-                    }}
-                  >
-                    {link.label}
-                  </Typography>
-                ))}
-              </Box>
-            </Box>
-
-            {/* Company */}
-            <Box>
-              <Typography sx={{
-                fontFamily: 'Montserrat', fontWeight: 700, mb: 2.5,
-                fontSize: { xs: 11, md: 12 }, color: '#fff',
-                textTransform: 'uppercase', letterSpacing: 1,
-              }}>
-                {FOOTER_SECTIONS[1].title}
-              </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.6 }}>
-                {FOOTER_SECTIONS[1].links.map((link, i) => (
+                {COMPANY_LINKS.map((link, i) => (
                   <Typography
                     key={i}
                     component="a"
@@ -257,23 +335,32 @@ export default function Footer() {
                 Contact
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.2 }}>
-                <Box sx={{ display: 'flex', gap: 1.2, alignItems: 'flex-start' }}>
-                  <PhoneIcon sx={{ fontSize: 15, mt: 0.3, flexShrink: 0, color: 'rgba(216,237,224,0.55)' }} />
-                  <Box>
-                    <Typography sx={{ fontSize: { xs: 13, md: 14 }, color: 'rgba(216,237,224,0.72)', lineHeight: 1.7 }}>+91 9876 543 210</Typography>
-                    <Typography sx={{ fontSize: { xs: 13, md: 14 }, color: 'rgba(216,237,224,0.72)', lineHeight: 1.7 }}>+91 8765 432 109</Typography>
+                {d.phones.length > 0 && (
+                  <Box sx={{ display: 'flex', gap: 1.2, alignItems: 'flex-start' }}>
+                    <PhoneIcon sx={{ fontSize: 15, mt: 0.3, flexShrink: 0, color: 'rgba(216,237,224,0.55)' }} />
+                    <Box>
+                      {d.phones.map((phone, i) => (
+                        <Typography key={i} sx={{ fontSize: { xs: 13, md: 14 }, color: 'rgba(216,237,224,0.72)', lineHeight: 1.7 }}>
+                          {phone}
+                        </Typography>
+                      ))}
+                    </Box>
                   </Box>
-                </Box>
-                <Box sx={{ display: 'flex', gap: 1.2, alignItems: 'center' }}>
-                  <EmailIcon sx={{ fontSize: 15, flexShrink: 0, color: 'rgba(216,237,224,0.55)' }} />
-                  <Typography sx={{ color: 'rgba(216,237,224,0.72)', fontSize: { xs: 13, md: 14 } }}>contact@elite.com</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', gap: 1.2, alignItems: 'flex-start' }}>
-                  <LocationOnIcon sx={{ fontSize: 15, mt: 0.3, flexShrink: 0, color: 'rgba(216,237,224,0.55)' }} />
-                  <Typography sx={{ color: 'rgba(216,237,224,0.72)', fontSize: { xs: 13, md: 14 }, lineHeight: 1.7 }}>
-                    123 Ave,<br />City — 110001
-                  </Typography>
-                </Box>
+                )}
+                {d.email && (
+                  <Box sx={{ display: 'flex', gap: 1.2, alignItems: 'center' }}>
+                    <EmailIcon sx={{ fontSize: 15, flexShrink: 0, color: 'rgba(216,237,224,0.55)' }} />
+                    <Typography sx={{ color: 'rgba(216,237,224,0.72)', fontSize: { xs: 13, md: 14 } }}>{d.email}</Typography>
+                  </Box>
+                )}
+                {d.address && (
+                  <Box sx={{ display: 'flex', gap: 1.2, alignItems: 'flex-start' }}>
+                    <LocationOnIcon sx={{ fontSize: 15, mt: 0.3, flexShrink: 0, color: 'rgba(216,237,224,0.55)' }} />
+                    <Typography sx={{ color: 'rgba(216,237,224,0.72)', fontSize: { xs: 13, md: 14 }, lineHeight: 1.7 }}>
+                      {d.address}
+                    </Typography>
+                  </Box>
+                )}
               </Box>
             </Box>
           </Box>
@@ -283,37 +370,18 @@ export default function Footer() {
           {/* Bottom Bar */}
           <Box sx={{
             display: 'flex',
-            justifyContent: 'space-between',
+            justifyContent: 'center',
             alignItems: 'center',
             flexWrap: 'wrap',
             gap: 2,
-            flexDirection: { xs: 'column-reverse', md: 'row' },
           }}>
             <Typography sx={{
               color: 'rgba(216,237,224,0.38)',
               fontSize: { xs: 11, md: 12 },
-              textAlign: { xs: 'center', md: 'left' },
+              textAlign: 'center',
             }}>
-              © 2025 JJ Institute Of Science. All rights reserved.
+              {d.copyrightText}
             </Typography>
-            <Box sx={{ display: 'flex', gap: { xs: 2, md: 3 }, flexWrap: 'wrap', justifyContent: 'center' }}>
-              {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map((item) => (
-                <Typography
-                  key={item}
-                  component="a"
-                  href="#"
-                  sx={{
-                    color: 'rgba(216,237,224,0.38)',
-                    textDecoration: 'none',
-                    fontSize: { xs: 11, md: 12 },
-                    '&:hover': { color: 'rgba(216,237,224,0.75)' },
-                    transition: 'color 0.2s',
-                  }}
-                >
-                  {item}
-                </Typography>
-              ))}
-            </Box>
           </Box>
 
         </Container>

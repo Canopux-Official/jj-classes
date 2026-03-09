@@ -29,9 +29,6 @@ import landingPageController from './controllers/landingPageController';
 const port = process.env.PORT || 3000;
 const app = express();
 
-connectDB().catch((err) => {
-  console.error("Initial Database Connection Error:", err);
-});
 
 
 app.use(helmet());
@@ -52,6 +49,19 @@ app.use(cors({ origin: process.env.CLIENT_LINK }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Ensure DB is connected before any route handler runs.
+// connectDB() is idempotent — it returns the cached connection after the first call.
+app.use(async (_req: express.Request, res: express.Response, next: express.NextFunction) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error('DB connection failed:', err);
+    res.status(503).json({ success: false, message: 'Database unavailable. Please try again.' });
+  }
+});
+
 
 
 

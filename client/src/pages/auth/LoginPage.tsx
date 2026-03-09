@@ -27,7 +27,7 @@ import { useNavigate } from 'react-router-dom';
 import JIS from '../../assets/logo/JIS Logo.png';
 
 // Import functions from your API file
-import { getLoggedInUser, verifyOtp, resendOtp } from '../../api/apiFunctions';
+import { getLoggedInUser, verifyOtp, resendOtp, validateToken } from '../../api/apiFunctions';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -59,6 +59,26 @@ const LoginPage = () => {
 
   // --- ADMIN LOGIC ---
   const isAdmin = formData.role === 'admin' || formData.role === 'superadmin';
+
+  // --- AUTO-LOGIN IF VALID TOKEN ---
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        setLoading(true);
+        const { isValid, role } = await validateToken();
+        if (isValid) {
+          if (role === 'admin' || role === 'superadmin') {
+            navigate('/admin/dashboard');
+          } else {
+            navigate('/student/dashboard');
+          }
+        }
+        setLoading(false);
+      }
+    };
+    checkAuth();
+  }, [navigate]);
 
   // --- TIMER LOGIC ---
   useEffect(() => {

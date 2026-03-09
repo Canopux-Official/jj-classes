@@ -1,5 +1,5 @@
 import React from 'react';
-import { Typography, IconButton, Avatar, Box, Button } from '@mui/material';
+import { Typography, IconButton, Avatar, Box, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 // import {Badge} from '@mui/material';;
 //import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
@@ -14,7 +14,8 @@ interface AdminHeaderProps {
 const AdminHeader: React.FC<AdminHeaderProps> = ({ handleDrawerToggle }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const headName = location.pathname.split('/')[2] ? location.pathname.split('/')[2].toLocaleUpperCase(): 'DASHBOARD';
+  const [logoutOpen, setLogoutOpen] = React.useState(false);
+  const headName = location.pathname.split('/')[2] ? location.pathname.split('/')[2].toLocaleUpperCase() : 'DASHBOARD';
 
 
   return (
@@ -35,7 +36,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ handleDrawerToggle }) => {
             {headName}
           </Typography>
         </Box>
-        
+
         <Box display="flex" alignItems="center" gap={{ xs: 1, sm: 2 }}>
           <IconButton color="inherit">
             {/* <Badge badgeContent={4} color="error">
@@ -43,34 +44,65 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ handleDrawerToggle }) => {
             </Badge> */}
           </IconButton>
           <Button
-              variant="outlined"
-              color="error"
-              size="small"
-              startIcon={<LogoutIcon />}
-              onClick={() => {
-                window.localStorage.removeItem('authToken');
-                navigate('/login');
-              }}
-              sx={{
-                borderRadius: 2,
-                textTransform: 'none',
-                borderColor: '#ffcdd2',
-                color: '#d32f2f',
-                '&:hover': {
-                  borderColor: '#d32f2f',
-                  bgcolor: '#ffebee',
-                },
-              }}
-            >
-              Logout
-            </Button>
+            variant="outlined"
+            color="error"
+            size="small"
+            startIcon={<LogoutIcon />}
+            onClick={() => setLogoutOpen(true)}
+            sx={{
+              borderRadius: 2,
+              textTransform: 'none',
+              borderColor: '#ffcdd2',
+              color: '#d32f2f',
+              '&:hover': {
+                borderColor: '#d32f2f',
+                bgcolor: '#ffebee',
+              },
+            }}
+          >
+            Logout
+          </Button>
+
+          <Dialog
+            open={logoutOpen}
+            onClose={() => setLogoutOpen(false)}
+            PaperProps={{
+              sx: { borderRadius: 3, p: 1 }
+            }}
+          >
+            <DialogTitle sx={{ fontWeight: 700, color: '#0a2540' }}>Confirm Logout</DialogTitle>
+            <DialogContent>
+              <DialogContentText sx={{ color: '#475569' }}>
+                Are you sure you want to log out of the admin dashboard?
+              </DialogContentText>
+            </DialogContent>
+            <DialogActions sx={{ pb: 2, pr: 3 }}>
+              <Button onClick={() => setLogoutOpen(false)} color="inherit" sx={{ fontWeight: 600 }}>
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  window.localStorage.removeItem('authToken');
+                  navigate('/login');
+                }}
+                sx={{
+                  bgcolor: '#d32f2f',
+                  fontWeight: 600,
+                  '&:hover': { bgcolor: '#b71c1c' }
+                }}
+              >
+                Logout
+              </Button>
+            </DialogActions>
+          </Dialog>
           <ProfileSection>
             {/* Hide text on mobile to save space */}
             <Box textAlign="right" sx={{ display: { xs: 'none', sm: 'block' } }}>
               <Typography variant="subtitle2" fontWeight="700">Admin User</Typography>
               <Typography variant="caption" color="text.secondary">JJ Institue Of Science</Typography>
             </Box>
-            
+
 
             <Avatar
               sx={{

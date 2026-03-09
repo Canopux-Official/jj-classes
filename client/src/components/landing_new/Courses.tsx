@@ -1,9 +1,8 @@
 import { useState } from 'react'
-import { Box, Container, Typography, Collapse, Button, Chip } from '@mui/material'
+import { Box, Container, Typography, Collapse, Chip } from '@mui/material'
 import BookOpenIcon from '@mui/icons-material/AutoStories'
 import PeopleIcon from '@mui/icons-material/PeopleAlt'
 import AccessTimeIcon from '@mui/icons-material/Schedule'
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import AddIcon from '@mui/icons-material/Add'
 import RemoveIcon from '@mui/icons-material/Remove'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
@@ -125,7 +124,7 @@ function CourseCard({ course, isExpanded, onToggle }: {
           <Box sx={{
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-            gap: 1, mb: 3,
+            gap: 1,
           }}>
             {course.features.map((feature, i) => (
               <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
@@ -139,21 +138,6 @@ function CourseCard({ course, isExpanded, onToggle }: {
               </Box>
             ))}
           </Box>
-          <Button
-            variant="contained"
-            fullWidth
-            endIcon={<ArrowForwardIcon sx={{ fontSize: '16px !important' }} />}
-            onClick={(e) => e.stopPropagation()}
-            sx={{
-              bgcolor: '#0a2540', color: '#fff',
-              py: 1.3, borderRadius: '12px', fontSize: '0.92rem',
-              boxShadow: '0 4px 16px rgba(10,37,64,0.2)',
-              '&:hover': { bgcolor: '#0d3057', boxShadow: '0 6px 24px rgba(10,37,64,0.3)', transform: 'translateY(-1px)' },
-              transition: 'all 0.25s',
-            }}
-          >
-            Enroll Now
-          </Button>
         </Box>
       </Collapse>
     </Box>

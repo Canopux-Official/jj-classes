@@ -12,7 +12,7 @@ export default function FAQ({ data }: { data?: { q: string; a: string; id?: stri
     ? data.map((f, index) => ({ ...f, id: f.id || `faq-${index}` })) : []
 
   return (
-    <Box sx={{ py: { xs: 9, md: 14 }, bgcolor: '#fff' }}>
+    <Box id="faq" sx={{ py: { xs: 9, md: 14 }, bgcolor: '#fff' }}>
       <Container maxWidth="md">
         <Box sx={{ textAlign: 'center', mb: { xs: 7, md: 10 }, px: { xs: 1, sm: 2 } }}>
           <Typography sx={{
