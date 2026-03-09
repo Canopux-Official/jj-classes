@@ -173,7 +173,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       }
 
       // Verify with backend
-      const isValid = await validateToken();
+      const { isValid } = await validateToken();
       if (!isValid) {
         localStorage.removeItem('authToken');
         localStorage.removeItem('authEmail');

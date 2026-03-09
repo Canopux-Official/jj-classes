@@ -1,6 +1,8 @@
 import {
   Box, Container, Typography, Button, Divider, IconButton,
+  Dialog, DialogContent, DialogTitle,
 } from '@mui/material'
+import { useState } from 'react'
 import PhoneIcon from '@mui/icons-material/Phone'
 import EmailIcon from '@mui/icons-material/Email'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
@@ -53,6 +55,8 @@ const handleNavClick = (e: React.MouseEvent, href: string) => {
 }
 
 export default function Footer({ data }: FooterProps) {
+  const [contactOpen, setContactOpen] = useState(false);
+
   const d = {
     brandDescription: data?.brandDescription || 'Transforming academic aspirations into achievements through excellence and dedication.',
     ctaHeading: data?.ctaHeading || 'Ready to Transform Your Future?',
@@ -110,7 +114,7 @@ export default function Footer({ data }: FooterProps) {
             <Button
               variant="contained"
               size="large"
-              onClick={(e) => handleNavClick(e, '#courses')}
+              onClick={() => setContactOpen(true)}
               sx={{
                 bgcolor: '#2e7d32',
                 color: '#fff',
@@ -124,26 +128,100 @@ export default function Footer({ data }: FooterProps) {
                 fontSize: { xs: '0.85rem', md: '1rem' },
               }}
             >
-              {d.ctaButtonPrimary}
-            </Button>
-            <Button
-              variant="outlined"
-              size="large"
-              sx={{
-                borderColor: '#2e7d32',
-                color: '#2e7d32',
-                px: { xs: 3, md: 5 },
-                py: { xs: 1.2, md: 1.4 },
-                fontFamily: 'Montserrat',
-                fontWeight: 700,
-                borderRadius: 2,
-                fontSize: { xs: '0.85rem', md: '1rem' },
-                '&:hover': { bgcolor: 'rgba(46,125,50,0.06)', borderColor: '#256428' },
-              }}
-            >
-              {d.ctaButtonSecondary}
+              Contact Us to Enroll
             </Button>
           </Box>
+
+          {/* Contact Dialog */}
+          <Dialog
+            open={contactOpen}
+            onClose={() => setContactOpen(false)}
+            maxWidth="xs"
+            fullWidth
+            PaperProps={{ sx: { borderRadius: '20px', overflow: 'hidden' } }}
+          >
+            <DialogTitle sx={{
+              fontFamily: 'Montserrat', fontWeight: 800, fontSize: '1.1rem',
+              bgcolor: '#051911', color: '#d8ede0',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              px: 3, py: 2.5,
+            }}>
+              Contact Us to Enroll
+              <IconButton size="small" onClick={() => setContactOpen(false)}
+                sx={{ color: 'rgba(216,237,224,0.7)', '&:hover': { color: '#fff' } }}>
+                ✕
+              </IconButton>
+            </DialogTitle>
+            <DialogContent sx={{ bgcolor: '#fff', px: 3, py: 3 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+
+                {/* Phones */}
+                {d.phones.length > 0 && (
+                  <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+                    <Box sx={{
+                      width: 38, height: 38, borderRadius: '10px',
+                      bgcolor: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                    }}>
+                      <PhoneIcon sx={{ fontSize: 18, color: '#2e7d32' }} />
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', mb: 0.5, fontWeight: 600 }}>
+                        Phone
+                      </Typography>
+                      {d.phones.map((phone, i) => (
+                        <Typography key={i} component="a" href={`tel:${phone.replace(/\s/g, '')}`}
+                          sx={{ display: 'block', fontSize: '0.95rem', fontWeight: 600, color: '#0a2540', textDecoration: 'none', lineHeight: 1.6, '&:hover': { color: '#2e7d32' } }}>
+                          {phone}
+                        </Typography>
+                      ))}
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Email */}
+                {d.email && (
+                  <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+                    <Box sx={{
+                      width: 38, height: 38, borderRadius: '10px',
+                      bgcolor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                    }}>
+                      <EmailIcon sx={{ fontSize: 18, color: '#2563eb' }} />
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', mb: 0.5, fontWeight: 600 }}>
+                        Email
+                      </Typography>
+                      <Typography component="a" href={`mailto:${d.email}`}
+                        sx={{ fontSize: '0.95rem', fontWeight: 600, color: '#0a2540', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>
+                        {d.email}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Address */}
+                {d.address && (
+                  <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+                    <Box sx={{
+                      width: 38, height: 38, borderRadius: '10px',
+                      bgcolor: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                    }}>
+                      <LocationOnIcon sx={{ fontSize: 18, color: '#ea580c' }} />
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', mb: 0.5, fontWeight: 600 }}>
+                        Address
+                      </Typography>
+                      <Typography sx={{ fontSize: '0.9rem', fontWeight: 500, color: '#374151', lineHeight: 1.6 }}>
+                        {d.address}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+
+              </Box>
+            </DialogContent>
+          </Dialog>
         </Container>
       </Box>
 

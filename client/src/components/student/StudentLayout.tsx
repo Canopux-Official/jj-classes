@@ -3,7 +3,7 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box, IconButton, List, ListItem, ListItemButton,
   ListItemIcon, ListItemText, Typography, Toolbar, Avatar,
-  Stack, Button
+  Stack, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -26,6 +26,7 @@ interface StudentData {
 
 const StudentLayout: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [logoutOpen, setLogoutOpen] = useState(false);
   const [student, setStudent] = useState<StudentData | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -53,8 +54,6 @@ const StudentLayout: React.FC = () => {
         }
       } catch (error) {
         console.error("Error loading dashboard data", error);
-      } finally {
-
       }
     };
 
@@ -125,10 +124,7 @@ const StudentLayout: React.FC = () => {
               color="error"
               size="small"
               startIcon={<LogoutIcon />}
-              onClick={() => {
-                window.localStorage.removeItem('authToken');
-                navigate('/login');
-              }}
+              onClick={() => setLogoutOpen(true)}
               sx={{
                 borderRadius: 2,
                 textTransform: 'none',
@@ -142,6 +138,40 @@ const StudentLayout: React.FC = () => {
             >
               Logout
             </Button>
+
+            <Dialog
+              open={logoutOpen}
+              onClose={() => setLogoutOpen(false)}
+              PaperProps={{
+                sx: { borderRadius: 3, p: 1 }
+              }}
+            >
+              <DialogTitle sx={{ fontWeight: 700, color: '#0a2540' }}>Confirm Logout</DialogTitle>
+              <DialogContent>
+                <DialogContentText sx={{ color: '#475569' }}>
+                  Are you sure you want to log out of the student portal?
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions sx={{ pb: 2, pr: 3 }}>
+                <Button onClick={() => setLogoutOpen(false)} color="inherit" sx={{ fontWeight: 600 }}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={() => {
+                    window.localStorage.removeItem('authToken');
+                    navigate('/login');
+                  }}
+                  sx={{
+                    bgcolor: '#d32f2f',
+                    fontWeight: 600,
+                    '&:hover': { bgcolor: '#b71c1c' }
+                  }}
+                >
+                  Logout
+                </Button>
+              </DialogActions>
+            </Dialog>
 
           </Stack>
         </Toolbar>
