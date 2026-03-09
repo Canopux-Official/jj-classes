@@ -31,15 +31,23 @@ export const FilterToolbar = styled(Paper)(({ theme }) => ({
 }));
 
 export const SearchInput = styled(TextField)(({ theme }) => ({
-  flex: '1 1 250px',
-  minWidth: '250px',
+  flex: '1 1 auto',
+  width: '100%',
+  [theme.breakpoints.up('sm')]: {
+    minWidth: '250px',
+    width: 'auto',
+  },
   '& .MuiOutlinedInput-root': {
     backgroundColor: theme.palette.background.default,
   },
 }));
 
 export const FilterSelect = styled(Select)(({ theme }) => ({
-  minWidth: '180px',
+  width: '100%',
+  [theme.breakpoints.up('sm')]: {
+    minWidth: '180px',
+    width: 'auto',
+  },
   backgroundColor: theme.palette.background.default,
   '& .MuiSelect-select': {
     paddingTop: '8.5px',

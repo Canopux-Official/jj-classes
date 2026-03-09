@@ -278,14 +278,12 @@ const SessionPage: React.FC = () => {
 
   // --- COMMIT & VALIDATION ---
   const handleCommit = async () => {
-    // 1. Session Validation
     const fromCheck = validateSessionString(fromSession);
     const toCheck = validateSessionString(toSession);
 
     if (!fromCheck.isValid) return alert(`Current Session Error: ${fromCheck.error}`);
     if (!toCheck.isValid) return alert(`Next Session Error: ${toCheck.error}`);
 
-    // Check Logic: ToSession must be chronologically after FromSession
     const fromStartYear = parseInt(fromSession.split('-')[0]);
     const toStartYear = parseInt(toSession.split('-')[0]);
 
@@ -293,8 +291,6 @@ const SessionPage: React.FC = () => {
       return alert("Validation Error: Next Session year must be greater than Current Session year.");
     }
 
-    // Optional: Ensure sequential flow (Next Session starts when Current ends)
-    // E.g. 2024-2025 -> 2025-2026
     const fromEndYear = parseInt(fromSession.split('-')[1]);
     if (toStartYear !== fromEndYear) {
       if (!window.confirm(`Warning: There is a gap or overlap between sessions.\nCurrent ends: ${fromEndYear}\nNext starts: ${toStartYear}\n\nAre you sure this is correct?`)) {
@@ -306,7 +302,6 @@ const SessionPage: React.FC = () => {
 
     if (studentsToProcess.length === 0) return alert("No students selected.");
 
-    // 2. Stream Validation
     const missingStream = studentsToProcess.find(s =>
       s.currentClass === '10' && s.nextAction === 'Promote' && !s.nextStream && !s.stream
     );
@@ -335,7 +330,6 @@ const SessionPage: React.FC = () => {
           payload.enrolledSubjects = student.enrolledSubjects;
           payload.targetExams = student.targetExams;
 
-          // If leaving the institute (graduating), mark inactive
           if (student.nextClass === 'graduated') {
             payload.isActive = false;
           }
@@ -368,7 +362,7 @@ const SessionPage: React.FC = () => {
   const paginatedData = filteredStudents.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
-    <Box sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ p: { xs: 2, sm: 3 }, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
 
       <Box mb={3}>
         <Typography variant="h5" fontWeight="700">Session & Promotion Manager</Typography>
@@ -377,31 +371,33 @@ const SessionPage: React.FC = () => {
 
       {/* 1. Control Panel */}
       <Paper elevation={0} sx={{ p: 2, mb: 3, border: '1px solid #e0e0e0', borderRadius: 2 }}>
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="flex-start">
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems={{ xs: 'stretch', md: 'flex-start' }}>
 
-          <Box display="flex" gap={2} alignItems="flex-start" flex={1}>
+          <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2} alignItems="center" flex={1}>
             <TextField
               label="Current Session"
               value={fromSession}
               onChange={(e) => setFromSession(e.target.value)}
               size="small"
-              sx={{ width: 160 }}
+              fullWidth
               error={!!sessionErrors.from}
               helperText={sessionErrors.from}
             />
-            <Box pt={1}><ArrowForwardIcon color="action" /></Box>
+            <Box pt={{ sm: 1 }} display={{ xs: 'none', sm: 'block' }}>
+              <ArrowForwardIcon color="action" />
+            </Box>
             <TextField
               label="Next Session"
               value={toSession}
               onChange={(e) => setToSession(e.target.value)}
               size="small"
-              sx={{ width: 160 }}
+              fullWidth
               error={!!sessionErrors.to}
               helperText={sessionErrors.to}
             />
           </Box>
 
-          <FormControl size="small" sx={{ minWidth: 200 }}>
+          <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 200 } }}>
             <InputLabel>Target Batch</InputLabel>
             <Select
               value={targetBatchClass}
@@ -421,16 +417,23 @@ const SessionPage: React.FC = () => {
       </Paper>
 
       {/* 2. Actions & Filters */}
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-        <Stack direction="row" spacing={2}>
+      <Stack
+        direction={{ xs: 'column', lg: 'row' }}
+        justifyContent="space-between"
+        alignItems={{ xs: 'stretch', lg: 'center' }}
+        spacing={2}
+        mb={2}
+      >
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <TextField
             size="small"
             placeholder="Search Name..."
             value={searchTerm}
+            fullWidth
             onChange={(e) => setSearchTerm(e.target.value)}
             InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
           />
-          <FormControl size="small" sx={{ minWidth: 150 }}>
+          <FormControl size="small" fullWidth sx={{ minWidth: 150 }}>
             <InputLabel>Planned Action</InputLabel>
             <Select value={statusFilter} label="Planned Action" onChange={(e) => setStatusFilter(e.target.value)}>
               <MenuItem value="All">All</MenuItem>
@@ -442,16 +445,17 @@ const SessionPage: React.FC = () => {
           </FormControl>
         </Stack>
 
-        <Stack direction="row" spacing={1}>
-          <Button variant="outlined" color="success" size="small" onClick={() => handleBulkAction('Promote')} disabled={selectedIds.length === 0}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+          <Button fullWidth variant="outlined" color="success" size="small" onClick={() => handleBulkAction('Promote')} disabled={selectedIds.length === 0}>
             Set Promote
           </Button>
           {canMoveToDropper && (
-            <Button variant="outlined" color="secondary" size="small" onClick={() => handleBulkAction('ToDropper')} disabled={selectedIds.length === 0}>
+            <Button fullWidth variant="outlined" color="secondary" size="small" onClick={() => handleBulkAction('ToDropper')} disabled={selectedIds.length === 0}>
               Set To Dropper
             </Button>
           )}
           <Button
+            fullWidth
             variant="contained"
             startIcon={<SaveIcon />}
             onClick={handleCommit}
@@ -469,110 +473,127 @@ const SessionPage: React.FC = () => {
         </Box>
       )}
 
-      {/* 3. Main Table */}
-      <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #e0e0e0', flex: 1 }}>
-        <Table stickyHeader size="small">
-          <TableHead sx={{ '& th': { bgcolor: '#f8fafc', fontWeight: 700 } }}>
-            <TableRow>
-              <TableCell padding="checkbox">
-                <Checkbox
-                  checked={selectedIds.length > 0 && selectedIds.length === filteredStudents.length}
-                  indeterminate={selectedIds.length > 0 && selectedIds.length < filteredStudents.length}
-                  onChange={(e) => handleSelectAll(e.target.checked)}
-                />
-              </TableCell>
-              <TableCell>Student</TableCell>
-              <TableCell>Current Status</TableCell>
-              <TableCell>Next Action</TableCell>
-              <TableCell>Next Class</TableCell>
-              <TableCell>Config (Next Session)</TableCell>
-              <TableCell align="right">Edit</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading ? (
-              <TableRow><TableCell colSpan={7} align="center"><CircularProgress /></TableCell></TableRow>
-            ) : paginatedData.length === 0 ? (
-              <TableRow><TableCell colSpan={7} align="center">No students found for this batch/session.</TableCell></TableRow>
-            ) : (
-              paginatedData.map((student) => {
-                const isSelected = selectedIds.includes(student._id);
-                const needsStream = student.currentClass === '10' && student.nextAction === 'Promote' && !student.nextStream && !student.stream;
-                const isDropperEligible = ['12', 'dropper-1'].includes(student.currentClass);
+      {/* 3. Main Table & Pagination Wrapper */}
+      <Paper
+        elevation={0}
+        sx={{
+          width: '100%',
+          flexGrow: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          border: '1px solid #e0e0e0',
+          borderRadius: 2,
+          overflow: 'hidden'
+        }}
+      >
+        <TableContainer sx={{ flexGrow: 1, overflowX: 'auto' }}>
+          {/* minWidth strictly goes on the Table to force horizontal scroll within the container */}
+          <Table stickyHeader size="small" sx={{ minWidth: 800 }}>
+            <TableHead sx={{ '& th': { bgcolor: '#f8fafc', fontWeight: 700 } }}>
+              <TableRow>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    checked={selectedIds.length > 0 && selectedIds.length === filteredStudents.length}
+                    indeterminate={selectedIds.length > 0 && selectedIds.length < filteredStudents.length}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                  />
+                </TableCell>
+                <TableCell>Student</TableCell>
+                <TableCell>Current Status</TableCell>
+                <TableCell>Next Action</TableCell>
+                <TableCell>Next Class</TableCell>
+                <TableCell>Config (Next Session)</TableCell>
+                <TableCell align="right">Edit</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                <TableRow><TableCell colSpan={7} align="center"><CircularProgress /></TableCell></TableRow>
+              ) : paginatedData.length === 0 ? (
+                <TableRow><TableCell colSpan={7} align="center">No students found for this batch/session.</TableCell></TableRow>
+              ) : (
+                paginatedData.map((student) => {
+                  const isSelected = selectedIds.includes(student._id);
+                  const needsStream = student.currentClass === '10' && student.nextAction === 'Promote' && !student.nextStream && !student.stream;
+                  const isDropperEligible = ['12', 'dropper-1'].includes(student.currentClass);
 
-                return (
-                  <TableRow key={student._id} selected={isSelected} hover>
-                    <TableCell padding="checkbox">
-                      <Checkbox checked={isSelected} onChange={() => handleSelectOne(student._id)} />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="subtitle2" fontWeight={600}>{student.name}</Typography>
-                      <Typography variant="caption" color="text.secondary">{student.phoneNumber}</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip label={`Class ${student.currentClass}`} size="small" variant="outlined" />
-                      {student.stream && <Typography variant="caption" display="block">{student.stream}</Typography>}
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        size="small"
-                        value={student.nextAction}
-                        onChange={(e) => handleActionChange(student._id, e.target.value as PromotionStatus)}
-                        sx={{ fontSize: '0.8125rem', py: 0, height: 30, minWidth: 120 }}
-                      >
-                        <MenuItem value="Promote">{['12', 'dropper-1', 'dropper-2'].includes(student.currentClass) ? 'Graduate' : 'Promote'}</MenuItem>
-                        <MenuItem value="Retain">Retain</MenuItem>
-                        {isDropperEligible && <MenuItem value="ToDropper">To Dropper</MenuItem>}
-                        <MenuItem value="Discontinue">Discontinue</MenuItem>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <ArrowForwardIcon fontSize="small" color="action" />
-                        <Typography fontWeight={700} color={student.nextClass === 'graduated' ? 'text.secondary' : 'primary'}>
-                          {student.nextClass}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      {(student.nextAction === 'Promote' || student.nextAction === 'ToDropper') && student.nextClass !== 'graduated' && (
-                        <Box>
-                          {needsStream ? (
-                            <Chip label="Stream Missing!" color="error" size="small" icon={<ErrorOutlineIcon />} />
-                          ) : (
-                            student.nextStream && <Chip label={student.nextStream} size="small" sx={{ mr: 0.5 }} />
-                          )}
-                          <Typography variant="caption" color="text.secondary" display="block">
-                            {student.targetExams.join(', ')}
+                  return (
+                    <TableRow key={student._id} selected={isSelected} hover>
+                      <TableCell padding="checkbox">
+                        <Checkbox checked={isSelected} onChange={() => handleSelectOne(student._id)} />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="subtitle2" fontWeight={600}>{student.name}</Typography>
+                        <Typography variant="caption" color="text.secondary">{student.phoneNumber}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip label={`Class ${student.currentClass}`} size="small" variant="outlined" />
+                        {student.stream && <Typography variant="caption" display="block">{student.stream}</Typography>}
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          size="small"
+                          value={student.nextAction}
+                          onChange={(e) => handleActionChange(student._id, e.target.value as PromotionStatus)}
+                          sx={{ fontSize: '0.8125rem', py: 0, height: 30, minWidth: 120 }}
+                        >
+                          <MenuItem value="Promote">{['12', 'dropper-1', 'dropper-2'].includes(student.currentClass) ? 'Graduate' : 'Promote'}</MenuItem>
+                          <MenuItem value="Retain">Retain</MenuItem>
+                          {isDropperEligible && <MenuItem value="ToDropper">To Dropper</MenuItem>}
+                          <MenuItem value="Discontinue">Discontinue</MenuItem>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <ArrowForwardIcon fontSize="small" color="action" />
+                          <Typography fontWeight={700} color={student.nextClass === 'graduated' ? 'text.secondary' : 'primary'}>
+                            {student.nextClass}
                           </Typography>
                         </Box>
-                      )}
-                      {student.nextClass === 'graduated' && <Chip label="Inactive" size="small" />}
-                    </TableCell>
-                    <TableCell align="right">
-                      <Tooltip title="Customize for Next Session">
-                        <IconButton size="small" color="primary" onClick={() => openCustomization(student)}>
-                          <AltRouteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                      </TableCell>
+                      <TableCell>
+                        {(student.nextAction === 'Promote' || student.nextAction === 'ToDropper') && student.nextClass !== 'graduated' && (
+                          <Box>
+                            {needsStream ? (
+                              <Chip label="Stream Missing!" color="error" size="small" icon={<ErrorOutlineIcon />} />
+                            ) : (
+                              student.nextStream && <Chip label={student.nextStream} size="small" sx={{ mr: 0.5 }} />
+                            )}
+                            <Typography variant="caption" color="text.secondary" display="block">
+                              {student.targetExams.join(', ')}
+                            </Typography>
+                          </Box>
+                        )}
+                        {student.nextClass === 'graduated' && <Chip label="Inactive" size="small" />}
+                      </TableCell>
+                      <TableCell align="right">
+                        <Tooltip title="Customize for Next Session">
+                          <IconButton size="small" color="primary" onClick={() => openCustomization(student)}>
+                            <AltRouteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
-      <TablePagination
-        component="div"
-        count={filteredStudents.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={(_, p) => setPage(p)}
-        onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-      />
+        <TablePagination
+          component="div"
+          count={filteredStudents.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={(_, p) => setPage(p)}
+          onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
+          sx={{ borderTop: '1px solid #e0e0e0' }}
+          labelRowsPerPage={<Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Rows per page:</Box>}
+        />
+      </Paper>
 
+      {/* Dialog remains unchanged */}
       <Dialog open={openCustomize} onClose={() => setOpenCustomize(false)} fullWidth maxWidth="sm">
         <DialogTitle sx={{ bgcolor: '#f8fafc', borderBottom: '1px solid #e0e0e0' }}>
           Configuring for Next Session ({toSession})
