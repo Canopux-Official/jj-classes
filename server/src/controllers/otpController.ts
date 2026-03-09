@@ -16,6 +16,8 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// DON'T DELETE THIS BELOW COMMENTED PART
+
 // const transporter = nodemailer.createTransport({
 //   host: process.env.MAIL_HOST,
 //   port: Number(process.env.MAIL_PORT), // 465
@@ -24,7 +26,6 @@ const transporter = nodemailer.createTransport({
 //     user: process.env.MAIL_USER,
 //     pass: process.env.MAIL_PASS,
 //   },
-//   // Optional but recommended for production to prevent hanging connections
 //   connectionTimeout: 20000,
 //   greetingTimeout: 20000,
 // });
