@@ -214,7 +214,6 @@ function AppLayout() {
       <CssBaseline />
       <Routes>
         {/* Public Routes (Non-LandingPage) */}
-        <Route path="/courses" element={<CoursesPage />} />
         <Route path="/login" element={<LoginPage />} />
 
         {/* 🔒 Protected Routes */}
