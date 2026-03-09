@@ -14,20 +14,20 @@ const transporter = nodemailer.createTransport({
     user: process.env.MAIL_USER,
     pass: process.env.MAIL_PASS,
   },
-}); 
+});
 
-// const mailOptions: RenderSmtpOptions = {
-//   host: "smtp.gmail.com",
-//   port: 465,        // Changed to SSL port
-//   secure: true,     // true for port 465
+// const transporter = nodemailer.createTransport({
+//   host: process.env.MAIL_HOST,
+//   port: Number(process.env.MAIL_PORT), // 465
+//   secure: true, // true for port 465, false for 587
 //   auth: {
 //     user: process.env.MAIL_USER,
 //     pass: process.env.MAIL_PASS,
 //   },
-//   connectionTimeout: 20000, // 20 seconds
+//   // Optional but recommended for production to prevent hanging connections
+//   connectionTimeout: 20000,
 //   greetingTimeout: 20000,
-//   family: 4, // Critical for Render
-// };
+// });
 
 authenticator.options = { digits: 6, step: 300 };
 

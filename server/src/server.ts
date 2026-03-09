@@ -50,6 +50,7 @@ app.use(apiLimiter);
 
 app.use(cors({ origin: process.env.CLIENT_LINK }));
 
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 
