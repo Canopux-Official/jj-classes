@@ -1,6 +1,9 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
+import compression from 'compression';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 
 dotenv.config();
 
@@ -24,31 +27,41 @@ import adminLandingPageRoutes from './routes/admin/admin.landingPageRoutes';
 import landingPageController from './controllers/landingPageController';
 
 const port = process.env.PORT || 3000;
-
 const app = express();
 
-app.use(cors({ origin: process.env.CLIENT_LINK }));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
-
-app.use(async (req, res, next) => {
-  try {
-    await connectDB();
-    next();
-  } catch (err) {
-    console.error("Database Connection Error:", err);
-    res.status(500).json({ error: "Failed to connect to database" });
-  }
+connectDB().catch((err) => {
+  console.error("Initial Database Connection Error:", err);
 });
 
-// landing page public route
+
+app.use(helmet());
+
+app.use(compression());
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later." }
+});
+
+app.use(apiLimiter);
+
+app.use(cors({ origin: process.env.CLIENT_LINK }));
+
+app.use(express.urlencoded({ extended: true }));
+
+
+
+// Landing page public route
 app.get('/landingPage', (req: express.Request, res: express.Response) => {
   landingPageController.getLandingPage(req, res);
 });
 
 app.use('/auth', authRoutes);
 
-// admin routes
+// Admin routes
 app.use('/admin/dashboard', adminDashboardRoutes);
 app.use('/admin/studentControl', adminStudentRoutes);
 app.use('/admin/streamControl', adminStreamRoutes);
@@ -60,24 +73,14 @@ app.use('/admin/attendance', adminAttendanceRoutes);
 app.use('/admin/control', adminControlRoutes);
 app.use('/admin/landingPage', adminLandingPageRoutes);
 
-// student routes
+// Student routes
 app.use('/student/studentProfile', studentProfileRoutes);
 app.use('/student/material', studentMaterialRoutes);
 app.use('/student/notice', studentNoticeRoutes);
 app.use('/student/attendance', studentAttendanceRoutes);
 
-// Cron Jobs
 app.use('/api/cron', cronRoutes);
-// cron.schedule('0 0 * * *', async () => {
-//   console.log('Running automated material cleanup...');
-//   try {
-//     await materialcontroller.cleanupInactiveMaterials();
-//   } catch (err) {
-//     console.error('Cron Cleanup Error:', err);
-//   }
-// });
 
-console.log('Cron job for material cleanup has been scheduled');
 
 const startServer = () => {
   app.listen(port, () => {
@@ -85,7 +88,6 @@ const startServer = () => {
   });
 };
 
-// Vercel handles the "listen" internally, but Render/Local need it.
 if (process.env.VERCEL !== "true") {
   startServer();
 }
