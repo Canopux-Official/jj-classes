@@ -18,7 +18,12 @@ import {
     FormControl,
     InputLabel,
     Select,
-    MenuItem
+    MenuItem,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import AddIcon from '@mui/icons-material/Add';
@@ -146,6 +151,13 @@ const AdminLandingPage: React.FC = () => {
     const [leftWidth, setLeftWidth] = useState(50); // percentage 0-100
     const [isDragging, setIsDragging] = useState(false);
 
+    // Unsaved changes tracking
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const isFirstLoad = useRef(true);
+
+    // Publish confirmation dialog
+    const [publishDialogOpen, setPublishDialogOpen] = useState(false);
+
     // Refs for drag logic
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -186,6 +198,26 @@ const AdminLandingPage: React.FC = () => {
         fetchData();
     }, []);
 
+    // Mark dirty whenever landingData changes after initial fetch
+    useEffect(() => {
+        if (isFirstLoad.current) {
+            isFirstLoad.current = false;
+            return;
+        }
+        setHasUnsavedChanges(true);
+    }, [landingData]);
+
+    // Warn on browser refresh / tab close
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (!hasUnsavedChanges) return;
+            e.preventDefault();
+            e.returnValue = '';
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [hasUnsavedChanges]);
+
     const fetchData = async () => {
         try {
             const res = await getLandingPage();
@@ -221,10 +253,12 @@ const AdminLandingPage: React.FC = () => {
         if (!landingData) return;
         setSaving(true);
         setError(null);
+        setPublishDialogOpen(false);
         try {
             const res = await updateLandingPage(landingData);
             if (res.success) {
                 setSuccess(true);
+                setHasUnsavedChanges(false);
             } else {
                 setError(res.message || 'Failed to update landing page');
             }
@@ -372,8 +406,8 @@ const AdminLandingPage: React.FC = () => {
                                 <Button
                                     variant="contained"
                                     startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
-                                    onClick={handleUpdate}
-                                    disabled={saving}
+                                    onClick={() => setPublishDialogOpen(true)}
+                                    disabled={saving || !hasUnsavedChanges}
                                     fullWidth
                                     sx={{
                                         bgcolor: '#0b2021',
@@ -382,7 +416,11 @@ const AdminLandingPage: React.FC = () => {
                                         borderRadius: '8px',
                                         textTransform: 'none',
                                         fontWeight: 600,
-                                        '&:hover': { bgcolor: '#1a3a3a' }
+                                        '&:hover': { bgcolor: '#1a3a3a' },
+                                        '&.Mui-disabled': {
+                                            bgcolor: 'rgba(0,0,0,0.12)',
+                                            color: 'rgba(0,0,0,0.26)'
+                                        }
                                     }}
                                 >
                                     {saving ? 'Saving...' : 'Publish Changes'}
@@ -909,6 +947,43 @@ const AdminLandingPage: React.FC = () => {
                                 </Card>
                             </Box>
                         )}
+
+                        {/* Publish Confirmation Dialog */}
+                        <Dialog
+                            open={publishDialogOpen}
+                            onClose={() => setPublishDialogOpen(false)}
+                            PaperProps={{ sx: { borderRadius: '12px', p: 1 } }}
+                        >
+                            <DialogTitle sx={{ fontWeight: 700, color: '#0b2021' }}>Publish Changes?</DialogTitle>
+                            <DialogContent>
+                                <DialogContentText>
+                                    This will overwrite the live landing page for all visitors. Are you sure you want to publish your changes?
+                                </DialogContentText>
+                            </DialogContent>
+                            <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+                                <Button
+                                    onClick={() => setPublishDialogOpen(false)}
+                                    variant="outlined"
+                                    sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    onClick={handleUpdate}
+                                    variant="contained"
+                                    startIcon={<SaveIcon />}
+                                    sx={{
+                                        bgcolor: '#0b2021',
+                                        borderRadius: '8px',
+                                        textTransform: 'none',
+                                        fontWeight: 600,
+                                        '&:hover': { bgcolor: '#1a3a3a' }
+                                    }}
+                                >
+                                    Yes, Publish
+                                </Button>
+                            </DialogActions>
+                        </Dialog>
 
                         <Snackbar
                             open={success}
