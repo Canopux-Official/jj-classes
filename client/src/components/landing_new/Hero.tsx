@@ -77,7 +77,7 @@ export default function Hero({ data }: { data?: { heading?: React.ReactNode; sub
   const heroHeading = data?.heading || (
     <>
       Unlock Your Academic
-      <Box component="em" sx={{ color: '#c47a3a', fontStyle: 'italic', display: 'block' }}> Potential</Box>
+      <Box component="em" sx={{ color: '#c47a3a', display: 'block' }}> Potential</Box>
     </>
   )
   const heroSubheading = data?.subheading || 'Join JJ Institute Of Science and unlock your full potential. Our proven methodology has helped thousands of students achieve their dreams in competitive exams.'
@@ -155,7 +155,7 @@ export default function Hero({ data }: { data?: { heading?: React.ReactNode; sub
               </Typography>
               <Typography sx={{
                 color: '#6b7280', fontSize: { xs: '1rem', md: '1.1rem' },
-                lineHeight: 1.75, fontFamily: '"DM Sans", sans-serif',
+                lineHeight: 1.75,
                 maxWidth: 480,
               }}>
                 {heroSubheading}
