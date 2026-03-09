@@ -91,7 +91,7 @@ export default function Hero({ data }: { data?: { heading?: React.ReactNode; sub
   return (
     <Box id="hero" sx={{
       pt: { xs: 13, md: 17 }, pb: { xs: 8, md: 12 },
-      background: 'linear-gradient(160deg, #f8f9ff 0%, #fdf9f5 50%, #f8f4ef 100%)',
+      background: 'white',
       position: 'relative', overflow: 'hidden',
       '@keyframes fadeUp': {
         from: { opacity: 0, transform: 'translateY(20px)' },
@@ -143,7 +143,7 @@ export default function Hero({ data }: { data?: { heading?: React.ReactNode; sub
             <Box sx={{ opacity: 0, animation: 'fadeUp 0.6s ease forwards', animationDelay: '80ms', mb: 3 }}>
               <Typography variant="h1" sx={{
                 fontSize: { xs: '2.4rem', sm: '3rem', md: '3.8rem' },
-                color: '#0a4025', lineHeight: 1.08, letterSpacing: '-0.03em',
+                color: '#04301a', lineHeight: 1.08, letterSpacing: '-0.03em',
                 mb: 2.5,
               }}>
                 {heroHeading}

@@ -122,7 +122,7 @@ export default function Results({ data }: { data?: Student[] | unknown[] }) {
   const shouldAnimate = displayResults.length > 4
 
   return (
-    <Box id="results" sx={{ py: { xs: 9, md: 13 }, bgcolor: '#fafaf8' }}>
+    <Box id="results" sx={{ py: { xs: 9, md: 13 }, bgcolor: '#ffffff' }}>
       <Container maxWidth="lg">
         <Box sx={{ textAlign: 'center', mb: 8, px: { xs: 1, sm: 2 } }}>
           <Typography sx={{
@@ -137,7 +137,7 @@ export default function Results({ data }: { data?: Student[] | unknown[] }) {
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
             <Typography variant="h2" sx={{
-              color: '#0a4025',
+              color: '#04301a',
               fontSize: { xs: '1.9rem', sm: '2.4rem', md: '3rem' },
               lineHeight: 1.1, letterSpacing: '-0.03em',
             }}>

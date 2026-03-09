@@ -172,7 +172,7 @@ export default function Courses({ data }: { data?: (Omit<Course, 'id'> & { cours
   return (
     <Box id="courses" sx={{
       py: { xs: 9, md: 14 },
-      bgcolor: '#fafaf8',
+      bgcolor: '#ffffff',
       position: 'relative',
     }}>
       <Container maxWidth="lg">
