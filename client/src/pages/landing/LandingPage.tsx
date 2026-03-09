@@ -11,6 +11,21 @@ import Footer from '../../components/landing_new/Footer';
 import theme from '../../components/landing_new/theme/theme';
 import { getLandingPage } from '../../api/apiFunctions';
 
+interface FooterData {
+  brandDescription?: string;
+  ctaHeading?: string;
+  ctaSubtext?: string;
+  ctaButtonPrimary?: string;
+  ctaButtonSecondary?: string;
+  courseLinks?: { label: string; href: string }[];
+  companyLinks?: { label: string; href: string }[];
+  phones?: string[];
+  email?: string;
+  address?: string;
+  copyrightText?: string;
+  socialLinks?: { facebook?: string; instagram?: string; linkedin?: string; twitter?: string };
+}
+
 interface LandingData {
   hero?: { heading?: React.ReactNode; subheading?: string; stats?: { target: number; suffix: string; divisor: number; label: string }[]; image?: string };
   results?: { id: number; name: string; score: string; scoreLabel: string; exam: string; course: string; image: string; bio: string; achievement: string; youtubeLink?: string }[];
@@ -18,7 +33,7 @@ interface LandingData {
   faculty?: { id: string; name: string; title: string; subject: string; experience: string; qualification: string; specialty: string; initials: string; image: string; bio: string }[];
   facultyStats?: { value: string; label: string }[];
   faqs?: { q: string; a: string; id?: string }[];
-  footer?: unknown;
+  footer?: FooterData;
 }
 
 const LandingPage = () => {
@@ -61,7 +76,7 @@ const LandingPage = () => {
       <Courses data={data?.courses} />
       <Faculty data={data?.faculty} stats={data?.facultyStats} />
       <FAQ data={data?.faqs} />
-      <Footer />
+      <Footer data={data?.footer} />
     </ThemeProvider>
   );
 };

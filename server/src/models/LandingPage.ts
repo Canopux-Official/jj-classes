@@ -167,6 +167,7 @@ const landingPageSchema = new mongoose.Schema({
 
     // --- FOOTER SECTION ---
     footer: {
+        // --- CONTACT ---
         // Array of phone numbers to display. Example: ['+91 9876 543 210', '+91 8765 432 109']
         phones: [{ type: String }],
 
@@ -175,6 +176,10 @@ const landingPageSchema = new mongoose.Schema({
 
         // Physical address of the institute. Example: '123 Ave, City — 110001'
         address: { type: String },
+
+        // --- BOTTOM BAR ---
+        // Copyright line. Example: '© 2025 JJ Institute Of Science. All rights reserved.'
+        copyrightText: { type: String, default: '© 2025 JJ Institute Of Science. All rights reserved.' },
 
         // URLs for the social media icon links at the bottom
         socialLinks: {

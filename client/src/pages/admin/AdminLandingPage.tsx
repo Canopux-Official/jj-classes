@@ -112,6 +112,7 @@ interface Footer {
     phones: string[];
     email: string;
     address: string;
+    copyrightText: string;
     socialLinks: SocialLinks;
 }
 
@@ -235,7 +236,13 @@ const AdminLandingPage: React.FC = () => {
                         facultyStats: [],
                         results: [],
                         faqs: [],
-                        footer: { phones: [], email: '', address: '', socialLinks: { facebook: '', instagram: '', linkedin: '', twitter: '' } }
+                        footer: {
+                            phones: [],
+                            email: '',
+                            address: '',
+                            copyrightText: '© 2025 JJ Institute Of Science. All rights reserved.',
+                            socialLinks: { facebook: '', instagram: '', linkedin: '', twitter: '' }
+                        }
                     });
                 }
             } else {
@@ -885,7 +892,9 @@ const AdminLandingPage: React.FC = () => {
 
                         {/* Tab 5: Footer & Social */}
                         {activeTab === 5 && (
-                            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '7fr 5fr' }, gap: 4 }}>
+                            <Stack spacing={4}>
+
+                                {/* Card 1: Contact Info */}
                                 <Card variant="outlined" sx={{ borderRadius: '12px' }}>
                                     <CardContent sx={{ p: 3 }}>
                                         <Typography variant="h6" fontWeight={700} gutterBottom>Contact Information</Typography>
@@ -915,7 +924,7 @@ const AdminLandingPage: React.FC = () => {
                                                 <Stack spacing={1}>
                                                     {landingData?.footer?.phones?.map((phone: string, idx: number) => (
                                                         <Box key={idx} sx={{ display: 'flex', gap: 1 }}>
-                                                            <TextField size="small" fullWidth value={phone} onChange={(e) => {
+                                                            <TextField size="small" fullWidth placeholder="e.g. +91 98765 43210" value={phone} onChange={(e) => {
                                                                 const updatedPhones = [...landingData.footer.phones];
                                                                 updatedPhones[idx] = e.target.value;
                                                                 handleNestedChange('footer.phones', updatedPhones);
@@ -934,18 +943,37 @@ const AdminLandingPage: React.FC = () => {
                                     </CardContent>
                                 </Card>
 
-                                <Card variant="outlined" sx={{ borderRadius: '12px' }}>
-                                    <CardContent sx={{ p: 3 }}>
-                                        <Typography variant="h6" fontWeight={700} gutterBottom>Social Media Links</Typography>
-                                        <Stack spacing={2}>
-                                            <TextField label="Facebook URL" size="small" value={landingData?.footer?.socialLinks?.facebook || ''} onChange={(e) => handleNestedChange('footer.socialLinks.facebook', e.target.value)} />
-                                            <TextField label="Instagram URL" size="small" value={landingData?.footer?.socialLinks?.instagram || ''} onChange={(e) => handleNestedChange('footer.socialLinks.instagram', e.target.value)} />
-                                            <TextField label="LinkedIn URL" size="small" value={landingData?.footer?.socialLinks?.linkedin || ''} onChange={(e) => handleNestedChange('footer.socialLinks.linkedin', e.target.value)} />
-                                            <TextField label="Twitter URL" size="small" value={landingData?.footer?.socialLinks?.twitter || ''} onChange={(e) => handleNestedChange('footer.socialLinks.twitter', e.target.value)} />
-                                        </Stack>
-                                    </CardContent>
-                                </Card>
-                            </Box>
+                                {/* Card 3: Social & Copyright */}
+                                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '7fr 5fr' }, gap: 4 }}>
+                                    <Card variant="outlined" sx={{ borderRadius: '12px' }}>
+                                        <CardContent sx={{ p: 3 }}>
+                                            <Typography variant="h6" fontWeight={700} gutterBottom>Social Media Links</Typography>
+                                            <Stack spacing={2}>
+                                                <TextField label="Facebook URL" size="small" value={landingData?.footer?.socialLinks?.facebook || ''} onChange={(e) => handleNestedChange('footer.socialLinks.facebook', e.target.value)} />
+                                                <TextField label="Instagram URL" size="small" value={landingData?.footer?.socialLinks?.instagram || ''} onChange={(e) => handleNestedChange('footer.socialLinks.instagram', e.target.value)} />
+                                                <TextField label="LinkedIn URL" size="small" value={landingData?.footer?.socialLinks?.linkedin || ''} onChange={(e) => handleNestedChange('footer.socialLinks.linkedin', e.target.value)} />
+                                                <TextField label="Twitter/X URL" size="small" value={landingData?.footer?.socialLinks?.twitter || ''} onChange={(e) => handleNestedChange('footer.socialLinks.twitter', e.target.value)} />
+                                            </Stack>
+                                        </CardContent>
+                                    </Card>
+
+                                    <Card variant="outlined" sx={{ borderRadius: '12px' }}>
+                                        <CardContent sx={{ p: 3 }}>
+                                            <Typography variant="h6" fontWeight={700} gutterBottom>Copyright</Typography>
+                                            <TextField
+                                                label="Copyright Text"
+                                                fullWidth
+                                                multiline
+                                                rows={3}
+                                                helperText='Shown at the bottom of the footer. e.g. "© 2025 JJ Institute..."'
+                                                value={landingData?.footer?.copyrightText || ''}
+                                                onChange={(e) => handleNestedChange('footer.copyrightText', e.target.value)}
+                                            />
+                                        </CardContent>
+                                    </Card>
+                                </Box>
+
+                            </Stack>
                         )}
 
                         {/* Publish Confirmation Dialog */}
@@ -1042,7 +1070,7 @@ const AdminLandingPage: React.FC = () => {
                             <Courses data={landingData?.courses} />
                             <Faculty data={landingData?.faculty} />
                             <FAQ data={landingData?.faqs} />
-                            <Footer />
+                            <Footer data={landingData?.footer} />
                         </ThemeProvider>
                     </Box>
                 </Box>
