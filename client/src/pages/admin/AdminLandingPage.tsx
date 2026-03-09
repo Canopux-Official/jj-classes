@@ -1194,7 +1194,7 @@ const AdminLandingPage: React.FC = () => {
                         bottom: { xs: 24, sm: 'auto' },
                         left: { xs: '50%', sm: 24 },
                         transform: { xs: 'translateX(-50%)', sm: 'none' },
-                        zIndex: 2000
+                        zIndex: 100
                     }}>
                         <Button
                             variant="contained"

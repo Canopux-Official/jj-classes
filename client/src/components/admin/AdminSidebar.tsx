@@ -157,14 +157,14 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen, handleDrawerTog
   );
 
   return (
-    <Box component="nav" sx={{ width: { sm: DRAWER_WIDTH }, flexShrink: { sm: 0 } }}>
+    <Box component="nav" sx={{ width: { sm: DRAWER_WIDTH }, flexShrink: { sm: 0 }}}>
 
       {/* 1. MOBILE DRAWER (Temporary) */}
       <Drawer
         variant="temporary"
         open={mobileOpen}
         onClose={handleDrawerToggle}
-        ModalProps={{ keepMounted: true }}
+        ModalProps={{ keepMounted: true , style: { zIndex: 1200 }}} // Better open performance on mobile.
         sx={{
           display: { xs: 'block', sm: 'none' },
           '& .MuiDrawer-paper': {
@@ -172,6 +172,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen, handleDrawerTog
             width: DRAWER_WIDTH,
             ...drawerPaperStyles
           },
+          zIndex: 1200
         }}
       >
         {drawerContent}
@@ -186,7 +187,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen, handleDrawerTog
             boxSizing: 'border-box',
             width: DRAWER_WIDTH,
             ...drawerPaperStyles
-          },
+          }
         }}
         open
       >
