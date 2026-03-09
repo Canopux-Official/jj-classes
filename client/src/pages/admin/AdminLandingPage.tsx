@@ -356,10 +356,15 @@ const AdminLandingPage: React.FC = () => {
                                 <Typography variant="h4" fontWeight={800} sx={{ color: '#0b2021', fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' } }}>Landing Page Manager</Typography>
                                 <Typography variant="body2" color="text.secondary">Customize the content and layout of your public landing page.</Typography>
                             </Box>
-                            <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap' }}>
+                            <Stack
+                                direction={{ xs: 'column', sm: 'row' }}
+                                spacing={2}
+                                sx={{ width: { xs: '100%', sm: 'auto' } }}
+                            >
                                 <Button
                                     variant="outlined"
                                     onClick={() => setIsEditing(false)}
+                                    fullWidth
                                     sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
                                 >
                                     Exit Edit Mode
@@ -369,6 +374,7 @@ const AdminLandingPage: React.FC = () => {
                                     startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
                                     onClick={handleUpdate}
                                     disabled={saving}
+                                    fullWidth
                                     sx={{
                                         bgcolor: '#0b2021',
                                         px: 3,
