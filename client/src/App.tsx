@@ -140,7 +140,6 @@ const queryClient = new QueryClient({
 
 // Import Pages
 import LandingPage from './pages/landing/LandingPage';
-import CoursesPage from './pages/courses/CoursesPage';
 import LoginPage from './pages/auth/LoginPage';
 
 // Import Dashboard Layouts
