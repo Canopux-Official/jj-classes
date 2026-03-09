@@ -12,12 +12,22 @@ createRoot(document.getElementById('root')!).render(
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('/service-worker.js') // Path to the SW in /public folder
+      .register('/service-worker.js')
       .then((registration) => {
         console.log('Service Worker registered:', registration);
+
+        // Listen for updates
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          newWorker?.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // New version installed → reload automatically
+              console.log('New version found, reloading app...');
+              window.location.reload();
+            }
+          });
+        });
       })
-      .catch((error) => {
-        console.error('Service Worker registration failed:', error);
-      });
+      .catch((err) => console.error('SW registration failed:', err));
   });
 }
