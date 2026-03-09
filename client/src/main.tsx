@@ -21,7 +21,7 @@ if ('serviceWorker' in navigator) {
           const newWorker = registration.installing;
           newWorker?.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              // New version installed → reload automatically
+              // Automatically reload the page when new SW is installed
               console.log('New version found, reloading app...');
               window.location.reload();
             }
