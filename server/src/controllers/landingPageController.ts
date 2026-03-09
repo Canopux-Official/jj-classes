@@ -1,9 +1,11 @@
 import express from 'express';
 import LandingPage from '../models/LandingPage';
+import connectDB from '../config/db';
 
 // Get Landing Page Content (Public)
 const getLandingPage = async (req: express.Request, res: express.Response): Promise<void> => {
     try {
+        await connectDB();
         const landingPage = await LandingPage.findOne();
 
         if (!landingPage) {
@@ -39,6 +41,7 @@ const getLandingPage = async (req: express.Request, res: express.Response): Prom
 // Update or Upsert Landing Page Content (Admin)
 const updateLandingPage = async (req: express.Request, res: express.Response): Promise<void> => {
     try {
+        await connectDB();
         const { hero, courses, faculty, results, faqs, footer } = req.body;
 
         const updatedLandingPage = await LandingPage.findOneAndUpdate(
