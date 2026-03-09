@@ -103,7 +103,7 @@ export default function Header() {
                 onClick={() => navigate('/login')}
                 sx={{
                   ml: 1.5, px: 3, py: 1,
-                  bgcolor: '#0a2540', color: '#fff',
+                  bgcolor: '#0a4025', color: '#fff',
                   borderRadius: '10px',
                   fontSize: 14,
                   boxShadow: '0 2px 12px rgba(10,37,64,0.25)',
@@ -160,7 +160,7 @@ export default function Header() {
             ))}
             <ListItem sx={{ mt: 2, px: 1 }}>
               <Button onClick={() => navigate('/login')} variant="contained" fullWidth
-                sx={{ bgcolor: '#0a2540', borderRadius: '10px', py: 1.2 }}>
+                sx={{ bgcolor: '#0a4025', borderRadius: '10px', py: 1.2 }}>
                 Login
               </Button>
             </ListItem>

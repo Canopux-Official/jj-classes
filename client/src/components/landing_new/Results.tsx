@@ -137,7 +137,7 @@ export default function Results({ data }: { data?: Student[] | unknown[] }) {
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
             <Typography variant="h2" sx={{
-              color: '#0a2540',
+              color: '#0a4025',
               fontSize: { xs: '1.9rem', sm: '2.4rem', md: '3rem' },
               lineHeight: 1.1, letterSpacing: '-0.03em',
             }}>

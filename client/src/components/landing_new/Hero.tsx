@@ -143,7 +143,7 @@ export default function Hero({ data }: { data?: { heading?: React.ReactNode; sub
             <Box sx={{ opacity: 0, animation: 'fadeUp 0.6s ease forwards', animationDelay: '80ms', mb: 3 }}>
               <Typography variant="h1" sx={{
                 fontSize: { xs: '2.4rem', sm: '3rem', md: '3.8rem' },
-                color: '#0a2540', lineHeight: 1.08, letterSpacing: '-0.03em',
+                color: '#0a4025', lineHeight: 1.08, letterSpacing: '-0.03em',
                 mb: 2.5,
               }}>
                 {heroHeading}
@@ -164,7 +164,7 @@ export default function Hero({ data }: { data?: { heading?: React.ReactNode; sub
                 endIcon={<ArrowForwardIcon sx={{ fontSize: '18px !important' }} />}
                 sx={{
                   px: 3.5, py: 1.4,
-                  bgcolor: '#0a2540', color: '#fff',
+                  bgcolor: '#0a4025', color: '#fff',
                   borderRadius: '12px', fontSize: '0.95rem',
                   boxShadow: '0 4px 20px rgba(10,37,64,0.25)',
                   '&:hover': { bgcolor: '#0d3057', boxShadow: '0 8px 28px rgba(10,37,64,0.35)', transform: 'translateY(-1px)' },
