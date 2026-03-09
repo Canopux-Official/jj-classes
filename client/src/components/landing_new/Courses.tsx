@@ -188,7 +188,7 @@ export default function Courses({ data }: { data?: (Omit<Course, 'id'> & { cours
             Our Programs
           </Typography>
           <Typography variant="h2" sx={{
-            color: '#0a4025', mb: 2,
+            color: '#04301a', mb: 2,
             fontSize: { xs: '1.9rem', sm: '2.4rem', md: '3rem' },
             lineHeight: 1.1, letterSpacing: '-0.03em',
           }}>

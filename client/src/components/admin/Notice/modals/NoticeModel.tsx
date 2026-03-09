@@ -135,14 +135,14 @@ const NoticeModal: React.FC<NoticeModalProps> = ({
             rows={3}
           />
 
-          <TextField
+          {/* <TextField
             label="Image Link"
             name="imageLink"
             value={formData.imageLink}
             onChange={handleChange}
             fullWidth
             placeholder="https://example.com/image.jpg"
-          />
+          /> */}
 
           <TextField
             label="Tag"
