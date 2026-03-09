@@ -11,6 +11,7 @@ const stats = [
   { target: 50, suffix: '+', divisor: 1, label: 'Expert Teachers' },
 ]
 
+
 function useCountUp(target: number, duration = 1800, delay = 0, active = false) {
   const [count, setCount] = useState(0)
   useEffect(() => {

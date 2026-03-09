@@ -4,6 +4,8 @@ import CloseIcon from '@mui/icons-material/Close'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import StarIcon from '@mui/icons-material/Star'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
+import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
+import EmojiEventsOutlinedIcon from "@mui/icons-material/EmojiEventsOutlined";
 
 interface Student {
   id: number; name: string; score: string; scoreLabel: string
@@ -31,84 +33,264 @@ const formatYoutubeLink = (url?: string) => {
   return url
 }
 
+// function StudentCard({ student, onSelect }: { student: Student; onSelect: (s: Student) => void }) {
+//   const [hovered, setHovered] = useState(false)
+//   return (
+//     <Box
+//       onClick={() => onSelect(student)}
+//       onMouseEnter={() => setHovered(true)}
+//       onMouseLeave={() => setHovered(false)}
+//       sx={{ cursor: 'pointer', width: 210, flexShrink: 0 }}
+//     >
+//       <Box sx={{
+//         position: 'relative', height: 270, mb: 1.8,
+//         borderRadius: '20px', overflow: 'hidden',
+//         boxShadow: hovered ? '0 16px 40px rgba(10,37,64,0.14)' : '0 4px 16px rgba(10,37,64,0.06)',
+//         transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+//         transform: hovered ? 'translateY(-5px)' : 'translateY(0)',
+//       }}>
+//         <Box component="img" src={student.image} alt={student.name}
+//           onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { e.currentTarget.src = 'https://via.placeholder.com/220x270?text=No+Image' }}
+//           sx={{
+//             width: '100%', height: '100%',
+//             objectFit: 'cover', objectPosition: 'top', display: 'block',
+//             transition: 'transform 0.4s ease',
+//             transform: hovered ? 'scale(1.04)' : 'scale(1)',
+//           }}
+//         />
+//         {/* Bottom gradient overlay */}
+//         <Box sx={{
+//           position: 'absolute', bottom: 0, left: 0, right: 0, height: '50%',
+//           background: 'linear-gradient(to top, rgba(10,37,64,0.75) 0%, transparent 100%)',
+//         }} />
+//         {/* Score badge bottom */}
+//         <Box sx={{
+//           position: 'absolute', bottom: 12, left: 12, right: 12,
+//           display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
+//         }}>
+//           <Box>
+//             <Typography sx={{
+//               color: '#fff', fontFamily: '"DM Sans", sans-serif',
+//               fontWeight: 700, fontSize: 14, lineHeight: 1.2,
+//             }}>
+//               {student.name}
+//             </Typography>
+//             <Typography sx={{ color: 'rgba(255,255,255,0.75)', fontSize: 11, fontFamily: '"DM Sans", sans-serif' }}>
+//               {student.exam}
+//             </Typography>
+//           </Box>
+//           <Box sx={{
+//             bgcolor: '#c47a3a', borderRadius: '10px',
+//             px: 1.2, py: 0.4,
+//           }}>
+//             <Typography sx={{ color: '#fff', fontFamily: '"DM Sans", sans-serif', fontWeight: 800, fontSize: 13 }}>
+//               {student.scoreLabel}
+//             </Typography>
+//           </Box>
+//         </Box>
+
+//         {/* Play button if video */}
+//         {student.youtubeLink && (
+//           <Box sx={{
+//             position: 'absolute', top: 12, right: 12,
+//             width: 32, height: 32, bgcolor: 'rgba(239,68,68,0.9)',
+//             borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+//             opacity: hovered ? 1 : 0, transition: 'opacity 0.25s ease',
+//           }}>
+//             <PlayArrowIcon sx={{ color: '#fff', fontSize: 18 }} />
+//           </Box>
+//         )}
+//       </Box>
+
+//       <Typography sx={{
+//         fontSize: 12, color: '#94a3b8',
+//         fontFamily: '"DM Sans", sans-serif', textAlign: 'center',
+//       }}>
+//         {student.course}
+//       </Typography>
+//     </Box>
+//   )
+// }
+
 function StudentCard({ student, onSelect }: { student: Student; onSelect: (s: Student) => void }) {
-  const [hovered, setHovered] = useState(false)
+  const [hovered, setHovered] = useState(false);
+
   return (
     <Box
       onClick={() => onSelect(student)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      sx={{ cursor: 'pointer', width: 210, flexShrink: 0 }}
+      sx={{
+        cursor: "pointer",
+        width: { xs: "100%", sm: 210, md: 220 },
+        maxWidth: { xs: 380, sm: 220 },
+        flexShrink: 0,
+        display: "flex",
+        flexDirection: "column",
+        fontFamily: '"Outfit", "DM Sans", sans-serif',
+      }}
     >
-      <Box sx={{
-        position: 'relative', height: 270, mb: 1.8,
-        borderRadius: '20px', overflow: 'hidden',
-        boxShadow: hovered ? '0 16px 40px rgba(10,37,64,0.14)' : '0 4px 16px rgba(10,37,64,0.06)',
-        transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-        transform: hovered ? 'translateY(-5px)' : 'translateY(0)',
-      }}>
-        <Box component="img" src={student.image} alt={student.name}
-          onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { e.currentTarget.src = 'https://via.placeholder.com/220x270?text=No+Image' }}
+      {/* Card Image Block */}
+      <Box
+        sx={{
+          position: "relative",
+          height: { xs: 260, sm: 275, md: 290 },
+          borderRadius: "12px",
+          overflow: "hidden",
+          border: hovered
+            ? "1.5px solid rgba(30, 64, 175, 0.4)"
+            : "1.5px solid rgba(226, 232, 240, 0.9)",
+          boxShadow: hovered
+            ? "0 16px 40px rgba(15, 23, 42, 0.16), 0 4px 12px rgba(30, 64, 175, 0.1)"
+            : "0 2px 12px rgba(15, 23, 42, 0.07)",
+          transform: hovered ? "translateY(-5px)" : "translateY(0)",
+          transition: "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
+          bgcolor: "#f1f5f9",
+        }}
+      >
+        {/* Photo */}
+        <Box
+          component="img"
+          src={student.image}
+          alt={student.name}
+          onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+            e.currentTarget.src = "https://via.placeholder.com/220x290?text=No+Image";
+          }}
           sx={{
-            width: '100%', height: '100%',
-            objectFit: 'cover', objectPosition: 'top', display: 'block',
-            transition: 'transform 0.4s ease',
-            transform: hovered ? 'scale(1.04)' : 'scale(1)',
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: "top center",
+            display: "block",
+            transition: "transform 0.5s ease",
+            transform: hovered ? "scale(1.04)" : "scale(1)",
           }}
         />
+
         {/* Bottom gradient overlay */}
-        <Box sx={{
-          position: 'absolute', bottom: 0, left: 0, right: 0, height: '50%',
-          background: 'linear-gradient(to top, rgba(10,37,64,0.75) 0%, transparent 100%)',
-        }} />
-        {/* Score badge bottom */}
-        <Box sx={{
-          position: 'absolute', bottom: 12, left: 12, right: 12,
-          display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
-        }}>
-          <Box>
-            <Typography sx={{
-              color: '#fff', fontFamily: '"DM Sans", sans-serif',
-              fontWeight: 700, fontSize: 14, lineHeight: 1.2,
-            }}>
-              {student.name}
-            </Typography>
-            <Typography sx={{ color: 'rgba(255,255,255,0.75)', fontSize: 11, fontFamily: '"DM Sans", sans-serif' }}>
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: 0, left: 0, right: 0,
+            height: "52%",
+            background: "linear-gradient(to top, rgba(10,20,45,0.92) 0%, rgba(10,20,45,0.55) 55%, transparent 100%)",
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* Score Badge — top left */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: 11, left: 11,
+            display: "flex", alignItems: "center", gap: 0.5,
+            bgcolor: "rgba(30, 64, 175, 0.92)",
+            backdropFilter: "blur(8px)",
+            borderRadius: "6px",
+            px: 1.1, py: 0.55,
+            boxShadow: "0 2px 8px rgba(30,64,175,0.35)",
+          }}
+        >
+          <EmojiEventsOutlinedIcon sx={{ color: "#93c5fd", fontSize: 11, mb: "1px" }} />
+          <Typography
+            sx={{
+              color: "#fff",
+              fontFamily: "inherit",
+              fontWeight: 700,
+              fontSize: 11,
+              letterSpacing: 0.4,
+            }}
+          >
+            {student.scoreLabel}
+          </Typography>
+        </Box>
+
+        {/* YouTube Play button — top right, shown on hover */}
+        {student.youtubeLink && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: 11, right: 11,
+              width: 30, height: 30,
+              bgcolor: "rgba(220, 38, 38, 0.9)",
+              backdropFilter: "blur(6px)",
+              borderRadius: "7px",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              opacity: hovered ? 1 : 0,
+              transform: hovered ? "scale(1)" : "scale(0.75)",
+              transition: "all 0.25s ease",
+              boxShadow: "0 2px 10px rgba(220,38,38,0.45)",
+            }}
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              window.open(student.youtubeLink, "_blank");
+            }}
+          >
+            <PlayArrowIcon sx={{ color: "#fff", fontSize: 15 }} />
+          </Box>
+        )}
+
+        {/* Name + Exam at bottom */}
+        <Box sx={{ position: "absolute", bottom: 0, left: 0, right: 0, px: 1.5, py: 1.4 }}>
+          <Typography
+            sx={{
+              color: "#ffffff",
+              fontFamily: "inherit",
+              fontWeight: 700,
+              fontSize: { xs: 14, sm: 14.5 },
+              lineHeight: 1.3,
+              letterSpacing: 0.1,
+              mb: 0.4,
+            }}
+          >
+            {student.name}
+          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Box sx={{ width: 4, height: 4, borderRadius: "50%", bgcolor: "#60a5fa", flexShrink: 0 }} />
+            <Typography
+              sx={{
+                color: "rgba(203,213,225,0.9)",
+                fontSize: 11,
+                fontFamily: "inherit",
+                fontWeight: 500,
+                letterSpacing: 0.3,
+              }}
+            >
               {student.exam}
             </Typography>
           </Box>
-          <Box sx={{
-            bgcolor: '#c47a3a', borderRadius: '10px',
-            px: 1.2, py: 0.4,
-          }}>
-            <Typography sx={{ color: '#fff', fontFamily: '"DM Sans", sans-serif', fontWeight: 800, fontSize: 13 }}>
-              {student.scoreLabel}
-            </Typography>
-          </Box>
         </Box>
-
-        {/* Play button if video */}
-        {student.youtubeLink && (
-          <Box sx={{
-            position: 'absolute', top: 12, right: 12,
-            width: 32, height: 32, bgcolor: 'rgba(239,68,68,0.9)',
-            borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            opacity: hovered ? 1 : 0, transition: 'opacity 0.25s ease',
-          }}>
-            <PlayArrowIcon sx={{ color: '#fff', fontSize: 18 }} />
-          </Box>
-        )}
       </Box>
 
-      <Typography sx={{
-        fontSize: 12, color: '#94a3b8',
-        fontFamily: '"DM Sans", sans-serif', textAlign: 'center',
-      }}>
-        {student.course}
-      </Typography>
+      {/* Course tag below card */}
+      <Box
+        sx={{
+          mt: 1.2, mx: 0.3,
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 0.6,
+          px: 1, py: 0.5,
+          borderRadius: "7px",
+          bgcolor: "rgba(241,245,249,0.8)",
+          border: "1px solid rgba(226,232,240,0.8)",
+        }}
+      >
+        <SchoolOutlinedIcon sx={{ fontSize: 12, color: "#64748b" }} />
+        <Typography
+          sx={{
+            fontSize: 11,
+            color: "#475569",
+            fontFamily: "inherit",
+            fontWeight: 600,
+            letterSpacing: 0.25,
+            textAlign: "center",
+          }}
+        >
+          {student.course}
+        </Typography>
+      </Box>
     </Box>
-  )
+  );
 }
+
 
 export default function Results({ data }: { data?: Student[] | unknown[] }) {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)

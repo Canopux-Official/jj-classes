@@ -23,7 +23,8 @@ import {
     DialogTitle,
     DialogContent,
     DialogContentText,
-    DialogActions
+    DialogActions,
+    LinearProgress
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import AddIcon from '@mui/icons-material/Add';
@@ -39,6 +40,7 @@ import Courses from '../../components/landing_new/Courses';
 import Faculty from '../../components/landing_new/Faculty';
 import FAQ from '../../components/landing_new/FAQ';
 import Footer from '../../components/landing_new/Footer';
+import { uploadImageToCloudinary } from '../../components/landing_new/service/cloudinary_service';
 
 
 // Define Interfaces for Type Safety
@@ -154,6 +156,9 @@ const AdminLandingPage: React.FC = () => {
     // Unsaved changes tracking
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
     const isFirstLoad = useRef(true);
+
+    const [imageUploading, setImageUploading] = useState(false);
+    const [imageUploadProgress, setImageUploadProgress] = useState(0);
 
     // Publish confirmation dialog
     const [publishDialogOpen, setPublishDialogOpen] = useState(false);
@@ -295,7 +300,7 @@ const AdminLandingPage: React.FC = () => {
         const reader = new FileReader();
         reader.onload = (event) => {
             const img = new Image();
-            img.onload = () => {
+            img.onload = async () => {
                 if (img.width < 500 || img.height < 500) {
                     setError(`Image is too small (${img.width}x${img.height}). Minimum dimensions are 500x500 pixels.`);
                     return;
@@ -306,6 +311,20 @@ const AdminLandingPage: React.FC = () => {
                 }
                 handleNestedChange('hero.image', event.target?.result);
                 setError(null);
+                setImageUploading(true);
+                setImageUploadProgress(0);
+
+                try {
+                    const imageUrl = await uploadImageToCloudinary(file, (progress) => {
+                        setImageUploadProgress(progress);
+                    });
+                    handleNestedChange('hero.image', imageUrl); // ✅ direct URL, works in <img src> instantly
+                } catch (err: any) {
+                    setError(`Upload failed: ${err.message}`);
+                } finally {
+                    setImageUploading(false);
+                    setImageUploadProgress(0);
+                }
             };
             img.src = event.target?.result as string;
         };
@@ -479,20 +498,69 @@ const AdminLandingPage: React.FC = () => {
                                                 onChange={(e) => handleNestedChange('hero.subheading', e.target.value)}
                                             />
                                             <Box sx={{ mt: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 2, bgcolor: '#fafafa' }}>
-                                                <Typography variant="subtitle2" fontWeight={600} gutterBottom>Group Photo (Top Candidates)</Typography>
-                                                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
-                                                    Upload a square image (minimum 500x500 pixels) to be displayed on the right side of the Hero section.
+                                                <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                                                    Group Photo (Top Candidates)
                                                 </Typography>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                                                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+                                                    Upload a square image (minimum 500×500 px) to be displayed on the right side of the Hero section.
+                                                </Typography>
+
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}>
+                                                    {/* Preview */}
                                                     <Box
                                                         component="img"
-                                                        src={landingData?.hero?.image || 'https://via.placeholder.com/150?text=No+Image'}
-                                                        sx={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 2, border: '1px solid #ddd', bgcolor: '#fff' }}
+                                                        src={landingData?.hero?.image}
+                                                        sx={{
+                                                            width: 120,
+                                                            height: 120,
+                                                            objectFit: 'cover',
+                                                            borderRadius: 2,
+                                                            border: '1px solid #ddd',
+                                                            bgcolor: '#fff',
+                                                            flexShrink: 0,
+                                                        }}
                                                     />
-                                                    <Button variant="outlined" component="label" startIcon={<CloudUploadIcon />}>
-                                                        Upload Square Image
-                                                        <input type="file" hidden accept="image/*" onChange={handleImageUpload} />
-                                                    </Button>
+
+                                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                        {/* Upload button */}
+                                                        <Button
+                                                            variant="outlined"
+                                                            component="label"
+                                                            startIcon={imageUploading ? <CircularProgress size={16} /> : <CloudUploadIcon />}
+                                                            disabled={imageUploading}
+                                                        >
+                                                            {imageUploading ? `Uploading… ${imageUploadProgress}%` : 'Upload Square Image'}
+                                                            <input type="file" hidden accept="image/*" onChange={handleImageUpload} />
+                                                        </Button>
+
+                                                        {/* Progress bar — only visible while uploading */}
+                                                        {imageUploading && (
+                                                            <LinearProgress
+                                                                variant="determinate"
+                                                                value={imageUploadProgress}
+                                                                sx={{ borderRadius: 1, height: 6, width: 220 }}
+                                                            />
+                                                        )}
+
+                                                        {/* Stored link — visible once image is set */}
+                                                        {landingData?.hero?.image && !imageUploading && (
+                                                            <Typography
+                                                                variant="caption"
+                                                                color="text.secondary"
+                                                                sx={{
+                                                                    maxWidth: 260,
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    whiteSpace: 'nowrap',
+                                                                }}
+                                                            >
+                                                                🔗{' '}
+                                                                <a href={landingData.hero.image} target="_blank" rel="noreferrer">
+                                                                    {landingData.hero.image}
+                                                                </a>
+                                                            </Typography>
+                                                        )}
+                                                    </Box>
                                                 </Box>
                                             </Box>
                                         </Box>
@@ -609,23 +677,48 @@ const AdminLandingPage: React.FC = () => {
                                                                     src={student.image || 'https://via.placeholder.com/60?text=No+Img'}
                                                                     sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd' }}
                                                                 />
-                                                                <Button variant="outlined" component="label" size="small" startIcon={<CloudUploadIcon />}>
-                                                                    Upload Image
-                                                                    <input type="file" hidden accept="image/*" onChange={(e) => {
+                                                                <Button
+                                                                    variant="outlined"
+                                                                    component="label"
+                                                                    size="small"
+                                                                    startIcon={imageUploading ? <CircularProgress size={14} /> : <CloudUploadIcon />}
+                                                                    disabled={imageUploading}
+                                                                >
+                                                                    {imageUploading ? `${imageUploadProgress}%` : 'Upload Image'}
+                                                                    <input type="file" hidden accept="image/*" onChange={async (e) => {
                                                                         const file = e.target.files?.[0];
                                                                         if (!file) return;
                                                                         if (!file.type.startsWith('image/')) {
                                                                             setError('Please select a valid image file');
                                                                             return;
                                                                         }
-                                                                        const reader = new FileReader();
-                                                                        reader.onload = (event) => {
-                                                                            handleArrayItemChange('results', index, 'image', event.target?.result);
+
+                                                                        setImageUploading(true);
+                                                                        setImageUploadProgress(0);
+
+                                                                        try {
+                                                                            const imageUrl = await uploadImageToCloudinary(file, (progress) => {
+                                                                                setImageUploadProgress(progress);
+                                                                            });
+                                                                            handleArrayItemChange('results', index, 'image', imageUrl);
                                                                             setError(null);
-                                                                        };
-                                                                        reader.readAsDataURL(file);
+                                                                        } catch (err: any) {
+                                                                            setError(`Upload failed: ${err.message}`);
+                                                                        } finally {
+                                                                            setImageUploading(false);
+                                                                            setImageUploadProgress(0);
+                                                                            e.target.value = '';
+                                                                        }
                                                                     }} />
                                                                 </Button>
+
+                                                                {imageUploading && (
+                                                                    <LinearProgress
+                                                                        variant="determinate"
+                                                                        value={imageUploadProgress}
+                                                                        sx={{ mt: 1, borderRadius: 1, height: 5 }}
+                                                                    />
+                                                                )}
                                                             </Box>
                                                         </Box>
                                                         <TextField size="small" label="Testimonial / Bio" multiline rows={3} fullWidth value={student.bio} onChange={(e) => handleArrayItemChange('results', index, 'bio', e.target.value)} />
@@ -811,22 +904,40 @@ const AdminLandingPage: React.FC = () => {
                                                                     sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: '50%', border: '2px solid #e0e0e0' }}
                                                                 />
                                                                 <Button variant="outlined" component="label" size="small" startIcon={<CloudUploadIcon />}>
-                                                                    Upload Photo
-                                                                    <input type="file" hidden accept="image/*" onChange={(e) => {
+                                                                    {imageUploading ? `${imageUploadProgress}%` : 'Upload Photo'}
+                                                                    <input type="file" hidden accept="image/*" onChange={async (e) => {
                                                                         const file = e.target.files?.[0];
                                                                         if (!file) return;
                                                                         if (!file.type.startsWith('image/')) {
                                                                             setError('Please select a valid image file');
                                                                             return;
                                                                         }
-                                                                        const reader = new FileReader();
-                                                                        reader.onload = (event) => {
-                                                                            handleArrayItemChange('faculty', index, 'image', event.target?.result);
+
+                                                                        setImageUploading(true);
+                                                                        setImageUploadProgress(0);
+
+                                                                        try {
+                                                                            const imageUrl = await uploadImageToCloudinary(file, (progress) => {
+                                                                                setImageUploadProgress(progress);
+                                                                            });
+                                                                            handleArrayItemChange('faculty', index, 'image', imageUrl);
                                                                             setError(null);
-                                                                        };
-                                                                        reader.readAsDataURL(file);
+                                                                        } catch (err: any) {
+                                                                            setError(`Upload failed: ${err.message}`);
+                                                                        } finally {
+                                                                            setImageUploading(false);
+                                                                            setImageUploadProgress(0);
+                                                                            e.target.value = '';
+                                                                        }
                                                                     }} />
                                                                 </Button>
+                                                                {imageUploading && (
+                                                                    <LinearProgress
+                                                                        variant="determinate"
+                                                                        value={imageUploadProgress}
+                                                                        sx={{ mt: 1, borderRadius: 1, height: 5 }}
+                                                                    />
+                                                                )}
                                                             </Box>
                                                         </Box>
                                                         <TextField size="small" label="Detailed Bio" multiline rows={3} fullWidth value={member.bio} onChange={(e) => handleArrayItemChange('faculty', index, 'bio', e.target.value)} />
