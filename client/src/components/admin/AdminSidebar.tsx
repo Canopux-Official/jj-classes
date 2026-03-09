@@ -13,6 +13,7 @@ import QuizIcon from '@mui/icons-material/Quiz';     // For Target Exams
 import EditCalendarIcon from '@mui/icons-material/EditCalendar';
 import PushPinIcon from '@mui/icons-material/PushPin';
 import VpnKeyIcon from '@mui/icons-material/VpnKey'; // For Access Control
+import LanguageIcon from '@mui/icons-material/Language'; // For Landing Page
 import { getAdminProfile } from '../../api/apiFunctions';
 
 import { LogoContainer, drawerPaperStyles } from './AdminSidebar.styles';
@@ -58,6 +59,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ mobileOpen, handleDrawerTog
     { text: 'Add Notice', icon: <PushPinIcon />, path: '/admin/notice', permissionKey: 'notice' },
 
     { text: 'Attendance', icon: <EditCalendarIcon />, path: '/admin/attendance', permissionKey: 'attendance' },
+    { text: 'Landing Page Content', icon: <LanguageIcon />, path: '/admin/landing-page', permissionKey: 'landingPage' },
   ];
 
   if (role === 'superadmin') {

@@ -1,0 +1,192 @@
+import mongoose from 'mongoose';
+
+// ==========================================
+// 1. STATS SUB-SCHEMA (Used in Hero Section)
+// ==========================================
+const statSchema = new mongoose.Schema({
+    // The final number the counter animates to. Example: 10000
+    target: { type: Number, required: true },
+
+    // The text that appears right after the number. Example: 'K+' or '%'
+    suffix: { type: String, default: '' },
+
+    // What to divide the target by for the display number (e.g., 10000 / 1000 = 10). Example: 1000
+    divisor: { type: Number, default: 1 },
+
+    // The text displayed underneath the number. Example: 'Students Trained'
+    label: { type: String, required: true }
+}, { _id: false });
+
+
+// ==========================================
+// 2. COURSES SUB-SCHEMA
+// ==========================================
+const courseSchema = new mongoose.Schema({
+    // Unique string ID used for frontend React state (expandedId). Example: 'jee' or 'neet'
+    courseId: { type: String, required: true },
+
+    // The display name of the course. Example: 'JEE Main & Advanced'
+    title: { type: String, required: true },
+
+    // A short summary of the course. Example: 'Comprehensive preparation for India's most competitive exam'
+    description: { type: String, required: true },
+
+    // Difficulty or stage of the course. Example: 'Advanced' or 'Intermediate'
+    level: { type: String, required: true },
+
+    // Number of students enrolled, used for the icon tag. Example: 2500
+    students: { type: Number, default: 0 },
+
+    // Time commitment required. Example: '18 months'
+    duration: { type: String, required: true },
+
+    // Array of bullet points for the "Key Features" section. Example: ['Expert faculty', 'Mock tests', 'Doubt sessions']
+    features: [{ type: String }],
+
+    // The CSS background gradient for the course card. Example: 'linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(6,182,212,0.08) 100%)'
+    gradient: { type: String }
+});
+
+
+// ==========================================
+// 3. FACULTY SUB-SCHEMA
+// ==========================================
+const facultySchema = new mongoose.Schema({
+    // The teacher's full name. Example: 'Dr. Rajesh Kumar'
+    name: { type: String, required: true },
+
+    // Their job role or designation. Example: 'Senior Professor'
+    title: { type: String, required: true },
+
+    // The core subject they teach. Example: 'Mathematics'
+    subject: { type: String, required: true },
+
+    // Number of years teaching (kept as string to allow things like '18+'). Example: '18'
+    experience: { type: String, required: true },
+
+    // Their degrees or educational background. Example: 'Ph.D. from IIT Delhi'
+    qualification: { type: String, required: true },
+
+    // Their specific area of expertise. Example: 'JEE Advanced problem solving'
+    specialty: { type: String, required: true },
+
+    // Two letter initials (optional, but good for fallbacks if image fails). Example: 'RK'
+    initials: { type: String },
+
+    // Direct URL to their profile picture (AWS S3, Cloudinary, etc.). Example: 'https://images.unsplash.com/photo-156860...'
+    image: { type: String, required: true },
+
+    // The detailed paragraph shown in the popup modal. Example: 'Dr. Rajesh Kumar has mentored over 3,000 JEE aspirants...'
+    bio: { type: String, required: true }
+});
+
+
+// ==========================================
+// 4. RESULTS / SUCCESS STORIES SUB-SCHEMA
+// ==========================================
+const resultSchema = new mongoose.Schema({
+    // The successful student's name. Example: 'Rahul Sharma'
+    name: { type: String, required: true },
+
+    // The actual score or rank value. Example: 'AIR 127' or '99.8%'
+    score: { type: String, required: true },
+
+    // How the score is formatted in the green UI badge. Example: 'AIR 127'
+    scoreLabel: { type: String, required: true },
+
+    // The specific exam they cleared. Example: "JEE Adv. '25"
+    exam: { type: String, required: true },
+
+    // The type of program they were enrolled in. Example: 'Classroom Course'
+    course: { type: String, required: true },
+
+    // Direct URL to the student's photo. Example: 'https://images.unsplash.com/photo-150700...'
+    image: { type: String, required: true },
+
+    // Short blurb about their study habits. Example: 'Rahul consistently performed exceptionally well...'
+    bio: { type: String, required: true },
+
+    // The final outcome or college they got into. Example: 'Admitted to IIT Delhi - Computer Science'
+    achievement: { type: String, required: true },
+
+    // YouTube Shorts link for their success story video
+    youtubeLink: { type: String }
+});
+
+
+// ==========================================
+// 5. FAQ SUB-SCHEMA
+// ==========================================
+const faqSchema = new mongoose.Schema({
+    // The frequently asked question. Example: 'Do you provide online classes?'
+    q: { type: String, required: true },
+
+    // The answer to the question. Example: 'Yes, we offer a Hybrid Model (Offline + Online)...'
+    a: { type: String, required: true }
+});
+
+
+// ==========================================
+// 6. MAIN LANDING PAGE SCHEMA
+// ==========================================
+const landingPageSchema = new mongoose.Schema({
+
+    // --- HERO SECTION ---
+    hero: {
+        // The massive text at the very top of the site. Example: 'Transform Your Academic Excellence'
+        heading: { type: String, default: 'Transform Your Academic Excellence' },
+
+        // The paragraph right below the main heading. Example: 'Join JJ Institute Of Science and unlock your full potential...'
+        subheading: { type: String, default: 'Join JJ Institute Of Science and unlock your full potential. Our proven methodology has helped thousands of students achieve their dreams in competitive exams.' },
+
+        // Group photo for top candidates (Base64 or URL)
+        image: { type: String },
+
+        // Array of the 3 stats shown below the hero buttons
+        stats: [statSchema]
+    },
+
+    // --- ARRAYS OF CONTENT ---
+    // Array holding all course cards
+    courses: [courseSchema],
+
+    // Array holding all teacher profiles
+    faculty: [facultySchema],
+
+    // Array holding the four stats boxes at the top of the Faculty section
+    facultyStats: [{
+        value: { type: String, required: true },
+        label: { type: String, required: true }
+    }],
+
+    // Array holding all student success stories for the scrolling marquee
+    results: [resultSchema],
+
+    // Array holding all the accordion dropdowns for the FAQ section
+    faqs: [faqSchema],
+
+    // --- FOOTER SECTION ---
+    footer: {
+        // Array of phone numbers to display. Example: ['+91 9876 543 210', '+91 8765 432 109']
+        phones: [{ type: String }],
+
+        // Contact email address. Example: 'contact@elite.com'
+        email: { type: String },
+
+        // Physical address of the institute. Example: '123 Ave, City — 110001'
+        address: { type: String },
+
+        // URLs for the social media icon links at the bottom
+        socialLinks: {
+            facebook: { type: String, default: '#' },
+            instagram: { type: String, default: '#' },
+            linkedin: { type: String, default: '#' },
+            twitter: { type: String, default: '#' }
+        }
+    }
+}, {
+    // Automatically adds 'createdAt' and 'updatedAt' timestamps to the document
+    timestamps: true
+});
+
+export default mongoose.model('LandingPage', landingPageSchema);

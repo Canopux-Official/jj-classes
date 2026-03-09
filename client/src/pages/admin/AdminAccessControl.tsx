@@ -40,6 +40,7 @@ interface AdminPermissions {
     upload: boolean;
     notice: boolean;
     attendance: boolean;
+    landingPage: boolean;
 }
 
 interface AdminUser {
@@ -59,7 +60,8 @@ const permissionLabels: Record<keyof AdminPermissions, string> = {
     session: "Session Manager",
     upload: "Upload Material",
     notice: "Add Notice",
-    attendance: "Attendance"
+    attendance: "Attendance",
+    landingPage: "Landing Page Manager"
 };
 
 const AdminAccessControl: React.FC = () => {
@@ -143,7 +145,7 @@ const AdminAccessControl: React.FC = () => {
             ...(currentPermissions || {
                 students: false, streams: false, targetExams: false,
                 subjects: false, session: false, upload: false,
-                notice: false, attendance: false
+                notice: false, attendance: false, landingPage: false
             }),
             [key]: currentPermissions ? !currentPermissions[key] : true
         };
@@ -157,7 +159,7 @@ const AdminAccessControl: React.FC = () => {
             adminDataToSubmit.permissions = {
                 students: true, streams: true, targetExams: true,
                 subjects: true, session: true, upload: true,
-                notice: true, attendance: true
+                notice: true, attendance: true, landingPage: true
             };
         }
         addAdminMutation.mutate(adminDataToSubmit);

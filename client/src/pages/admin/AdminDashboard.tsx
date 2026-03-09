@@ -20,6 +20,7 @@ import TargetExamPage from '../../components/admin/TargetExamPage';
 import AdminNoticePage from './AdminNotice';
 import AttendanceManagement from '../../components/admin/Attendance/attendance/AttendanceManagement';
 import AdminAccessControl from './AdminAccessControl';
+import AdminLandingPage from './AdminLandingPage';
 
 const DRAWER_WIDTH = 260;
 
@@ -63,6 +64,7 @@ const AdminDashboard: React.FC = () => {
             {/* NEW ROUTES */}
             <Route path="streams" element={<StreamPage />} />
             <Route path="target-exams" element={<TargetExamPage />} />
+            <Route path="landing-page" element={<AdminLandingPage />} />
             <Route path="control" element={<AdminAccessControl />} />
 
             <Route path="*" element={<Navigate to="/admin" replace />} />

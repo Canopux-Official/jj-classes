@@ -515,4 +515,8 @@ export async function getStudentNotices(): Promise<ApiResponse> {
     // @ts-expect-error response.data is not typed
     return { success: false, message: axiosError.response?.data?.message || "Failed to fetch student notices" };
   }
-}
+};
+
+// --- LANDING PAGE APIs ---
+export const getLandingPage = () => crudRequest('get', '/landingPage');
+export const updateLandingPage = (data: unknown) => crudRequest('post', '/admin/landingPage/update', data);

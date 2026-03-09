@@ -19,15 +19,16 @@ import adminAttendanceRoutes from './routes/admin/admin.attendanceRoutes';
 import adminControlRoutes from './routes/admin/admin.controlRoutes';
 import studentAttendanceRoutes from './routes/student/student.attendanceRoutes';
 import cronRoutes from './routes/cronRoutes';
-// import materialcontroller from './controllers/materialcontroller';
+import adminLandingPageRoutes from './routes/admin/admin.landingPageRoutes';
+import landingPageController from './controllers/landingPageController';
 
 const port = process.env.PORT || 3000;
 
 const app = express();
 
 app.use(cors({ origin: process.env.CLIENT_LINK }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 app.use(async (req, res, next) => {
   try {
@@ -37,6 +38,11 @@ app.use(async (req, res, next) => {
     console.error("Database Connection Error:", err);
     res.status(500).json({ error: "Failed to connect to database" });
   }
+});
+
+// landing page public route
+app.get('/landingPage', (req: express.Request, res: express.Response) => {
+  landingPageController.getLandingPage(req, res);
 });
 
 app.use('/auth', authRoutes);
@@ -51,6 +57,7 @@ app.use('/admin/material', materialRoutes);
 app.use('/admin/notice', adminNoticeRoutes);
 app.use('/admin/attendance', adminAttendanceRoutes);
 app.use('/admin/control', adminControlRoutes);
+app.use('/admin/landingPage', adminLandingPageRoutes);
 
 // student routes
 app.use('/student/studentProfile', studentProfileRoutes);

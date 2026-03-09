@@ -1,70 +1,48 @@
 import { useState } from 'react'
 import {
-  Box, Container, Typography, Accordion, AccordionSummary,
-  AccordionDetails
+  Box, Container, Typography, Accordion, AccordionSummary, AccordionDetails
 } from '@mui/material'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import AddIcon from '@mui/icons-material/Add'
+import RemoveIcon from '@mui/icons-material/Remove'
 
-const FAQ_ITEMS = [
-  {
-    id: "1",
-    q: "What is JJ Institute Of Science known for?",
-    a: "We are renowned for exceptional coaching services specializing in CBSE Class 9 to 12, and NEET/JEE preparation. Our track record of producing successful students speaks for our commitment to academic excellence."
-  },
-  {
-    id: "2",
-    q: "Why should I choose JJ Institute Of Science for competitive exams?",
-    a: "JJ Institute Of Science is your gateway to success. Our experienced faculty, well-researched study material, and personalized attention set us apart. We have a proven track record of top ranks in NEET and JEE."
-  },
-  {
-    id: "3",
-    q: "Do you provide online classes?",
-    a: "Yes, we offer a Hybrid Model (Offline + Online), giving you the flexibility to choose a learning mode that suits your convenience. Our online classes are interactive and engaging."
-  },
-  {
-    id: "4",
-    q: "How do you prepare students for NEET & JEE?",
-    a: "Our programs are meticulously designed covering all essential topics with rigorous practice through mock tests. We focus on concept clarity and problem-solving skills."
-  },
-  {
-    id: "5",
-    q: "Will I get regular updates on performance?",
-    a: "Absolutely! We believe in transparent communication. You will receive regular progress reports, performance analysis, and feedback to help you track your growth."
-  },
-  {
-    id: "6",
-    q: "Do you offer scholarships?",
-    a: "Yes, we have scholarship programs and financial aid options for deserving students. We believe financial constraints should not hinder access to quality education."
-  },
-  {
-    id: "7",
-    q: "What makes your faculty exceptional?",
-    a: "Our faculty comprises experienced educators who are experts in their respective subjects. They are dedicated to providing the best guidance and mentorship to ensure student success."
-  },
-  {
-    id: "8",
-    q: "How can I enroll?",
-    a: "Enrolling is easy! You can visit our center in Koraput or fill out the enquiry form on this website. Our team will guide you through the process."
-  }
-];
-
-export default function FAQ() {
+export default function FAQ({ data }: { data?: { q: string; a: string; id?: string }[] }) {
   const [expanded, setExpanded] = useState<string | false>(false)
 
+  const displayFaqs = data && data.length > 0
+    ? data.map((f, index) => ({ ...f, id: f.id || `faq-${index}` })) : []
+
   return (
-    <Box sx={{ py: { xs: 10, md: 14 }, bgcolor: 'rgb(254 254 254 / 50%)' }}>
+    <Box sx={{ py: { xs: 9, md: 14 }, bgcolor: '#fff' }}>
       <Container maxWidth="md">
-        <Box sx={{ textAlign: 'center', mb: 8 }}>
-          <Typography variant="h2" sx={{ color: 'primary.main', mb: 2, fontSize: { xs: '2rem', md: '3rem' } }}>
+        <Box sx={{ textAlign: 'center', mb: { xs: 7, md: 10 }, px: { xs: 1, sm: 2 } }}>
+          <Typography sx={{
+            display: 'inline-block',
+            bgcolor: 'rgba(10,37,64,0.05)', color: '#0a2540',
+            fontFamily: '"DM Sans", sans-serif', fontWeight: 600,
+            fontSize: 12, letterSpacing: '0.1em', textTransform: 'uppercase',
+            px: 2, py: 0.6, borderRadius: '20px', mb: 2,
+            border: '1px solid rgba(10,37,64,0.1)',
+          }}>
+            FAQ
+          </Typography>
+          <Typography variant="h2" sx={{
+            color: '#0a2540', mb: 2,
+            fontSize: { xs: '1.9rem', sm: '2.4rem', md: '3rem' },
+            lineHeight: 1.1, letterSpacing: '-0.03em',
+          }}>
             Frequently Asked Questions
           </Typography>
-          <Typography variant="body1" sx={{ color: 'text.secondary', fontSize: '1.1rem' }}>
-            Find answers to common questions about our courses and services
+          <Typography sx={{
+            color: '#6b7280', maxWidth: 460, mx: 'auto',
+            fontSize: { xs: '0.95rem', md: '1.05rem' },
+            lineHeight: 1.7, fontFamily: '"DM Sans", sans-serif',
+          }}>
+            Everything you need to know about our courses and services
           </Typography>
         </Box>
 
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 6 }}>
-          {FAQ_ITEMS.map((item) => (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          {displayFaqs.map((item: { q: string; a: string; id: string }) => (
             <Accordion
               key={item.id}
               expanded={expanded === item.id}
@@ -72,56 +50,64 @@ export default function FAQ() {
               elevation={0}
               disableGutters
               sx={{
-                border: '1px solid',
-                borderColor: expanded === item.id ? 'rgba(196,122,58,0.4)' : 'divider',
-                borderRadius: '8px !important',
+                border: '1.5px solid',
+                borderColor: expanded === item.id ? 'rgba(196,122,58,0.3)' : 'rgba(10,37,64,0.07)',
+                borderRadius: '16px !important',
                 overflow: 'hidden',
                 '&:before': { display: 'none' },
-                transition: 'border-color 0.2s',
+                transition: 'all 0.25s ease',
+                boxShadow: expanded === item.id ? '0 8px 24px rgba(196,122,58,0.08)' : 'none',
               }}
             >
               <AccordionSummary
-                expandIcon={<ExpandMoreIcon sx={{ color: 'primary.main' }} />}
+                expandIcon={
+                  <Box sx={{
+                    width: 28, height: 28,
+                    bgcolor: expanded === item.id ? '#c47a3a' : 'rgba(10,37,64,0.06)',
+                    borderRadius: '8px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'background 0.25s ease',
+                    flexShrink: 0,
+                  }}>
+                    {expanded === item.id
+                      ? <RemoveIcon sx={{ fontSize: 15, color: '#fff' }} />
+                      : <AddIcon sx={{ fontSize: 15, color: '#374151' }} />}
+                  </Box>
+                }
                 sx={{
-                  bgcolor: expanded === item.id ? 'rgba(245,241,237,0.6)' : 'background.paper',
-                  '&:hover': { bgcolor: 'rgba(245,241,237,0.6)' },
-                  px: 3, py: 0.5,
+                  bgcolor: expanded === item.id ? 'rgba(253,249,245,0.8)' : '#fff',
+                  '&:hover': { bgcolor: 'rgba(253,249,245,0.6)' },
+                  px: 3, py: 0.8,
+                  transition: 'background 0.25s ease',
+                  '& .MuiAccordionSummary-expandIconWrapper': { transform: 'none !important' },
                 }}
               >
-                <Typography sx={{ fontFamily: 'Montserrat', fontWeight: 700, color: 'text.primary', fontSize: '1rem' }}>
-                  {item.q}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1, pr: 1.5 }}>
+                  <Typography sx={{
+                    fontFamily: '"DM Sans", sans-serif', fontWeight: 600,
+                    color: '#0d1b2a', fontSize: { xs: '0.92rem', md: '0.98rem' },
+                    lineHeight: 1.5,
+                  }}>
+                    {item.q}
+                  </Typography>
+                </Box>
               </AccordionSummary>
-              <AccordionDetails sx={{ bgcolor: 'rgba(245,241,237,0.3)', px: 3, pb: 3 }}>
-                <Typography sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
+              <AccordionDetails sx={{
+                bgcolor: 'rgba(253,249,245,0.5)',
+                px: 3, pb: 3, pt: 0,
+                borderTop: '1px solid rgba(196,122,58,0.1)',
+              }}>
+                <Typography sx={{
+                  color: '#6b7280', lineHeight: 1.75,
+                  fontSize: { xs: '0.88rem', md: '0.93rem' },
+                  fontFamily: '"DM Sans", sans-serif',
+                }}>
                   {item.a}
                 </Typography>
               </AccordionDetails>
             </Accordion>
           ))}
         </Box>
-
-        {/* CTA Box */}
-        {/* <Paper
-          elevation={0}
-          sx={{
-            background: 'linear-gradient(135deg, rgba(0,26,77,0.06) 0%, rgba(196,122,58,0.08) 100%)',
-            border: '1px solid rgba(0,26,77,0.15)',
-            borderRadius: 3,
-            p: 5,
-            textAlign: 'center',
-          }}
-        >
-          <Typography variant="h4" sx={{ color: 'primary.main', fontFamily: 'Montserrat', mb: 2 }}>
-            Still have questions?
-          </Typography>
-          <Typography sx={{ color: 'text.secondary', mb: 4, lineHeight: 1.7 }}>
-            Our admissions team is ready to help! Contact us for personalized guidance.
-          </Typography>
-          <Button variant="contained" color="primary" size="large" sx={{ px: 5 }}>
-            Contact Us Today
-          </Button>
-        </Paper> */}
       </Container>
     </Box>
   )
