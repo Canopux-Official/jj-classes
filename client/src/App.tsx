@@ -127,6 +127,7 @@ import { useState, useEffect, type ReactNode } from 'react'; // Import ReactNode
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider, CssBaseline, CircularProgress, Box } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { HelmetProvider } from 'react-helmet-async';
 import theme from './theme/theme';
 
 const queryClient = new QueryClient({
@@ -245,19 +246,21 @@ function AppLayout() {
 
 function App() {
   return (
-    <SplashScreen>
-      <QueryClientProvider client={queryClient}>
-        <Router>
-          <Routes>
-            {/* 🌐 LandingPage Outside ThemeProvider (Has its own theme) */}
-            <Route path="/" element={<LandingPage />} />
+    <HelmetProvider>
+      <SplashScreen>
+        <QueryClientProvider client={queryClient}>
+          <Router>
+            <Routes>
+              {/* 🌐 LandingPage Outside ThemeProvider (Has its own theme) */}
+              <Route path="/" element={<LandingPage />} />
 
-            {/* All other routes with ThemeProvider */}
-            <Route path="/*" element={<AppLayout />} />
-          </Routes>
-        </Router>
-      </QueryClientProvider>
-    </SplashScreen>
+              {/* All other routes with ThemeProvider */}
+              <Route path="/*" element={<AppLayout />} />
+            </Routes>
+          </Router>
+        </QueryClientProvider>
+      </SplashScreen>
+    </HelmetProvider>
   );
 }
 

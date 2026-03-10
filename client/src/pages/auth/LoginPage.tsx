@@ -28,6 +28,7 @@ import JIS from '../../assets/logo/JIS Logo.png';
 
 // Import functions from your API file
 import { getLoggedInUser, verifyOtp, resendOtp, validateToken } from '../../api/apiFunctions';
+import SEO from '../../components/SEO';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -311,6 +312,10 @@ const LoginPage = () => {
 
   return (
     <Box sx={loginStyles.container}>
+      <SEO 
+        title="Student & Admin Portal | JJ Institute of Science" 
+        description="Login to the JJ Institute of Science portal to access your courses, dashboard, and educational resources."
+      />
       {/* LEFT SECTION */}
       <Box sx={loginStyles.leftSection}>
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }}>
