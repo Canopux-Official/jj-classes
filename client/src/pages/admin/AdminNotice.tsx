@@ -242,18 +242,18 @@ const AdminNoticePage = () => {
 
         {/* Search and Filters */}
         <Paper sx={{ p: 2.5, mb: 3, borderRadius: 2, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {/* Search - full width on all screens */}
             <TextField
               placeholder="Search heading, description, tag..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              fullWidth
               sx={{
-                flex: 1,
-                minWidth: 300,
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 1.5,
-                  bgcolor: '#f8f9fa'
-                }
+                  bgcolor: '#f8f9fa',
+                },
               }}
               InputProps={{
                 startAdornment: (
@@ -265,83 +265,108 @@ const AdminNoticePage = () => {
               size="small"
             />
 
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>Tag</InputLabel>
-              <Select
-                value={filterTag}
-                label="Tag"
-                onChange={(e) => setFilterTag(e.target.value)}
-                sx={{ borderRadius: 1.5, bgcolor: '#f8f9fa' }}
-              >
-                <MenuItem value="All">All Tags</MenuItem>
-                {uniqueTags.map((tag) => (
-                  <MenuItem key={tag} value={tag}>{tag}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            {/* Filters row - wraps on mobile */}
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: '1fr 1fr',        // 2 columns on mobile
+                  sm: 'repeat(4, 1fr)', // 4 columns on tablet
+                  md: 'repeat(4, 1fr) auto', // 4 + clear button on desktop
+                },
+                gap: 1.5,
+                alignItems: 'center',
+              }}
+            >
+              <FormControl size="small" fullWidth>
+                <InputLabel>Tag</InputLabel>
+                <Select
+                  value={filterTag}
+                  label="Tag"
+                  onChange={(e) => setFilterTag(e.target.value)}
+                  sx={{ borderRadius: 1.5, bgcolor: '#f8f9fa' }}
+                >
+                  <MenuItem value="All">All Tags</MenuItem>
+                  {uniqueTags.map((tag) => (
+                    <MenuItem key={tag} value={tag}>{tag}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>Class Type</InputLabel>
-              <Select
-                value={filterClassType}
-                label="Class Type"
-                onChange={(e) => setFilterClassType(e.target.value)}
-                sx={{ borderRadius: 1.5, bgcolor: '#f8f9fa' }}
-              >
-                <MenuItem value="All">All Types</MenuItem>
-                {uniqueClassTypes.map((type) => (
-                  <MenuItem key={type} value={type}>{type}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+              <FormControl size="small" fullWidth>
+                <InputLabel>Class Type</InputLabel>
+                <Select
+                  value={filterClassType}
+                  label="Class Type"
+                  onChange={(e) => setFilterClassType(e.target.value)}
+                  sx={{ borderRadius: 1.5, bgcolor: '#f8f9fa' }}
+                >
+                  <MenuItem value="All">All Types</MenuItem>
+                  {uniqueClassTypes.map((type) => (
+                    <MenuItem key={type} value={type}>{type}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>Stream</InputLabel>
-              <Select
-                value={filterStream}
-                label="Stream"
-                onChange={(e) => setFilterStream(e.target.value)}
-                sx={{ borderRadius: 1.5, bgcolor: '#f8f9fa' }}
-              >
-                <MenuItem value="All">All Streams</MenuItem>
-                {streams.map((stream) => (
-                  <MenuItem key={stream._id} value={stream.name}>{stream.name}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+              <FormControl size="small" fullWidth>
+                <InputLabel>Stream</InputLabel>
+                <Select
+                  value={filterStream}
+                  label="Stream"
+                  onChange={(e) => setFilterStream(e.target.value)}
+                  sx={{ borderRadius: 1.5, bgcolor: '#f8f9fa' }}
+                >
+                  <MenuItem value="All">All Streams</MenuItem>
+                  {streams.map((stream) => (
+                    <MenuItem key={stream._id} value={stream.name}>{stream.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>Target Exam</InputLabel>
-              <Select
-                value={filterTargetExam}
-                label="Target Exam"
-                onChange={(e) => setFilterTargetExam(e.target.value)}
-                sx={{ borderRadius: 1.5, bgcolor: '#f8f9fa' }}
-              >
-                <MenuItem value="All">All Exams</MenuItem>
-                {targetExams.map((exam) => (
-                  <MenuItem key={exam._id} value={exam.name}>{exam.name}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+              <FormControl size="small" fullWidth>
+                <InputLabel>Target Exam</InputLabel>
+                <Select
+                  value={filterTargetExam}
+                  label="Target Exam"
+                  onChange={(e) => setFilterTargetExam(e.target.value)}
+                  sx={{ borderRadius: 1.5, bgcolor: '#f8f9fa' }}
+                >
+                  <MenuItem value="All">All Exams</MenuItem>
+                  {targetExams.map((exam) => (
+                    <MenuItem key={exam._id} value={exam.name}>{exam.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-            <Tooltip title="Clear Filters">
-              <IconButton
-                onClick={() => {
-                  setSearchQuery('');
-                  setFilterTag('All');
-                  setFilterClassType('All');
-                  setFilterStream('All');
-                  setFilterTargetExam('All');
-                }}
+              {/* Clear button - spans full width on mobile, auto on desktop */}
+              <Box
                 sx={{
-                  bgcolor: '#f8f9fa',
-                  '&:hover': { bgcolor: '#e9ecef' }
+                  gridColumn: { xs: '1 / -1', md: 'auto' },
+                  display: 'flex',
+                  justifyContent: { xs: 'flex-end', md: 'center' },
                 }}
               >
-                <FilterListIcon />
-              </IconButton>
-            </Tooltip>
+                <Tooltip title="Clear Filters">
+                  <IconButton
+                    onClick={() => {
+                      setSearchQuery('');
+                      setFilterTag('All');
+                      setFilterClassType('All');
+                      setFilterStream('All');
+                      setFilterTargetExam('All');
+                    }}
+                    sx={{
+                      bgcolor: '#f8f9fa',
+                      borderRadius: 1.5,
+                      px: { xs: 2, md: 1 },
+                      '&:hover': { bgcolor: '#e9ecef' },
+                    }}
+                  >
+                    <FilterListIcon />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </Box>
           </Box>
 
           {/* Results count */}
