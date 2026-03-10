@@ -10,7 +10,8 @@ import FacebookIcon from '@mui/icons-material/Facebook'
 import InstagramIcon from '@mui/icons-material/Instagram'
 import LinkedInIcon from '@mui/icons-material/LinkedIn'
 import TwitterIcon from '@mui/icons-material/Twitter'
-import LogoImg from '../../assets/logo.jpeg';
+// import LogoImg from '../../assets/logo.jpeg';
+import LogoCircular from '/logo/JIS Logo Circular.png'
 
 interface FooterData {
   brandDescription?: string;
@@ -244,7 +245,7 @@ export default function Footer({ data }: FooterProps) {
                 <Box sx={{ width: 48, height: 48, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
                   <Box
                     component="img"
-                    src={LogoImg}
+                    src={LogoCircular}
                     alt="JJ Institute Logo"
                     sx={{ width: '100%', height: '100%', objectFit: 'contain' }}
                   />

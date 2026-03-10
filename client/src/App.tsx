@@ -148,6 +148,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 // Import API check
 import { validateToken } from './api/apiFunctions';
 import StudentPage from './pages/student/StudentPage';
+import SplashScreen from './pages/landing/SplashScreen';
 
 // 👇 Define the props interface
 interface ProtectedRouteProps {
@@ -244,17 +245,19 @@ function AppLayout() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <Router>
-        <Routes>
-          {/* 🌐 LandingPage Outside ThemeProvider (Has its own theme) */}
-          <Route path="/" element={<LandingPage />} />
+    <SplashScreen>
+      <QueryClientProvider client={queryClient}>
+        <Router>
+          <Routes>
+            {/* 🌐 LandingPage Outside ThemeProvider (Has its own theme) */}
+            <Route path="/" element={<LandingPage />} />
 
-          {/* All other routes with ThemeProvider */}
-          <Route path="/*" element={<AppLayout />} />
-        </Routes>
-      </Router>
-    </QueryClientProvider>
+            {/* All other routes with ThemeProvider */}
+            <Route path="/*" element={<AppLayout />} />
+          </Routes>
+        </Router>
+      </QueryClientProvider>
+    </SplashScreen>
   );
 }
 
