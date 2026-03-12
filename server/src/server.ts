@@ -37,7 +37,7 @@ app.use(compression());
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many requests, please try again later." }
@@ -52,15 +52,19 @@ app.use(express.urlencoded({ extended: true }));
 
 // Ensure DB is connected before any route handler runs.
 // connectDB() is idempotent — it returns the cached connection after the first call.
-app.use(async (_req: express.Request, res: express.Response, next: express.NextFunction) => {
-  try {
-    await connectDB();
-    next();
-  } catch (err) {
-    console.error('DB connection failed:', err);
-    res.status(503).json({ success: false, message: 'Database unavailable. Please try again.' });
-  }
-});
+// app.use(async (_req: express.Request, res: express.Response, next: express.NextFunction) => {
+//   try {
+//     await connectDB();
+//     next();
+//   } catch (err) {
+//     console.error('DB connection failed:', err);
+//     res.status(503).json({ success: false, message: 'Database unavailable. Please try again.' });
+//   }
+// });
+
+connectDB()
+  .then(() => console.log("Database connected successfully"))
+  .catch((err) => console.error("Database connection failed:", err));
 
 
 
