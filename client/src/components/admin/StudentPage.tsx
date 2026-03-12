@@ -145,8 +145,8 @@ const StudentsPage: React.FC = () => {
   }, [subjectsResponse]);
 
   const streamOptions = useMemo(() => {
-    const data = streamsResponse?.data as { streams: INamedEntity[] } | undefined;
-    return (streamsResponse?.success && data?.streams) ? data.streams.map(s => s.name) : [];
+    const data = streamsResponse?.data as INamedEntity[] | undefined;
+    return (streamsResponse?.success && data) ? data.map(s => s.name) : [];
   }, [streamsResponse]);
 
   const examOptions = useMemo(() =>
