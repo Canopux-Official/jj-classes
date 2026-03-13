@@ -31,30 +31,30 @@ export const useAttendance = () => {
   const [dirtyCount, setDirtyCount] = useState(0);
 
 
-  useEffect(() => {
-    const scheduleCleanup = () => {
-      const now = new Date();
-      const midnight = new Date();
-      midnight.setHours(24, 0, 0, 0);
-      const msUntilMidnight = midnight.getTime() - now.getTime();
+  // useEffect(() => {
+  //   const scheduleCleanup = () => {
+  //     const now = new Date();
+  //     const midnight = new Date();
+  //     midnight.setHours(24, 0, 0, 0);
+  //     const msUntilMidnight = midnight.getTime() - now.getTime();
 
-      return setTimeout(() => {
-        const keysToDelete = Object.keys(localStorage).filter(
-          (key) =>
-            key.startsWith('attendance_data_') ||
-            key === 'attendanceFilters'
-        );
-        keysToDelete.forEach((key) => localStorage.removeItem(key));
-        console.log(`🧹 Cleaned ${keysToDelete.length} attendance keys`);
+  //     return setTimeout(() => {
+  //       const keysToDelete = Object.keys(localStorage).filter(
+  //         (key) =>
+  //           key.startsWith('attendance_data_') ||
+  //           key === 'attendanceFilters'
+  //       );
+  //       keysToDelete.forEach((key) => localStorage.removeItem(key));
+  //       console.log(`🧹 Cleaned ${keysToDelete.length} attendance keys`);
 
-        // ✅ Reschedule for next midnight
-        scheduleCleanup();
-      }, msUntilMidnight);
-    };
+  //       // ✅ Reschedule for next midnight
+  //       scheduleCleanup();
+  //     }, msUntilMidnight);
+  //   };
 
-    const timer = scheduleCleanup();
-    return () => clearTimeout(timer);
-  }, []);
+  //   const timer = scheduleCleanup();
+  //   return () => clearTimeout(timer);
+  // }, []);
 
   const {
     isInitialized,
@@ -410,6 +410,14 @@ export const useAttendance = () => {
 
         // Clear dirty flags
         await clearDirtyFlags(filters.month!, filters.year!);
+
+        const keysToDelete = Object.keys(localStorage).filter(
+          (key) =>
+            key.startsWith('attendance_data_') ||
+            key === 'attendanceFilters'
+        );
+        keysToDelete.forEach((key) => localStorage.removeItem(key));
+        console.log(`🧹 Cleared ${keysToDelete.length} attendance keys after sync`);
 
         // Refresh data from backend
         await fetchAttendance();
