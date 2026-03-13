@@ -62,9 +62,11 @@ app.use(express.urlencoded({ extended: true }));
 //   }
 // });
 
-connectDB()
-  .then(() => console.log("Database connected successfully"))
-  .catch((err) => console.error("Database connection failed:", err));
+
+// here change 
+// connectDB()
+//   .then(() => console.log("Database connected successfully"))
+//   .catch((err) => console.error("Database connection failed:", err));
 
 
 
@@ -96,15 +98,25 @@ app.use('/student/attendance', studentAttendanceRoutes);
 
 app.use('/api/cron', cronRoutes);
 
+// const startServer = () => { app.listen(port, () => { console.log(Server is running on port ${port}); }); }; if (process.env.VERCEL !== "true") { startServer(); }
 
-const startServer = () => {
-  app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-  });
+// here change 
+const startServer = async () => {
+  try {
+    await connectDB(); // Wait for DB to be ready
+    console.log('Database connected. Starting server...');
+
+    if (process.env.VERCEL !== "true") {
+      app.listen(port, () => {
+        console.log(`Server running on port ${port}`);
+      });
+    }
+  } catch (err) {
+    console.error('Failed to connect to database:', err);
+    process.exit(1); // stop server if DB fails
+  }
 };
 
-if (process.env.VERCEL !== "true") {
-  startServer();
-}
+startServer();
 
 export default app;
