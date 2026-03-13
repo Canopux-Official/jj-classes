@@ -24,8 +24,11 @@ import {
     TextField,
     MenuItem,
     IconButton,
-    Stack
+    Stack,
+    InputAdornment
 } from '@mui/material';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditIcon from '@mui/icons-material/Edit';
@@ -72,12 +75,14 @@ const AdminAccessControl: React.FC = () => {
     const [newAdmin, setNewAdmin] = useState({
         name: '', email: '', phoneNumber: '', password: '', role: 'admin'
     });
+    const [showPasswordAdd, setShowPasswordAdd] = useState(false);
 
     // Edit Admin State
     const [openEditDialog, setOpenEditDialog] = useState(false);
     const [editingAdmin, setEditingAdmin] = useState({
         id: '', name: '', email: '', phoneNumber: '', password: '', role: 'admin'
     });
+    const [showPasswordEdit, setShowPasswordEdit] = useState(false);
 
     // React Query: Fetch Admins
     const { data: adminsResponse, isLoading: loading, isError } = useQuery({
@@ -162,6 +167,13 @@ const AdminAccessControl: React.FC = () => {
                 notice: true, attendance: true, landingPage: true
             };
         }
+        
+        // Final validation check before mutation
+        if (newAdmin.phoneNumber.length !== 10) {
+            alert("Phone number must be exactly 10 digits");
+            return;
+        }
+        
         addAdminMutation.mutate(adminDataToSubmit);
     };
 
@@ -187,6 +199,12 @@ const AdminAccessControl: React.FC = () => {
         // Only send password if it was filled out
         if (editingAdmin.password.trim() !== '') {
             adminDataToSubmit.password = editingAdmin.password;
+        }
+
+        // Final validation check before mutation
+        if (editingAdmin.phoneNumber.length !== 10) {
+            alert("Phone number must be exactly 10 digits");
+            return;
         }
 
         editAdminMutation.mutate({ id: editingAdmin.id, data: adminDataToSubmit });
@@ -332,14 +350,39 @@ const AdminAccessControl: React.FC = () => {
                             label="Phone Number"
                             fullWidth
                             value={newAdmin.phoneNumber}
-                            onChange={e => setNewAdmin({ ...newAdmin, phoneNumber: e.target.value })}
+                            onChange={e => {
+                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                setNewAdmin({ ...newAdmin, phoneNumber: val });
+                            }}
+                            error={newAdmin.phoneNumber.length > 0 && newAdmin.phoneNumber.length !== 10}
+                            helperText={newAdmin.phoneNumber.length > 0 && newAdmin.phoneNumber.length !== 10 ? "Phone number must be 10 digits" : ""}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600 }}>+91</Typography>
+                                    </InputAdornment>
+                                ),
+                            }}
                         />
                         <TextField
                             label="Initial Password"
-                            type="password"
+                            type={showPasswordAdd ? 'text' : 'password'}
                             fullWidth
                             value={newAdmin.password}
                             onChange={e => setNewAdmin({ ...newAdmin, password: e.target.value })}
+                            InputProps={{
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <IconButton
+                                            aria-label="toggle password visibility"
+                                            onClick={() => setShowPasswordAdd(!showPasswordAdd)}
+                                            edge="end"
+                                        >
+                                            {showPasswordAdd ? <VisibilityOff /> : <Visibility />}
+                                        </IconButton>
+                                    </InputAdornment>
+                                )
+                            }}
                         />
                         <TextField
                             select
@@ -358,7 +401,13 @@ const AdminAccessControl: React.FC = () => {
                     <Button
                         onClick={handleAddAdminSubmit}
                         variant="contained"
-                        disabled={addAdminMutation.isPending || !newAdmin.name || !newAdmin.email || !newAdmin.phoneNumber || !newAdmin.password}
+                        disabled={
+                            addAdminMutation.isPending || 
+                            !newAdmin.name || 
+                            !newAdmin.email || 
+                            newAdmin.phoneNumber.length !== 10 || 
+                            !newAdmin.password
+                        }
                         sx={{ bgcolor: '#0b2021', '&:hover': { bgcolor: '#1a3a3a' } }}
                     >
                         {addAdminMutation.isPending ? <CircularProgress size={24} color="inherit" /> : 'Create'}
@@ -388,14 +437,39 @@ const AdminAccessControl: React.FC = () => {
                             label="Phone Number"
                             fullWidth
                             value={editingAdmin.phoneNumber}
-                            onChange={e => setEditingAdmin({ ...editingAdmin, phoneNumber: e.target.value })}
+                            onChange={e => {
+                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                setEditingAdmin({ ...editingAdmin, phoneNumber: val });
+                            }}
+                            error={editingAdmin.phoneNumber.length > 0 && editingAdmin.phoneNumber.length !== 10}
+                            helperText={editingAdmin.phoneNumber.length > 0 && editingAdmin.phoneNumber.length !== 10 ? "Phone number must be 10 digits" : ""}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600 }}>+91</Typography>
+                                    </InputAdornment>
+                                ),
+                            }}
                         />
                         <TextField
                             label="New Password (Leave blank to keep unchanged)"
-                            type="password"
+                            type={showPasswordEdit ? 'text' : 'password'}
                             fullWidth
                             defaultValue=""
                             onChange={e => setEditingAdmin({ ...editingAdmin, password: e.target.value })}
+                            InputProps={{
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <IconButton
+                                            aria-label="toggle password visibility"
+                                            onClick={() => setShowPasswordEdit(!showPasswordEdit)}
+                                            edge="end"
+                                        >
+                                            {showPasswordEdit ? <VisibilityOff /> : <Visibility />}
+                                        </IconButton>
+                                    </InputAdornment>
+                                )
+                            }}
                         />
                         <TextField
                             select
@@ -414,7 +488,12 @@ const AdminAccessControl: React.FC = () => {
                     <Button
                         onClick={handleEditAdminSubmit}
                         variant="contained"
-                        disabled={editAdminMutation.isPending || !editingAdmin.name || !editingAdmin.email || !editingAdmin.phoneNumber}
+                        disabled={
+                            editAdminMutation.isPending || 
+                            !editingAdmin.name || 
+                            !editingAdmin.email || 
+                            editingAdmin.phoneNumber.length !== 10
+                        }
                         sx={{ bgcolor: '#0b2021', '&:hover': { bgcolor: '#1a3a3a' } }}
                     >
                         {editAdminMutation.isPending ? <CircularProgress size={24} color="inherit" /> : 'Save Changes'}
