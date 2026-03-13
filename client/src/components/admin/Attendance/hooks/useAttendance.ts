@@ -426,6 +426,17 @@ export const useAttendance = () => {
       }
     } catch (err) {
       console.error('Sync error:', err);
+      await clearDirtyFlags(filters.month!, filters.year!);
+
+      const keysToDelete = Object.keys(localStorage).filter(
+        (key) =>
+          key.startsWith('attendance_data_')
+      );
+      keysToDelete.forEach((key) => localStorage.removeItem(key));
+      console.log(`🧹 Cleared ${keysToDelete.length} attendance keys after sync`);
+
+      // Refresh data from backend
+      await fetchAttendance();
       setError(err instanceof Error ? err.message : 'Failed to sync changes');
       throw err;
     } finally {
