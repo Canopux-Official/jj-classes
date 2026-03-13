@@ -62,6 +62,24 @@ app.use(express.urlencoded({ extended: true }));
 //   }
 // });
 
+const startServer = async () => {
+  try {
+    await connectDB(); // Wait for DB to be ready
+    console.log('Database connected. Starting server...');
+
+    if (process.env.VERCEL !== "true") {
+      app.listen(port, () => {
+        console.log(`Server running on port ${port}`);
+      });
+    }
+  } catch (err) {
+    console.error('Failed to connect to database:', err);
+    process.exit(1); // stop server if DB fails
+  }
+};
+
+startServer();
+
 
 // here change 
 // connectDB()
@@ -101,22 +119,6 @@ app.use('/api/cron', cronRoutes);
 // const startServer = () => { app.listen(port, () => { console.log(Server is running on port ${port}); }); }; if (process.env.VERCEL !== "true") { startServer(); }
 
 // here change 
-const startServer = async () => {
-  try {
-    await connectDB(); // Wait for DB to be ready
-    console.log('Database connected. Starting server...');
 
-    if (process.env.VERCEL !== "true") {
-      app.listen(port, () => {
-        console.log(`Server running on port ${port}`);
-      });
-    }
-  } catch (err) {
-    console.error('Failed to connect to database:', err);
-    process.exit(1); // stop server if DB fails
-  }
-};
-
-startServer();
 
 export default app;
