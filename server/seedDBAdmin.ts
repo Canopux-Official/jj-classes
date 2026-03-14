@@ -7,7 +7,7 @@ dotenv.config();
 
 const seedAdmin = async () => {
   try {
-    const MONGO_URI = "mongodb+srv://jj-institute-database:jjInstituteDatabase%40123@cluster0.zkrvxol.mongodb.net/JJ-Classes?retryWrites=true&w=majority";
+    const MONGO_URI = process.env.MONGO_URI;
     if (!MONGO_URI) throw new Error('MONGO_URI not defined in .env');
 
     await mongoose.connect(MONGO_URI);;
