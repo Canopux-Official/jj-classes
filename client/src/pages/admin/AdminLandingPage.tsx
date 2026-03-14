@@ -1259,7 +1259,7 @@ const AdminLandingPage: React.FC = () => {
                         )}
 
                         {/* Tab 6: Gallery */}
-                        {activeTab === 6 && (
+                        {activeTab === 5 && (
                             <Card variant="outlined" sx={{ borderRadius: '12px' }}>
                                 <CardContent sx={{ p: 3 }}>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
@@ -1424,7 +1424,7 @@ const AdminLandingPage: React.FC = () => {
                         )}
 
                         {/* Tab 5: Footer & Social */}
-                        {activeTab === 5 && (
+                        {activeTab === 6 && (
                             <Stack spacing={4}>
 
                                 {/* Card 1: Contact Info */}
