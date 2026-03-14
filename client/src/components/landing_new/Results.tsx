@@ -350,10 +350,27 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import StarIcon from '@mui/icons-material/Star'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 
+// interface Student {
+//   id: number; name: string; score: string; scoreLabel: string
+//   exam: string; course: string; image: string; bio: string
+//   achievement: string; youtubeLink?: string
+// }
+
+interface ScoreEntry {
+  exam: string
+  score: string
+}
+
 interface Student {
-  id: number; name: string; score: string; scoreLabel: string
-  exam: string; course: string; image: string; bio: string
-  achievement: string; youtubeLink?: string
+  id: number
+  name: string
+  scores: ScoreEntry[]        // ✅ replaces score, scoreLabel, exam
+  course: string
+  image: string
+  bio: string
+  achievement: string
+  currentStatus: string[]     // ✅ new
+  youtubeLink?: string
 }
 
 const formatYoutubeLink = (url?: string) => {
@@ -374,13 +391,77 @@ const formatYoutubeLink = (url?: string) => {
   return url
 }
 
+// function StudentCard({ student, onSelect }: { student: Student; onSelect: (s: Student) => void }) {
+//   const [hovered, setHovered] = useState(false)
+//   return (
+//     <Box
+//       onClick={() => onSelect(student)}
+//       onMouseEnter={() => setHovered(true)}
+//       onMouseLeave={() => setHovered(false)}
+//       sx={{ cursor: 'pointer', width: 210, flexShrink: 0 }}
+//     >
+//       <Box sx={{
+//         position: 'relative', height: 270, mb: 1.8,
+//         borderRadius: '20px', overflow: 'hidden',
+//         boxShadow: hovered ? '0 16px 40px rgba(10,37,64,0.14)' : '0 4px 16px rgba(10,37,64,0.06)',
+//         transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+//         transform: hovered ? 'translateY(-5px)' : 'translateY(0)',
+//       }}>
+//         <Box component="img" src={student.image} alt={student.name}
+//           onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { e.currentTarget.src = 'https://via.placeholder.com/220x270?text=No+Image' }}
+//           sx={{
+//             width: '100%', height: '100%',
+//             objectFit: 'cover', objectPosition: 'top', display: 'block',
+//             transition: 'transform 0.4s ease',
+//             transform: hovered ? 'scale(1.04)' : 'scale(1)',
+//           }}
+//         />
+//         <Box sx={{
+//           position: 'absolute', bottom: 0, left: 0, right: 0, height: '55%',
+//           background: 'linear-gradient(to top, rgba(10,37,64,0.82) 0%, transparent 100%)',
+//         }} />
+//         <Box sx={{
+//           position: 'absolute', bottom: 12, left: 12, right: 12,
+//           display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
+//         }}>
+//           <Box>
+//             <Typography sx={{ color: '#fff', fontFamily: '"DM Sans", sans-serif', fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>
+//               {student.name}
+//             </Typography>
+//             <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, fontFamily: '"DM Sans", sans-serif' }}>
+//               {student.exam}
+//             </Typography>
+//           </Box>
+//           <Box sx={{ bgcolor: '#c47a3a', borderRadius: '8px', px: 1.2, py: 0.4 }}>
+//             <Typography sx={{ color: '#fff', fontFamily: '"DM Sans", sans-serif', fontWeight: 800, fontSize: 13 }}>
+//               {student.scoreLabel}
+//             </Typography>
+//           </Box>
+//         </Box>
+//         {student.youtubeLink && (
+//           <Box sx={{
+//             position: 'absolute', top: 12, right: 12,
+//             width: 32, height: 32, bgcolor: 'rgba(239,68,68,0.9)',
+//             borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+//             opacity: hovered ? 1 : 0, transition: 'opacity 0.25s ease',
+//           }}>
+//             <PlayArrowIcon sx={{ color: '#fff', fontSize: 18 }} />
+//           </Box>
+//         )}
+//       </Box>
+//       <Typography sx={{ fontSize: 12, color: '#94a3b8', fontFamily: '"DM Sans", sans-serif', textAlign: 'center' }}>
+//         {student.course}
+//       </Typography>
+//     </Box>
+//   )
+// }
+
 function StudentCard({ student, onSelect }: { student: Student; onSelect: (s: Student) => void }) {
   const [hovered, setHovered] = useState(false)
+  const firstScore = student.scores?.[0]  // show first score on card
+
   return (
-    <Box
-      onClick={() => onSelect(student)}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+    <Box onClick={() => onSelect(student)} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
       sx={{ cursor: 'pointer', width: 210, flexShrink: 0 }}
     >
       <Box sx={{
@@ -391,12 +472,10 @@ function StudentCard({ student, onSelect }: { student: Student; onSelect: (s: St
         transform: hovered ? 'translateY(-5px)' : 'translateY(0)',
       }}>
         <Box component="img" src={student.image} alt={student.name}
-          onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { e.currentTarget.src = 'https://via.placeholder.com/220x270?text=No+Image' }}
+          onError={(e: React.SyntheticEvent<HTMLImageElement>) => { e.currentTarget.src = 'https://via.placeholder.com/220x270?text=No+Image' }}
           sx={{
-            width: '100%', height: '100%',
-            objectFit: 'cover', objectPosition: 'top', display: 'block',
-            transition: 'transform 0.4s ease',
-            transform: hovered ? 'scale(1.04)' : 'scale(1)',
+            width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block',
+            transition: 'transform 0.4s ease', transform: hovered ? 'scale(1.04)' : 'scale(1)',
           }}
         />
         <Box sx={{
@@ -411,15 +490,19 @@ function StudentCard({ student, onSelect }: { student: Student; onSelect: (s: St
             <Typography sx={{ color: '#fff', fontFamily: '"DM Sans", sans-serif', fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>
               {student.name}
             </Typography>
+            {/* ✅ show first exam name */}
             <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, fontFamily: '"DM Sans", sans-serif' }}>
-              {student.exam}
+              {firstScore?.exam || student.course}
             </Typography>
           </Box>
-          <Box sx={{ bgcolor: '#c47a3a', borderRadius: '8px', px: 1.2, py: 0.4 }}>
-            <Typography sx={{ color: '#fff', fontFamily: '"DM Sans", sans-serif', fontWeight: 800, fontSize: 13 }}>
-              {student.scoreLabel}
-            </Typography>
-          </Box>
+          {/* ✅ show first score in badge */}
+          {firstScore && (
+            <Box sx={{ bgcolor: '#c47a3a', borderRadius: '8px', px: 1.2, py: 0.4 }}>
+              <Typography sx={{ color: '#fff', fontFamily: '"DM Sans", sans-serif', fontWeight: 800, fontSize: 13 }}>
+                {firstScore.score}
+              </Typography>
+            </Box>
+          )}
         </Box>
         {student.youtubeLink && (
           <Box sx={{
@@ -627,20 +710,12 @@ export default function Results({ data }: { data?: Student[] | unknown[] }) {
               )}
 
               {/* Score badge pinned bottom-left */}
-              {!isPlayingVideo && (
-                <Box sx={{
-                  position: 'absolute', bottom: 16, left: 16, zIndex: 3,
-                  display: 'flex', alignItems: 'center', gap: 1,
-                }}>
-                  <Box sx={{
-                    bgcolor: '#c47a3a',
-                    borderRadius: '8px', px: 1.5, py: 0.5,
-                  }}>
-                    <Typography sx={{
-                      color: '#fff', fontWeight: 800, fontSize: '0.95rem',
-                      fontFamily: '"DM Sans", sans-serif', lineHeight: 1,
-                    }}>
-                      {selectedStudent.scoreLabel}
+              {/* ✅ first score badge on image */}
+              {!isPlayingVideo && selectedStudent.scores?.[0] && (
+                <Box sx={{ position: 'absolute', bottom: 16, left: 16, zIndex: 3 }}>
+                  <Box sx={{ bgcolor: '#c47a3a', borderRadius: '8px', px: 1.5, py: 0.5 }}>
+                    <Typography sx={{ color: '#fff', fontWeight: 800, fontSize: '0.95rem', fontFamily: '"DM Sans", sans-serif', lineHeight: 1 }}>
+                      {selectedStudent.scores[0].score}
                     </Typography>
                   </Box>
                 </Box>
@@ -648,148 +723,159 @@ export default function Results({ data }: { data?: Student[] | unknown[] }) {
             </Box>
 
             {/* ── RIGHT PANEL: Details ── */}
+            {/* ── RIGHT PANEL: Details ── */}
             <Box sx={{
               flex: 1, display: 'flex', flexDirection: 'column',
               position: 'relative', overflow: 'hidden', bgcolor: '#fff',
             }}>
-              {/* Close button — top right */}
-              <IconButton
-                onClick={handleClose}
-                size="small"
-                sx={{
-                  position: 'absolute', top: 14, right: 14, zIndex: 10,
-                  color: '#6b7280', bgcolor: '#f9fafb',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px', p: 0.55,
-                  '&:hover': { bgcolor: '#f1f5f9', color: '#111827' },
-                  transition: 'all 0.15s ease',
-                }}
-              >
+              {/* Close button — unchanged */}
+              <IconButton onClick={handleClose} size="small" sx={{
+                position: 'absolute', top: 14, right: 14, zIndex: 10,
+                color: '#6b7280', bgcolor: '#f9fafb', border: '1px solid #e5e7eb',
+                borderRadius: '8px', p: 0.55,
+                '&:hover': { bgcolor: '#f1f5f9', color: '#111827' },
+                transition: 'all 0.15s ease',
+              }}>
                 <CloseIcon sx={{ fontSize: 16 }} />
               </IconButton>
 
-              {/* TOP SECTION — name block */}
+              {/* TOP SECTION */}
               <Box sx={{ px: { xs: 3, sm: 3.5 }, pt: { xs: 3, sm: 3.5 }, pb: 2.5 }}>
-                {/* Exam tag */}
-                <Box sx={{
-                  display: 'inline-flex', alignItems: 'center', gap: 0.6,
-                  bgcolor: 'rgba(196,122,58,0.06)',
-                  border: '1px solid rgba(196,122,58,0.18)',
-                  borderRadius: '6px', px: 1.2, py: 0.4, mb: 2,
-                }}>
-                  <StarIcon sx={{ fontSize: 11, color: '#c47a3a' }} />
-                  <Typography sx={{
-                    fontSize: '0.7rem', fontWeight: 700, color: '#c47a3a',
-                    fontFamily: '"DM Sans", sans-serif', letterSpacing: '0.07em',
-                    textTransform: 'uppercase',
-                  }}>
-                    {selectedStudent.exam}
-                  </Typography>
+                {/* ✅ Show all exam tags as pills */}
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8, mb: 2 }}>
+                  {(selectedStudent.scores || []).map((entry, i) => (
+                    <Box key={i} sx={{
+                      display: 'inline-flex', alignItems: 'center', gap: 0.6,
+                      bgcolor: 'rgba(196,122,58,0.06)',
+                      border: '1px solid rgba(196,122,58,0.18)',
+                      borderRadius: '6px', px: 1.2, py: 0.4,
+                    }}>
+                      <StarIcon sx={{ fontSize: 11, color: '#c47a3a' }} />
+                      <Typography sx={{
+                        fontSize: '0.7rem', fontWeight: 700, color: '#c47a3a',
+                        fontFamily: '"DM Sans", sans-serif', letterSpacing: '0.05em',
+                      }}>
+                        {entry.exam}
+                      </Typography>
+                    </Box>
+                  ))}
                 </Box>
 
-                {/* Student name */}
+                {/* Student name — unchanged */}
                 <Typography sx={{
-                  fontFamily: '"Fraunces", serif',
-                  fontWeight: 800,
-                  fontSize: { xs: '1.65rem', sm: '1.9rem' },
-                  color: '#0d1117',
-                  lineHeight: 1.1,
-                  letterSpacing: '-0.025em',
-                  mb: 0.8,
-                  pr: 4,
+                  fontFamily: '"Fraunces", serif', fontWeight: 800,
+                  fontSize: { xs: '1.65rem', sm: '1.9rem' }, color: '#0d1117',
+                  lineHeight: 1.1, letterSpacing: '-0.025em', mb: 0.8, pr: 4,
                 }}>
                   {selectedStudent.name}
                 </Typography>
 
-                {/* Achievement subtitle */}
-                <Typography sx={{
-                  fontSize: '0.85rem',
-                  color: '#6b7280',
-                  fontFamily: '"DM Sans", sans-serif',
-                  lineHeight: 1.55,
-                  fontWeight: 400,
-                }}>
+                <Typography sx={{ fontSize: '0.85rem', color: '#6b7280', fontFamily: '"DM Sans", sans-serif', lineHeight: 1.55 }}>
                   {selectedStudent.achievement}
                 </Typography>
               </Box>
 
-              {/* SEPARATOR */}
               <Box sx={{ height: '1px', bgcolor: '#f0f0f0', mx: { xs: 3, sm: 3.5 } }} />
 
-              {/* STATS STRIP */}
-              <Box sx={{
-                display: 'flex',
-                px: { xs: 3, sm: 3.5 }, py: 2.5,
-                gap: 0,
-              }}>
-                {/* Score */}
-                <Box sx={{ flex: 1, pr: 2 }}>
-                  <Typography sx={{
-                    fontSize: '0.65rem', fontWeight: 700, color: '#b0b8c4',
-                    textTransform: 'uppercase', letterSpacing: '0.1em',
-                    fontFamily: '"DM Sans", sans-serif', mb: 0.5,
-                  }}>
-                    Score
-                  </Typography>
-                  <Typography sx={{
-                    fontFamily: '"Fraunces", serif',
-                    fontSize: { xs: '1.5rem', sm: '1.7rem' },
-                    fontWeight: 800, color: '#16a34a', lineHeight: 1,
-                  }}>
-                    {selectedStudent.scoreLabel}
-                  </Typography>
-                </Box>
+              {/* ✅ SCORES STRIP — multiple scores */}
+              <Box sx={{ px: { xs: 3, sm: 3.5 }, py: 2, display: 'flex', flexWrap: 'wrap', gap: 0 }}>
+                {(selectedStudent.scores || []).map((entry, i, arr) => (
+                  <Box key={i} sx={{ display: 'flex', alignItems: 'stretch' }}>
+                    <Box sx={{ pr: 2.5 }}>
+                      <Typography sx={{
+                        fontSize: '0.62rem', fontWeight: 700, color: '#b0b8c4',
+                        textTransform: 'uppercase', letterSpacing: '0.1em',
+                        fontFamily: '"DM Sans", sans-serif', mb: 0.4,
+                      }}>
+                        {entry.exam}
+                      </Typography>
+                      <Typography sx={{
+                        fontFamily: '"Fraunces", serif',
+                        fontSize: { xs: '1.3rem', sm: '1.5rem' },
+                        fontWeight: 800, color: '#16a34a', lineHeight: 1,
+                      }}>
+                        {entry.score}
+                      </Typography>
+                    </Box>
+                    {/* vertical divider between scores */}
+                    {i < arr.length - 1 && (
+                      <Box sx={{ width: '1px', bgcolor: '#f0f0f0', alignSelf: 'stretch', mr: 2.5 }} />
+                    )}
+                  </Box>
+                ))}
 
-                {/* Vertical rule */}
-                <Box sx={{ width: '1px', bgcolor: '#f0f0f0', alignSelf: 'stretch', mx: 2 }} />
-
-                {/* Program */}
-                <Box sx={{ flex: 2 }}>
+                {/* Program — always last after scores */}
+                {selectedStudent.scores?.length > 0 && (
+                  <Box sx={{ width: '1px', bgcolor: '#f0f0f0', alignSelf: 'stretch', mr: 2.5 }} />
+                )}
+                <Box>
                   <Typography sx={{
-                    fontSize: '0.65rem', fontWeight: 700, color: '#b0b8c4',
+                    fontSize: '0.62rem', fontWeight: 700, color: '#b0b8c4',
                     textTransform: 'uppercase', letterSpacing: '0.1em',
-                    fontFamily: '"DM Sans", sans-serif', mb: 0.5,
+                    fontFamily: '"DM Sans", sans-serif', mb: 0.4,
                   }}>
                     Program
                   </Typography>
                   <Typography sx={{
-                    fontFamily: '"DM Sans", sans-serif',
-                    fontSize: '0.92rem', fontWeight: 700,
-                    color: '#0d1117', lineHeight: 1.35,
+                    fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem',
+                    fontWeight: 700, color: '#0d1117', lineHeight: 1.35,
                   }}>
                     {selectedStudent.course}
                   </Typography>
                 </Box>
               </Box>
 
-              {/* SEPARATOR */}
               <Box sx={{ height: '1px', bgcolor: '#f0f0f0', mx: { xs: 3, sm: 3.5 } }} />
 
-              {/* QUOTE BLOCK */}
+              {/* ✅ CURRENT STATUS — multiple lines */}
+              {selectedStudent.currentStatus?.length > 0 && (
+                <>
+                  <Box sx={{ px: { xs: 3, sm: 3.5 }, pt: 2, pb: 1.5 }}>
+                    <Typography sx={{
+                      fontSize: '0.62rem', fontWeight: 700, color: '#b0b8c4',
+                      textTransform: 'uppercase', letterSpacing: '0.1em',
+                      fontFamily: '"DM Sans", sans-serif', mb: 1.2,
+                    }}>
+                      Current Status
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.8 }}>
+                      {selectedStudent.currentStatus.map((line, i) => (
+                        <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Box sx={{
+                            width: 6, height: 6, borderRadius: '50%',
+                            bgcolor: '#c47a3a', flexShrink: 0,
+                          }} />
+                          <Typography sx={{
+                            fontSize: '0.88rem', color: '#374151',
+                            fontFamily: '"DM Sans", sans-serif', fontWeight: 500,
+                          }}>
+                            {line}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
+                  <Box sx={{ height: '1px', bgcolor: '#f0f0f0', mx: { xs: 3, sm: 3.5 } }} />
+                </>
+              )}
+
+              {/* QUOTE BLOCK — unchanged */}
               <Box sx={{
-                flex: 1,
-                px: { xs: 3, sm: 3.5 }, pt: 2.5, pb: { xs: 3, sm: 3.5 },
+                flex: 1, px: { xs: 3, sm: 3.5 }, pt: 2.5, pb: { xs: 3, sm: 3.5 },
                 display: 'flex', flexDirection: 'column', justifyContent: 'center',
               }}>
-                {/* Large decorative quote */}
                 <Typography sx={{
                   fontFamily: 'Georgia, "Times New Roman", serif',
-                  fontSize: '4rem', lineHeight: 0.7,
-                  color: '#e2e8f0',
-                  mb: 1, userSelect: 'none',
+                  fontSize: '4rem', lineHeight: 0.7, color: '#e2e8f0', mb: 1, userSelect: 'none',
                 }}>
                   &ldquo;
                 </Typography>
                 <Typography sx={{
-                  fontSize: { xs: '0.9rem', sm: '0.95rem' },
-                  color: '#374151',
-                  lineHeight: 1.85,
-                  fontFamily: '"DM Sans", sans-serif',
-                  fontWeight: 400,
+                  fontSize: { xs: '0.9rem', sm: '0.95rem' }, color: '#374151',
+                  lineHeight: 1.85, fontFamily: '"DM Sans", sans-serif', fontWeight: 400,
                 }}>
                   {selectedStudent.bio}
                 </Typography>
-                {/* Attribution line */}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }}>
                   <Box sx={{ height: '1px', width: 24, bgcolor: '#c47a3a' }} />
                   <Typography sx={{

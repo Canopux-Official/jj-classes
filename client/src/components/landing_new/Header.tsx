@@ -9,11 +9,13 @@ import CloseIcon from '@mui/icons-material/Close'
 import LogoImg from '../../assets/logo.jpeg'
 import { useNavigate } from 'react-router-dom'
 
+
 const navItems = [
   { label: 'Home', href: '#hero' },
   { label: 'Courses', href: '#courses' },
   { label: 'Result', href: '#results' },
   { label: 'Faculty', href: '#faculty' },
+  { label: 'Gallery', href: '#gallery' },
   { label: 'Contact', href: '#footer' },
 ]
 

@@ -11,6 +11,7 @@ import Footer from '../../components/landing_new/Footer';
 import theme from '../../components/landing_new/theme/theme';
 import { getLandingPage } from '../../api/apiFunctions';
 import SEO from '../../components/SEO';
+import Gallery from '../../components/landing_new/Gallery';
 
 interface FooterData {
   brandDescription?: string;
@@ -35,6 +36,7 @@ interface LandingData {
   facultyStats?: { value: string; label: string }[];
   faqs?: { q: string; a: string; id?: string }[];
   footer?: FooterData;
+  gallery?: { publicid: string; url: string }[];
 }
 
 const LandingPage = () => {
@@ -82,6 +84,7 @@ const LandingPage = () => {
       <Courses data={data?.courses} />
       <Faculty data={data?.faculty} stats={data?.facultyStats} />
       <FAQ data={data?.faqs} />
+      <Gallery data = {data?.gallery}/>
       <Footer data={data?.footer} />
     </ThemeProvider>
   );

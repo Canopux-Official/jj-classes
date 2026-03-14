@@ -18,7 +18,8 @@ const getLandingPage = async (req: express.Request, res: express.Response): Prom
                     faculty: [],
                     results: [],
                     faqs: [],
-                    footer: { phones: [], email: '', address: '', socialLinks: {} }
+                    footer: { phones: [], email: '', address: '', socialLinks: {} },
+                    gallery: []
                 }
             });
             return;
@@ -42,7 +43,7 @@ const getLandingPage = async (req: express.Request, res: express.Response): Prom
 const updateLandingPage = async (req: express.Request, res: express.Response): Promise<void> => {
     try {
         await connectDB();
-        const { hero, courses, faculty, results, faqs, footer } = req.body;
+        const { hero, courses, faculty, results, faqs, footer, facultyStats, gallery  } = req.body;
 
         const updatedLandingPage = await LandingPage.findOneAndUpdate(
             {},
@@ -50,9 +51,11 @@ const updateLandingPage = async (req: express.Request, res: express.Response): P
                 hero,
                 courses,
                 faculty,
+                facultyStats,
                 results,
                 faqs,
-                footer
+                footer,
+                gallery
             },
             { new: true, upsert: true, runValidators: true }
         );

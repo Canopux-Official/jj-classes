@@ -41,6 +41,7 @@ import Faculty from '../../components/landing_new/Faculty';
 import FAQ from '../../components/landing_new/FAQ';
 import Footer from '../../components/landing_new/Footer';
 import { uploadImageToCloudinary } from '../../components/landing_new/service/cloudinary_service';
+import Gallery from '../../components/landing_new/Gallery';
 
 
 // Define Interfaces for Type Safety
@@ -86,17 +87,33 @@ interface FacultyMember {
     bio: string;
 }
 
+interface ScoreEntry {
+    exam: string;
+    score: string;
+}
+
 interface Result {
     name: string;
-    score: string;
-    scoreLabel: string;
-    exam: string;
+    scores: ScoreEntry[];        // ✅ multiple exam scores
     course: string;
     image: string;
     bio: string;
     achievement: string;
+    currentStatus: string[];     // ✅ multiple status lines
     youtubeLink?: string;
 }
+
+// interface Result {
+//     name: string;
+//     score: string;
+//     scoreLabel: string;
+//     exam: string;
+//     course: string;
+//     image: string;
+//     bio: string;
+//     achievement: string;
+//     youtubeLink?: string;
+// }
 
 interface FAQ {
     q: string;
@@ -118,6 +135,11 @@ interface Footer {
     socialLinks: SocialLinks;
 }
 
+interface GalleryImage {
+    url: string;
+    publicId?: string;
+}
+
 interface LandingData {
     hero: Hero;
     courses: Course[];
@@ -125,6 +147,7 @@ interface LandingData {
     facultyStats: FacultyStat[];
     results: Result[];
     faqs: FAQ[];
+    gallery: GalleryImage[];
     footer: Footer;
 }
 
@@ -241,6 +264,7 @@ const AdminLandingPage: React.FC = () => {
                         facultyStats: [],
                         results: [],
                         faqs: [],
+                        gallery: [],
                         footer: {
                             phones: [],
                             email: '',
@@ -390,6 +414,14 @@ const AdminLandingPage: React.FC = () => {
 
     if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}><CircularProgress /></Box>;
 
+    // default stats
+    const defaultStats = [
+        { value: '6+', label: 'Expert Educators' },
+        { value: '88 yrs', label: 'Combined Experience' },
+        { value: '95%', label: 'Success Rate' },
+        { value: '4', label: 'Subjects Covered' }
+    ];
+
     return (
         <Box
             ref={containerRef}
@@ -476,7 +508,9 @@ const AdminLandingPage: React.FC = () => {
                             <Tab label="Course List" />
                             <Tab label="Faculty Team" />
                             <Tab label="FAQs" />
+                            <Tab label="Gallery" />   {/* ✅ add this */}
                             <Tab label="Footer & Social" />
+
                         </Tabs>
 
                         {/* Tab Panels */}
@@ -639,7 +673,7 @@ const AdminLandingPage: React.FC = () => {
                             </Stack>
                         )}
 
-                        {activeTab === 1 && (
+                        {/* {activeTab === 1 && (
                             <Card variant="outlined" sx={{ borderRadius: '12px' }}>
                                 <CardContent sx={{ p: 3 }}>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
@@ -729,6 +763,227 @@ const AdminLandingPage: React.FC = () => {
                                                             </Box>
                                                         </Box>
                                                         <TextField size="small" label="Testimonial / Bio" multiline rows={3} fullWidth value={student.bio} onChange={(e) => handleArrayItemChange('results', index, 'bio', e.target.value)} />
+                                                    </Box>
+                                                </Box>
+                                            </Paper>
+                                        ))}
+                                    </Box>
+                                </CardContent>
+                            </Card>
+                        )} */}
+
+                        {activeTab === 1 && (
+                            <Card variant="outlined" sx={{ borderRadius: '12px' }}>
+                                <CardContent sx={{ p: 3 }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+                                        <Box>
+                                            <Typography variant="h6" fontWeight={700}>Success Stories</Typography>
+                                            <Typography variant="body2" color="text.secondary">Showcase student achievements and ranks.</Typography>
+                                        </Box>
+                                        <Button variant="outlined" startIcon={<AddIcon />} onClick={() =>
+                                            addItem('results', {
+                                                name: '', scores: [], course: '', image: '',
+                                                bio: '', achievement: '', currentStatus: [], youtubeLink: ''
+                                            })
+                                        }>Add Story</Button>
+                                    </Box>
+
+                                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
+                                        {landingData?.results?.map((student: Result, index: number) => (
+                                            <Paper key={index} variant="outlined" sx={{ p: 3, borderRadius: '8px' }}>
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                                                    <Typography variant="subtitle1" fontWeight={700}>
+                                                        Student: {student.name || `New Entry ${index + 1}`}
+                                                    </Typography>
+                                                    <IconButton color="error" onClick={() => removeItem('results', index)}>
+                                                        <DeleteIcon />
+                                                    </IconButton>
+                                                </Box>
+
+                                                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                                                    <TextField size="small" label="Student Name" fullWidth
+                                                        value={student.name}
+                                                        onChange={(e) => handleArrayItemChange('results', index, 'name', e.target.value)}
+                                                    />
+                                                    <TextField size="small" label="Course (e.g. JEE Main)" fullWidth
+                                                        value={student.course}
+                                                        onChange={(e) => handleArrayItemChange('results', index, 'course', e.target.value)}
+                                                    />
+                                                    <TextField size="small" label="Final Achievement" fullWidth
+                                                        value={student.achievement}
+                                                        onChange={(e) => handleArrayItemChange('results', index, 'achievement', e.target.value)}
+                                                    />
+
+                                                    {/* ── Scores Section ── */}
+                                                    <Box sx={{ gridColumn: 'span 2' }}>
+                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                                                            <Typography variant="subtitle2" fontWeight={700}>
+                                                                Exam Scores
+                                                            </Typography>
+                                                            <Button size="small" startIcon={<AddIcon />} onClick={() => {
+                                                                const updated = [...landingData.results]
+                                                                updated[index] = {
+                                                                    ...updated[index],
+                                                                    scores: [...(updated[index].scores || []), { exam: '', score: '' }]
+                                                                }
+                                                                setLandingData(prev => prev ? { ...prev, results: updated } : prev)
+                                                            }}>
+                                                                Add Score
+                                                            </Button>
+                                                        </Box>
+                                                        <Stack spacing={1}>
+                                                            {(student.scores || []).map((entry: ScoreEntry, sIdx: number) => (
+                                                                <Box key={sIdx} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                                                    <TextField
+                                                                        size="small"
+                                                                        label="Exam (e.g. JEE Main)"
+                                                                        sx={{ flex: 1.2 }}
+                                                                        value={entry.exam}
+                                                                        onChange={(e) => {
+                                                                            const updated = [...landingData.results]
+                                                                            const newScores = [...(updated[index].scores || [])]
+                                                                            newScores[sIdx] = { ...newScores[sIdx], exam: e.target.value }
+                                                                            updated[index] = { ...updated[index], scores: newScores }
+                                                                            setLandingData(prev => prev ? { ...prev, results: updated } : prev)
+                                                                        }}
+                                                                    />
+                                                                    <TextField
+                                                                        size="small"
+                                                                        label="Score (e.g. AIR 42)"
+                                                                        sx={{ flex: 1 }}
+                                                                        value={entry.score}
+                                                                        onChange={(e) => {
+                                                                            const updated = [...landingData.results]
+                                                                            const newScores = [...(updated[index].scores || [])]
+                                                                            newScores[sIdx] = { ...newScores[sIdx], score: e.target.value }
+                                                                            updated[index] = { ...updated[index], scores: newScores }
+                                                                            setLandingData(prev => prev ? { ...prev, results: updated } : prev)
+                                                                        }}
+                                                                    />
+                                                                    <IconButton size="small" color="error" onClick={() => {
+                                                                        const updated = [...landingData.results]
+                                                                        updated[index] = {
+                                                                            ...updated[index],
+                                                                            scores: updated[index].scores.filter((_, i) => i !== sIdx)
+                                                                        }
+                                                                        setLandingData(prev => prev ? { ...prev, results: updated } : prev)
+                                                                    }}>
+                                                                        <DeleteIcon fontSize="small" />
+                                                                    </IconButton>
+                                                                </Box>
+                                                            ))}
+                                                            {(!student.scores || student.scores.length === 0) && (
+                                                                <Typography variant="caption" color="text.secondary" sx={{ pl: 0.5 }}>
+                                                                    No scores yet — click "Add Score" to add exam results
+                                                                </Typography>
+                                                            )}
+                                                        </Stack>
+                                                    </Box>
+
+                                                    {/* ── Current Status Section ── */}
+                                                    <Box sx={{ gridColumn: 'span 2' }}>
+                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                                                            <Box>
+                                                                <Typography variant="subtitle2" fontWeight={700}>Current Status</Typography>
+                                                                <Typography variant="caption" color="text.secondary">
+                                                                    e.g. "Selected at Google", "IIT Delhi — CS 2024"
+                                                                </Typography>
+                                                            </Box>
+                                                            <Button size="small" startIcon={<AddIcon />} onClick={() => {
+                                                                const updated = [...landingData.results]
+                                                                updated[index] = {
+                                                                    ...updated[index],
+                                                                    currentStatus: [...(updated[index].currentStatus || []), '']
+                                                                }
+                                                                setLandingData(prev => prev ? { ...prev, results: updated } : prev)
+                                                            }}>
+                                                                Add Status
+                                                            </Button>
+                                                        </Box>
+                                                        <Stack spacing={1}>
+                                                            {(student.currentStatus || []).map((status: string, stIdx: number) => (
+                                                                <Box key={stIdx} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                                                    <TextField
+                                                                        size="small"
+                                                                        fullWidth
+                                                                        placeholder={`Status line ${stIdx + 1}`}
+                                                                        value={status}
+                                                                        onChange={(e) => {
+                                                                            const updated = [...landingData.results]
+                                                                            const newStatus = [...(updated[index].currentStatus || [])]
+                                                                            newStatus[stIdx] = e.target.value
+                                                                            updated[index] = { ...updated[index], currentStatus: newStatus }
+                                                                            setLandingData(prev => prev ? { ...prev, results: updated } : prev)
+                                                                        }}
+                                                                    />
+                                                                    <IconButton size="small" color="error" onClick={() => {
+                                                                        const updated = [...landingData.results]
+                                                                        updated[index] = {
+                                                                            ...updated[index],
+                                                                            currentStatus: updated[index].currentStatus.filter((_, i) => i !== stIdx)
+                                                                        }
+                                                                        setLandingData(prev => prev ? { ...prev, results: updated } : prev)
+                                                                    }}>
+                                                                        <DeleteIcon fontSize="small" />
+                                                                    </IconButton>
+                                                                </Box>
+                                                            ))}
+                                                            {(!student.currentStatus || student.currentStatus.length === 0) && (
+                                                                <Typography variant="caption" color="text.secondary" sx={{ pl: 0.5 }}>
+                                                                    No status lines yet — click "Add Status"
+                                                                </Typography>
+                                                            )}
+                                                        </Stack>
+                                                    </Box>
+
+                                                    {/* ── Image + Bio ── (unchanged) */}
+                                                    <Box sx={{ gridColumn: 'span 2' }}>
+                                                        <TextField
+                                                            size="small" label="Youtube Link (Optional)" fullWidth
+                                                            value={student.youtubeLink || ''}
+                                                            onChange={(e) => handleArrayItemChange('results', index, 'youtubeLink', e.target.value)}
+                                                            sx={{ mb: 2 }}
+                                                            helperText="⚠️ Only 9:16 vertical videos (YouTube Shorts) are supported."
+                                                            FormHelperTextProps={{ sx: { color: 'warning.main', fontWeight: 500 } }}
+                                                        />
+                                                        <Box sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 1, bgcolor: '#fafafa' }}>
+                                                            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                                                                Upload Image
+                                                            </Typography>
+                                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                                                <Box component="img"
+                                                                    src={student.image || 'https://via.placeholder.com/60?text=No+Img'}
+                                                                    sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd' }}
+                                                                />
+                                                                <Button variant="outlined" component="label" size="small"
+                                                                    startIcon={imageUploading ? <CircularProgress size={14} /> : <CloudUploadIcon />}
+                                                                    disabled={imageUploading}
+                                                                >
+                                                                    {imageUploading ? `${imageUploadProgress}%` : 'Upload Image'}
+                                                                    <input type="file" hidden accept="image/*" onChange={async (e) => {
+                                                                        const file = e.target.files?.[0];
+                                                                        if (!file || !file.type.startsWith('image/')) return;
+                                                                        setImageUploading(true); setImageUploadProgress(0);
+                                                                        try {
+                                                                            const imageUrl = await uploadImageToCloudinary(file, (p) => setImageUploadProgress(p));
+                                                                            handleArrayItemChange('results', index, 'image', imageUrl);
+                                                                        } catch (err: any) {
+                                                                            setError(`Upload failed: ${err.message}`);
+                                                                        } finally {
+                                                                            setImageUploading(false); setImageUploadProgress(0); e.target.value = '';
+                                                                        }
+                                                                    }} />
+                                                                </Button>
+                                                                {imageUploading && (
+                                                                    <LinearProgress variant="determinate" value={imageUploadProgress}
+                                                                        sx={{ mt: 1, borderRadius: 1, height: 5 }} />
+                                                                )}
+                                                            </Box>
+                                                        </Box>
+                                                        <TextField size="small" label="Testimonial / Bio" multiline rows={3} fullWidth
+                                                            value={student.bio}
+                                                            onChange={(e) => handleArrayItemChange('results', index, 'bio', e.target.value)}
+                                                        />
                                                     </Box>
                                                 </Box>
                                             </Paper>
@@ -831,21 +1086,14 @@ const AdminLandingPage: React.FC = () => {
 
                                         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
                                             {(() => {
-                                                const defaultStats = [
-                                                    { value: '6+', label: 'Expert Educators' },
-                                                    { value: '88 yrs', label: 'Combined Experience' },
-                                                    { value: '95%', label: 'Success Rate' },
-                                                    { value: '4', label: 'Subjects Covered' }
-                                                ];
-                                                const statsArray = (landingData?.facultyStats && landingData.facultyStats.length === 4)
-                                                    ? landingData.facultyStats
-                                                    : defaultStats;
+
+                                                const statsArray = landingData?.facultyStats ?? defaultStats;
 
                                                 return statsArray.map((stat, idx) => (
                                                     <Paper key={`fstat-${idx}`} variant="outlined" sx={{ p: 2, borderRadius: '8px' }}>
                                                         <Typography variant="subtitle2" sx={{ mb: 1.5, color: '#555' }}>Stat Box #{idx + 1}</Typography>
                                                         <Box sx={{ display: 'flex', gap: 2 }}>
-                                                            <TextField
+                                                            {/* <TextField
                                                                 size="small"
                                                                 label="Value (e.g. 6+)"
                                                                 sx={{ width: '40%' }}
@@ -854,6 +1102,15 @@ const AdminLandingPage: React.FC = () => {
                                                                     const newStats = [...statsArray];
                                                                     newStats[idx] = { ...newStats[idx], value: e.target.value };
                                                                     setLandingData(prev => prev ? ({ ...prev, facultyStats: newStats }) : prev);
+                                                                }}
+                                                            /> */}
+                                                            <TextField
+                                                                value={stat.value}
+                                                                onChange={(e) => {
+                                                                    const newStats = statsArray.map((s, i) =>   // ← use .map, safer than spread+index
+                                                                        i === idx ? { ...s, value: e.target.value } : s
+                                                                    );
+                                                                    setLandingData(prev => prev ? { ...prev, facultyStats: newStats } : prev);
                                                                 }}
                                                             />
                                                             <TextField
@@ -1001,6 +1258,171 @@ const AdminLandingPage: React.FC = () => {
                             </Card>
                         )}
 
+                        {/* Tab 6: Gallery */}
+                        {activeTab === 6 && (
+                            <Card variant="outlined" sx={{ borderRadius: '12px' }}>
+                                <CardContent sx={{ p: 3 }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
+                                        <Box>
+                                            <Typography variant="h6" fontWeight={700}>Photo Gallery</Typography>
+                                            <Typography variant="body2" color="text.secondary">
+                                                Upload photos — displayed as a collage. Each image keeps its original size and ratio.
+                                            </Typography>
+                                        </Box>
+
+                                        {/* Upload Button */}
+                                        <Button
+                                            variant="outlined"
+                                            component="label"
+                                            startIcon={imageUploading ? <CircularProgress size={16} /> : <CloudUploadIcon />}
+                                            disabled={imageUploading}
+                                            sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, flexShrink: 0 }}
+                                        >
+                                            {imageUploading ? `Uploading… ${imageUploadProgress}%` : 'Upload Photos'}
+                                            <input
+                                                type="file"
+                                                hidden
+                                                accept="image/*"
+                                                multiple
+                                                onChange={async (e) => {
+                                                    const files = Array.from(e.target.files || []);
+                                                    if (!files.length) return;
+
+                                                    setImageUploading(true);
+                                                    setImageUploadProgress(0);
+
+                                                    try {
+                                                        const uploaded: GalleryImage[] = [];
+                                                        for (let i = 0; i < files.length; i++) {
+                                                            const file = files[i];
+                                                            if (!file.type.startsWith('image/')) continue;
+                                                            const url = await uploadImageToCloudinary(file, (progress) => {
+                                                                // Show overall progress across all files
+                                                                const overall = Math.round(((i / files.length) * 100) + (progress / files.length));
+                                                                setImageUploadProgress(overall);
+                                                            });
+                                                            uploaded.push({ url });
+                                                        }
+                                                        const existing = landingData?.gallery || [];
+                                                        setLandingData(prev => prev ? {
+                                                            ...prev,
+                                                            gallery: [...existing, ...uploaded]
+                                                        } : prev);
+                                                        setError(null);
+                                                    } catch (err: any) {
+                                                        setError(`Upload failed: ${err.message}`);
+                                                    } finally {
+                                                        setImageUploading(false);
+                                                        setImageUploadProgress(0);
+                                                        e.target.value = '';
+                                                    }
+                                                }}
+                                            />
+                                        </Button>
+                                    </Box>
+
+                                    {/* Upload progress bar */}
+                                    {imageUploading && (
+                                        <LinearProgress
+                                            variant="determinate"
+                                            value={imageUploadProgress}
+                                            sx={{ mb: 3, borderRadius: 1, height: 6 }}
+                                        />
+                                    )}
+
+                                    {/* Empty state */}
+                                    {(!landingData?.gallery || landingData.gallery.length === 0) && !imageUploading && (
+                                        <Box sx={{
+                                            border: '2px dashed rgba(10,37,64,0.2)',
+                                            borderRadius: '12px',
+                                            p: 6,
+                                            textAlign: 'center',
+                                        }}>
+                                            <CloudUploadIcon sx={{ fontSize: 40, color: 'rgba(10,37,64,0.2)', mb: 1.5 }} />
+                                            <Typography variant="body2" color="text.secondary">
+                                                No photos yet — click "Upload Photos" to add some
+                                            </Typography>
+                                        </Box>
+                                    )}
+
+                                    {/* Masonry Collage Grid */}
+                                    {landingData?.gallery && landingData.gallery.length > 0 && (() => {
+                                        const cols: GalleryImage[][] = [[], [], []]
+                                        landingData.gallery.forEach((img, i) => cols[i % 3].push(img))
+
+                                        return (
+                                            <Box sx={{
+                                                display: 'grid',
+                                                gridTemplateColumns: { xs: '1fr 1fr', sm: '1fr 1fr 1fr' },
+                                                gap: '8px',
+                                                alignItems: 'start',
+                                            }}>
+                                                {cols.map((col, colIdx) => (
+                                                    <Box key={colIdx} sx={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                        {col.map((img, imgIdx) => {
+                                                            const realIdx = imgIdx * 3 + colIdx  // recover original index
+                                                            return (
+                                                                <Box
+                                                                    key={realIdx}
+                                                                    sx={{
+                                                                        position: 'relative',
+                                                                        borderRadius: '10px',
+                                                                        overflow: 'hidden',
+                                                                        lineHeight: 0,
+                                                                        '&:hover .gallery-delete': { opacity: 1 },
+                                                                    }}
+                                                                >
+                                                                    <Box
+                                                                        component="img"
+                                                                        src={img.url}
+                                                                        alt=""
+                                                                        sx={{
+                                                                            width: '100%',
+                                                                            height: 'auto',        // ✅ never crop
+                                                                            display: 'block',
+                                                                        }}
+                                                                    />
+                                                                    {/* Delete overlay */}
+                                                                    <Box
+                                                                        className="gallery-delete"
+                                                                        sx={{
+                                                                            position: 'absolute', inset: 0,
+                                                                            bgcolor: 'rgba(10,37,64,0.5)',
+                                                                            opacity: 0,
+                                                                            transition: 'opacity 0.2s ease',
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            justifyContent: 'center',
+                                                                        }}
+                                                                    >
+                                                                        <IconButton
+                                                                            size="small"
+                                                                            onClick={() => {
+                                                                                const updated = landingData.gallery.filter((_, i) => i !== realIdx)
+                                                                                setLandingData(prev => prev ? { ...prev, gallery: updated } : prev)
+                                                                            }}
+                                                                            sx={{
+                                                                                bgcolor: 'rgba(255,255,255,0.92)',
+                                                                                color: '#e53935',
+                                                                                '&:hover': { bgcolor: '#fff' },
+                                                                                borderRadius: '8px',
+                                                                            }}
+                                                                        >
+                                                                            <DeleteIcon fontSize="small" />
+                                                                        </IconButton>
+                                                                    </Box>
+                                                                </Box>
+                                                            )
+                                                        })}
+                                                    </Box>
+                                                ))}
+                                            </Box>
+                                        )
+                                    })()}
+                                </CardContent>
+                            </Card>
+                        )}
+
                         {/* Tab 5: Footer & Social */}
                         {activeTab === 5 && (
                             <Stack spacing={4}>
@@ -1086,6 +1508,9 @@ const AdminLandingPage: React.FC = () => {
 
                             </Stack>
                         )}
+
+
+
 
                         {/* Publish Confirmation Dialog */}
                         <Dialog
@@ -1181,6 +1606,7 @@ const AdminLandingPage: React.FC = () => {
                             <Courses data={landingData?.courses} />
                             <Faculty data={landingData?.faculty} />
                             <FAQ data={landingData?.faqs} />
+                            <Gallery data={landingData?.gallery} />
                             <Footer data={landingData?.footer} />
                         </ThemeProvider>
                     </Box>

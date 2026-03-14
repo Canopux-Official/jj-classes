@@ -80,36 +80,32 @@ const facultySchema = new mongoose.Schema({
     bio: { type: String, required: true }
 });
 
+const scoreEntrySchema = new mongoose.Schema({
+    // The exam name. Example: 'JEE Main', 'NEET', 'CBSE Class 12'
+    exam: { type: String, required: true },
+
+    // The score/rank achieved. Example: 'AIR 127', '99.8%', '95/100'
+    score: { type: String, required: true }
+}, { _id: false });
+
 
 // ==========================================
 // 4. RESULTS / SUCCESS STORIES SUB-SCHEMA
 // ==========================================
 const resultSchema = new mongoose.Schema({
-    // The successful student's name. Example: 'Rahul Sharma'
     name: { type: String, required: true },
 
-    // The actual score or rank value. Example: 'AIR 127' or '99.8%'
-    score: { type: String, required: true },
+    // Array of exam+score pairs. Example: [{ exam: 'JEE Main', score: '99.2%' }, { exam: 'NEET', score: 'AIR 450' }]
+    scores: [scoreEntrySchema],
 
-    // How the score is formatted in the green UI badge. Example: 'AIR 127'
-    scoreLabel: { type: String, required: true },
-
-    // The specific exam they cleared. Example: "JEE Adv. '25"
-    exam: { type: String, required: true },
-
-    // The type of program they were enrolled in. Example: 'Classroom Course'
     course: { type: String, required: true },
-
-    // Direct URL to the student's photo. Example: 'https://images.unsplash.com/photo-150700...'
     image: { type: String, required: true },
-
-    // Short blurb about their study habits. Example: 'Rahul consistently performed exceptionally well...'
     bio: { type: String, required: true },
-
-    // The final outcome or college they got into. Example: 'Admitted to IIT Delhi - Computer Science'
     achievement: { type: String, required: true },
 
-    // YouTube Shorts link for their success story video
+    // Array of current status lines. Example: ['Selected at Google', 'Startup Founder']
+    currentStatus: [{ type: String }],
+
     youtubeLink: { type: String }
 });
 
@@ -124,6 +120,17 @@ const faqSchema = new mongoose.Schema({
     // The answer to the question. Example: 'Yes, we offer a Hybrid Model (Offline + Online)...'
     a: { type: String, required: true }
 });
+
+// ==========================================
+// 7. GALLERY SUB-SCHEMA
+// ==========================================
+const galleryImageSchema = new mongoose.Schema({
+    // Direct URL to the uploaded image (Cloudinary). Example: 'https://res.cloudinary.com/...'
+    url: { type: String, required: true },
+
+    // Optional Cloudinary public_id for future deletion support. Example: 'gallery/abc123'
+    publicId: { type: String }
+}, { _id: false });
 
 
 // ==========================================
@@ -164,6 +171,8 @@ const landingPageSchema = new mongoose.Schema({
 
     // Array holding all the accordion dropdowns for the FAQ section
     faqs: [faqSchema],
+
+    gallery: [galleryImageSchema],
 
     // --- FOOTER SECTION ---
     footer: {

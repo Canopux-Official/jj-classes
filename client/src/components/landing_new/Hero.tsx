@@ -231,10 +231,10 @@ export default function Hero({ data }: { data?: { heading?: React.ReactNode; sub
               </Box>
               <Box>
                 <Typography sx={{ fontFamily: '"DM Sans", sans-serif', fontWeight: 700, fontSize: 13, color: '#0a2540', lineHeight: 1.2 }}>
-                  #1 Ranked
+                  #1 Rank
                 </Typography>
                 <Typography sx={{ fontSize: 11, color: '#94a3b8', fontFamily: '"DM Sans", sans-serif' }}>
-                  Coaching in Region
+                  Institute in Region
                 </Typography>
               </Box>
             </Box>

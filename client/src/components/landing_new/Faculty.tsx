@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Box, Container, Typography, Dialog, DialogContent, IconButton, Divider } from '@mui/material'
+import { Box, Container, Typography, Dialog, IconButton, Divider } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import SchoolIcon from '@mui/icons-material/School'
 import AutoStoriesIcon from '@mui/icons-material/AutoStories'
@@ -106,7 +106,7 @@ function FacultyCard({ member, onClick }: { member: FacultyMember; onClick: () =
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, pt: 0.5, borderTop: '1px solid rgba(10,37,64,0.06)' }}>
           <WorkHistoryOutlinedIcon sx={{ fontSize: 13, color: '#94a3b8' }} />
           <Typography sx={{ fontSize: { xs: 11, sm: 12 }, color: '#6b7280', fontFamily: '"DM Sans", sans-serif' }}>
-            {member.experience} yrs experience
+            {member.experience} experience
           </Typography>
         </Box>
       </Box>
@@ -126,6 +126,9 @@ export default function Faculty({ data, stats }: { data?: (Omit<FacultyMember, '
     { value: '95%', label: 'Success Rate' },
     { value: '4', label: 'Subjects Covered' },
   ]
+
+  console.log(stats)
+  console.log(data)
 
   return (
     <Box id="faculty" sx={{ py: { xs: 9, md: 14 }, bgcolor: '#fff' }}>
@@ -200,7 +203,7 @@ export default function Faculty({ data, stats }: { data?: (Omit<FacultyMember, '
       </Container>
 
       {/* Modal */}
-      <Dialog
+      {/* <Dialog
         open={!!selected} onClose={() => setSelected(null)}
         maxWidth="xs" fullWidth
         PaperProps={{ sx: { borderRadius: '24px', overflow: 'hidden', boxShadow: '0 32px 80px rgba(0,0,0,0.18)' } }}
@@ -297,7 +300,163 @@ export default function Faculty({ data, stats }: { data?: (Omit<FacultyMember, '
             </DialogContent>
           </>
         )}
+      </Dialog> */}
+
+      <Dialog
+        open={!!selected} onClose={() => setSelected(null)}
+        maxWidth="md" fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: { xs: '16px', sm: '24px' },
+            overflow: 'hidden',
+            boxShadow: '0 32px 80px rgba(0,0,0,0.18)',
+            margin: { xs: '16px', sm: '32px' },  // ✅ breathing room on mobile
+            maxHeight: { xs: 'calc(100vh - 32px)', sm: 'calc(100vh - 64px)' }, // ✅ limit height
+          }
+        }}
+      >
+        {selected && (
+          <Box sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            height: { sm: '100%' },
+            overflow: { xs: 'auto', sm: 'hidden' }, // ✅ mobile scrollable
+          }}>
+
+            {/* TOP on mobile / LEFT on desktop — Image */}
+            <Box sx={{
+              width: { xs: '100%', sm: 280 },
+              height: { xs: 260, sm: 'auto' },   // ✅ fixed height on mobile
+              flexShrink: 0,
+              position: 'relative',
+              overflow: 'hidden',
+            }}>
+              <Box
+                component="img"
+                src={selected.image}
+                alt={selected.name}
+                sx={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'center top',
+                  display: 'block',
+                }}
+              />
+              {/* Close button over image — visible on both */}
+              <IconButton
+                onClick={() => setSelected(null)}
+                size="small"
+                sx={{
+                  position: 'absolute', top: 12, right: 12,
+                  bgcolor: 'rgba(255,255,255,0.92)', color: '#374151',
+                  '&:hover': { bgcolor: '#fff' },
+                  borderRadius: '10px', p: 0.7,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                }}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
+
+            {/* BOTTOM on mobile / RIGHT on desktop — Details */}
+            <Box sx={{
+              flex: 1,
+              px: { xs: 2.5, sm: 3 },
+              py: { xs: 2.5, sm: 3 },
+              display: 'flex',
+              flexDirection: 'column',
+              overflowY: { xs: 'visible', sm: 'auto' }, // ✅ desktop scrollable if content tall
+            }}>
+              <Typography sx={{
+                fontFamily: '"DM Sans", sans-serif', fontWeight: 700,
+                fontSize: { xs: '1rem', sm: '1.15rem' },
+                color: '#0a2540', letterSpacing: '-0.01em'
+              }}>
+                {selected.name}
+              </Typography>
+              <Typography sx={{
+                fontSize: 12.5, color: '#94a3b8',
+                fontFamily: '"DM Sans", sans-serif', mb: 2
+              }}>
+                {selected.title}
+              </Typography>
+
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5, gap: 1, flexWrap: 'wrap' }}>
+                {(() => {
+                  const sStyle = getSubjectStyle(selected.subject)
+                  return (
+                    <Box sx={{
+                      bgcolor: sStyle.bg, color: sStyle.text,
+                      border: `1px solid ${sStyle.border}`,
+                      borderRadius: '8px', px: 1.8, py: 0.4,
+                      fontSize: 12, fontWeight: 600, fontFamily: '"DM Sans", sans-serif',
+                    }}>
+                      {selected.subject}
+                    </Box>
+                  )
+                })()}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                  <WorkHistoryOutlinedIcon sx={{ fontSize: 14, color: '#94a3b8' }} />
+                  <Typography sx={{ fontSize: 13, color: '#374151', fontWeight: 600, fontFamily: '"DM Sans", sans-serif' }}>
+                    {selected.experience} yrs experience
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Divider sx={{ mb: 2.5, borderColor: 'rgba(10,37,64,0.07)' }} />
+
+              <Typography sx={{
+                fontFamily: '"DM Sans", sans-serif', fontWeight: 700,
+                fontSize: '0.75rem', color: '#94a3b8', mb: 1,
+                textTransform: 'uppercase', letterSpacing: '0.08em'
+              }}>
+                About
+              </Typography>
+              <Typography sx={{
+                fontSize: 13.5, color: '#374151', lineHeight: 1.75, mb: 3,
+                fontFamily: '"DM Sans", sans-serif'
+              }}>
+                {selected.bio}
+              </Typography>
+
+              <Divider sx={{ mb: 2.5, borderColor: 'rgba(10,37,64,0.07)' }} />
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pb: { xs: 1, sm: 0 } }}>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                  <Box sx={{ width: 32, height: 32, bgcolor: '#f0f4ff', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <SchoolIcon sx={{ fontSize: 15, color: '#0a2540' }} />
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', mb: 0.2, fontFamily: '"DM Sans", sans-serif' }}>
+                      Qualification
+                    </Typography>
+                    <Typography sx={{ fontSize: 13.5, color: '#0d1b2a', fontWeight: 600, fontFamily: '"DM Sans", sans-serif' }}>
+                      {selected.qualification}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                  <Box sx={{ width: 32, height: 32, bgcolor: '#f0f4ff', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <AutoStoriesIcon sx={{ fontSize: 15, color: '#0a2540' }} />
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', mb: 0.2, fontFamily: '"DM Sans", sans-serif' }}>
+                      Specialty
+                    </Typography>
+                    <Typography sx={{ fontSize: 13.5, color: '#0d1b2a', fontWeight: 600, fontFamily: '"DM Sans", sans-serif' }}>
+                      {selected.specialty}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+
+          </Box>
+        )}
       </Dialog>
+
     </Box>
   )
 }
