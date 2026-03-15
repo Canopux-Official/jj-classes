@@ -30,7 +30,7 @@ interface FooterData {
 
 interface LandingData {
   hero?: { heading?: React.ReactNode; subheading?: string; stats?: { target: number; suffix: string; divisor: number; label: string }[]; image?: string };
-  results?: { id: number; name: string; score: string; scoreLabel: string; exam: string; course: string; image: string; bio: string; achievement: string; youtubeLink?: string }[];
+  results?: { id: number; name: string; score: string; scoreLabel: string; exam: string; course: string; image: string; bio: string; youtubeLink?: string }[];
   courses?: { id: string; title: string; description: string; level: string; students: number; duration: string; features: string[]; gradient: string; courseId?: string }[];
   faculty?: { id: string; name: string; title: string; subject: string; experience: string; qualification: string; specialty: string; initials: string; image: string; bio: string }[];
   facultyStats?: { value: string; label: string }[];
@@ -71,8 +71,8 @@ const LandingPage = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <SEO 
-        title="JJ Institute Of Science: In The Pursuit Of Excellence" 
+      <SEO
+        title="JJ Institute Of Science: In The Pursuit Of Excellence"
         description="Join JJ Institute of Science for a premier educational experience. Explore our courses, faculty, and success stories to achieve academic excellence in JEE, NEET, and Boards."
         keywords="JJ Institute of Science, JIS, Education, Courses, Faculty, Academic Excellence, JEE, NEET, Boards, Science"
       />
@@ -84,7 +84,7 @@ const LandingPage = () => {
       <Courses data={data?.courses} />
       <Faculty data={data?.faculty} stats={data?.facultyStats} />
       <FAQ data={data?.faqs} />
-      <Gallery data = {data?.gallery}/>
+      <Gallery data={data?.gallery} />
       <Footer data={data?.footer} />
     </ThemeProvider>
   );

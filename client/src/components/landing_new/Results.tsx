@@ -464,17 +464,19 @@ function StudentCard({ student, onSelect }: { student: Student; onSelect: (s: St
   const x = useMotionValue(0)
   const animFrameRef = useRef<number | null>(null)
 
+  const chips = student.scores ?? []
+  const shouldScroll = chips.length > 1  // ← the only gate you need
+
   useEffect(() => {
+    if (!shouldScroll) return   // single score → skip rAF entirely
+
     const rafId = requestAnimationFrame(() => {
       const tick = () => {
-        const wrapper = wrapperRef.current
         const inner = innerRef.current
-        if (wrapper && inner) {
-          // innerRef contains ONE set of chips
-          // We always scroll exactly one set width, then reset to 0 — seamless loop
-          const singleSetWidth = inner.offsetWidth / 2  // we render chips twice inside
-          let next = x.get() - 0.5                     // 0.5px per frame → gentle pace
-          if (next <= -singleSetWidth) next = 0        // jump back silently (chips are identical)
+        if (inner) {
+          const singleSetWidth = inner.offsetWidth / 2
+          let next = x.get() - 0.5
+          if (next <= -singleSetWidth) next = 0
           x.set(next)
         }
         animFrameRef.current = requestAnimationFrame(tick)
@@ -486,10 +488,7 @@ function StudentCard({ student, onSelect }: { student: Student; onSelect: (s: St
       cancelAnimationFrame(rafId)
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
     }
-  }, [x])
-
-  // duplicate chips so loop is always seamless regardless of count
-  const chips = student.scores ?? []
+  }, [x, shouldScroll])
 
   return (
     <motion.div
@@ -544,27 +543,36 @@ function StudentCard({ student, onSelect }: { student: Student; onSelect: (s: St
         )}
       </motion.div>
 
-      {/* ── Infinite loop score strip ── */}
+      {/* ── Score strip ── */}
       {chips.length > 0 && (
-        <Box
-          ref={wrapperRef}
-          sx={{
-            width: '100%',
-            overflow: 'hidden',
-            WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%)',
-            maskImage: 'linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%)',
-          }}
-        >
-          <motion.div style={{ display: 'flex', x }}>
-            {/* innerRef wraps BOTH copies — offsetWidth/2 = one set width */}
-            <div ref={innerRef} style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-              {/* copy A */}
-              {chips.map((s, i) => <ScoreChip key={`a-${i}`} s={s} />)}
-              {/* copy B — seamless loop: when A scrolls out, B takes over, then x resets to 0 */}
-              {chips.map((s, i) => <ScoreChip key={`b-${i}`} s={s} />)}
-            </div>
-          </motion.div>
-        </Box>
+        <>
+          {/* SINGLE score — static, centered, no scroll */}
+          {!shouldScroll && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 0 }}>
+              <ScoreChip s={chips[0]} />
+            </Box>
+          )}
+
+          {/* MULTIPLE scores — infinite loop scroll */}
+          {shouldScroll && (
+            <Box
+              ref={wrapperRef}
+              sx={{
+                width: '100%',
+                overflow: 'hidden',
+                WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%)',
+                maskImage: 'linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%)',
+              }}
+            >
+              <motion.div style={{ display: 'flex', x }}>
+                <div ref={innerRef} style={{ display: 'flex', flexShrink: 0 }}>
+                  {chips.map((s, i) => <ScoreChip key={`a-${i}`} s={s} />)}
+                  {chips.map((s, i) => <ScoreChip key={`b-${i}`} s={s} />)}
+                </div>
+              </motion.div>
+            </Box>
+          )}
+        </>
       )}
 
       <Typography sx={{ fontSize: 12, color: '#94a3b8', fontFamily: '"DM Sans", sans-serif', textAlign: 'center', mt: '8px' }}>
@@ -574,7 +582,6 @@ function StudentCard({ student, onSelect }: { student: Student; onSelect: (s: St
   )
 }
 
-// extracted to keep JSX clean
 function ScoreChip({ s }: { s: ScoreEntry }) {
   return (
     <Box sx={{
@@ -587,7 +594,7 @@ function ScoreChip({ s }: { s: ScoreEntry }) {
       bgcolor: 'rgba(196,122,58,0.04)',
       userSelect: 'none',
       pointerEvents: 'none',
-      mr: '6px',          // gap between chips (using mr instead of gap so duplicate set butts up correctly)
+      mr: '6px',
     }}>
       <Typography sx={{
         fontSize: 9, fontWeight: 700, color: '#b08040',
@@ -606,6 +613,7 @@ function ScoreChip({ s }: { s: ScoreEntry }) {
     </Box>
   )
 }
+
 
 export default function Results({ data }: { data?: Student[] | unknown[] }) {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
