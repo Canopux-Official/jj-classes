@@ -339,7 +339,7 @@ export const initGoogleDrive = (): Promise<boolean> => {
             discoveryDocs: [DISCOVERY_DOCS],
           });
           gapiInitialized = true;
-          console.log('✅ Google Drive API initialized');
+          // console.log('✅ Google Drive API initialized');
           resolve(true);
         } catch (error) {
           console.error('❌ Error initializing Google Drive:', error);
@@ -378,7 +378,7 @@ export const getAccessToken = (): Promise<string> => {
           return;
         }
         accessToken = response.access_token;
-        console.log('✅ Access token obtained');
+        // console.log('✅ Access token obtained');
         resolve(response.access_token);
       },
     });
@@ -409,7 +409,7 @@ export const deleteFileFromDrive = async (fileId: string): Promise<boolean> => {
     });
 
     if (response.ok || response.status === 204) {
-      console.log('✅ File deleted from Drive');
+      // console.log('✅ File deleted from Drive');
       return true;
     }
     
@@ -441,7 +441,7 @@ export const makeFilePublic = async (fileId: string): Promise<boolean> => {
     });
 
     if (response.ok) {
-      console.log('✅ File made public');
+      // console.log('✅ File made public');
       return true;
     }
 
@@ -461,7 +461,7 @@ export const uploadFileToDrive = async (
   onProgress?: (progress: number) => void
 ): Promise<FileDetail | null> => {
   try {
-    console.log('Starting upload for:', file.name);
+    // console.log('Starting upload for:', file.name);
 
     if (!gapiInitialized) {
       throw new Error('Google API not initialized');
@@ -480,7 +480,7 @@ export const uploadFileToDrive = async (
     form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
     form.append('file', file);
 
-    console.log('Uploading to Google Drive...');
+    // console.log('Uploading to Google Drive...');
 
     // Create XMLHttpRequest for progress tracking
     const xhr = new XMLHttpRequest();
@@ -514,13 +514,13 @@ export const uploadFileToDrive = async (
     });
 
     const data = await uploadPromise;
-    console.log('Upload response:', data);
+    // console.log('Upload response:', data);
 
     if (data.id) {
-      console.log('Making file public...');
+      // console.log('Making file public...');
       await makeFilePublic(data.id);
 
-      console.log('✅ File uploaded successfully:', file.name);
+      // console.log('✅ File uploaded successfully:', file.name);
 
       return {
         fileName: file.name,
@@ -606,5 +606,5 @@ export const isGoogleDriveInitialized = (): boolean => {
  */
 export const clearAccessToken = (): void => {
   accessToken = null;
-  console.log('✅ Access token cleared');
+  // console.log('✅ Access token cleared');
 };

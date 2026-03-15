@@ -60,7 +60,7 @@ const StudentLayout: React.FC = () => {
     fetchData();
   }, []);
 
-  console.log(student)
+  // console.log(student)
 
   const studentName = student?.name || "Student";
 

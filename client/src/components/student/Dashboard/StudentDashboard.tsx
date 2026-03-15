@@ -652,7 +652,7 @@ import {
   SupportAgentOutlined as SupportIcon,
   ChevronRight as ChevronIcon,
 } from '@mui/icons-material';
-import { getStudentProfile, getStudentNotices } from '../../../api/apiFunctions';
+import {getStudentNotices, getStudent } from '../../../api/apiFunctions';
 import MaterialStatsCard from '../Material/stats/MaterialStatsCard';
 import RecentlyAddedMaterials from '../Material/stats/RecentlyAddedMaterials';
 
@@ -669,7 +669,7 @@ const StudentDashboard: React.FC = () => {
   useEffect(() => {
     (async () => {
       try {
-        const [p, n] = await Promise.all([getStudentProfile(), getStudentNotices()]);
+        const [p, n] = await Promise.all([getStudent(), getStudentNotices()]);
         if (p.success) setStudent(p.data as StudentData);
         if (n.success) {
           const d = (n.data as any)?.data;
@@ -678,6 +678,8 @@ const StudentDashboard: React.FC = () => {
       } catch { }
     })();
   }, []);
+
+  // console.log(student)
 
   const firstName = student?.name?.split(' ')[0] || 'Student';
   const targets = student?.targetExams?.map(t => t.name).filter(Boolean).join(', ') || '';

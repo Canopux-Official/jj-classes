@@ -1044,7 +1044,7 @@ const ShowClass: React.FC = () => {
     return '';
   };
 
-  console.log(allNodes[0])
+  // console.log(allNodes[0])
 
   const getTargetExamName = (field: typeof allNodes[0]['targetExam']): string => getNameFromField(field as { _id?: string; name?: string } | string);
   const getStreamName = (field: typeof allNodes[0]['stream']): string => getNameFromField(field as { _id?: string; name?: string } | string | null);

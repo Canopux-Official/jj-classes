@@ -209,7 +209,7 @@ export const createFolder = async (parentId: string, folderData: Partial<Node>):
       folderData,
       { headers: getAuthHeaders() }
     );
-    console.log(folderData);
+    // console.log(folderData);
     return response.data;
   } catch (error) {
     console.error('Error creating folder:', error);

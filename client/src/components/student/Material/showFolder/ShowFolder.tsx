@@ -1100,7 +1100,7 @@ const StudentFolderStructure: React.FC = () => {
     }
   }, [searchQuery, currentItems]);
 
-  console.log(filteredItems);
+  // console.log(filteredItems);
 
 
 

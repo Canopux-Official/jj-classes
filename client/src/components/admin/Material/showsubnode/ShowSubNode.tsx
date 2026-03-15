@@ -374,7 +374,7 @@ const ShowSubnode: React.FC<ShowSubnodeProps> = ({
   }, [childNodes, searchQuery]);
 
 
-  console.log(filteredNodes);
+  // console.log(filteredNodes);
 
   // Breadcrumb path from backend - use display heading
   const breadcrumbPath = currentNode

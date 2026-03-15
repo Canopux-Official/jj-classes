@@ -1580,7 +1580,7 @@ const NodeDialogForm: React.FC<NodeDialogFormProps> = ({
       setLoadingSubjects(true);
       try {
         const res = await getAllSubjects();
-        console.log(res.data)
+        // console.log(res.data)
         if (res.success && res.data && (res.data as ISubjectResponse).subjects) {
           setSubjects((res.data as ISubjectResponse).subjects);
         }
@@ -1612,7 +1612,7 @@ const NodeDialogForm: React.FC<NodeDialogFormProps> = ({
           ? data.subject._id
           : null;
 
-      console.log(subjectId);
+      // console.log(subjectId);
 
       setFormData({
         heading: data.heading || '',
@@ -1880,10 +1880,10 @@ const NodeDialogForm: React.FC<NodeDialogFormProps> = ({
   };
 
   const handleSave = () => {
-    console.log('handleSave called with formData:', formData);
-    console.log('selectedSubjectId:', selectedSubjectId);
-    console.log('useManualHeading:', useManualHeading);
-    console.log('isFirstDepth:', isFirstDepth);
+    // console.log('handleSave called with formData:', formData);
+    // console.log('selectedSubjectId:', selectedSubjectId);
+    // console.log('useManualHeading:', useManualHeading);
+    // console.log('isFirstDepth:', isFirstDepth);
 
     // Validation: Either subject or heading must be present
     if (isFirstDepth && !formData.subject && !formData.heading?.trim()) {
@@ -1923,7 +1923,7 @@ const NodeDialogForm: React.FC<NodeDialogFormProps> = ({
       dataToSave.heading = formData.heading?.trim();
     }
 
-    console.log('dataToSave:', dataToSave);
+    // console.log('dataToSave:', dataToSave);
     onSave(dataToSave);
     onClose();
   };

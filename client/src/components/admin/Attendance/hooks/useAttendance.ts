@@ -242,7 +242,7 @@ export const useAttendance = () => {
   // Toggle attendance for a single day
   const toggleAttendance = useCallback(
     async (studentId: string, day: number) => {
-      console.log(`Toggle clicked: ${studentId}, Day ${day}`);
+      // console.log(`Toggle clicked: ${studentId}, Day ${day}`);
 
       try {
         const student = students.find((s) => s.studentId === studentId);
@@ -274,12 +274,12 @@ export const useAttendance = () => {
           newStatus = null;
         }
 
-        console.log(`Toggling: ${studentId} Day ${day} from ${currentStatus} to ${newStatus}`);
+        // console.log(`Toggling: ${studentId} Day ${day} from ${currentStatus} to ${newStatus}`);
 
         // Update in localStorage with month and year
         await updateAttendance(studentId, day, newStatus, filters.month!, filters.year!);
 
-        console.log('Update complete, refreshing from localStorage...');
+        // console.log('Update complete, refreshing from localStorage...');
 
         // Force refresh from localStorage
         const updatedStudents = await getAllStudents(
@@ -287,7 +287,7 @@ export const useAttendance = () => {
           filters.year!
         );
 
-        console.log(`Refreshed ${updatedStudents.length} students from localStorage`);
+        // console.log(`Refreshed ${updatedStudents.length} students from localStorage`);
 
         setStudents(updatedStudents);
 
@@ -295,7 +295,7 @@ export const useAttendance = () => {
         const dirtyStudents = updatedStudents.filter((s) => s.isDirty);
         setDirtyCount(dirtyStudents.length);
 
-        console.log(`✅ Toggle complete. Dirty count: ${dirtyStudents.length}`);
+        // console.log(`✅ Toggle complete. Dirty count: ${dirtyStudents.length}`);
       } catch (err) {
         console.error('Toggle attendance error:', err);
         setError(
@@ -310,7 +310,7 @@ export const useAttendance = () => {
   const markAllForDay = useCallback(
     async (day: number, status: boolean) => {
       try {
-        console.log(`Marking all students for day ${day} as ${status ? 'Present' : 'Absent'}`);
+        // console.log(`Marking all students for day ${day} as ${status ? 'Present' : 'Absent'}`);
 
         // Update all students
         const updatePromises = students.map((student) =>
@@ -329,7 +329,7 @@ export const useAttendance = () => {
         const dirtyStudents = updatedStudents.filter((s) => s.isDirty);
         setDirtyCount(dirtyStudents.length);
 
-        console.log(`✅ Marked all complete. Dirty count: ${dirtyStudents.length}`);
+        // console.log(`✅ Marked all complete. Dirty count: ${dirtyStudents.length}`);
       } catch (err) {
         console.error('Mark all error:', err);
         setError(err instanceof Error ? err.message : 'Failed to mark all');
@@ -346,7 +346,7 @@ export const useAttendance = () => {
     try {
       const dirtyStudents = await getDirtyStudents(filters.month!, filters.year!);
 
-      console.log(`Found ${dirtyStudents.length} dirty students to sync`);
+      // console.log(`Found ${dirtyStudents.length} dirty students to sync`);
 
       if (dirtyStudents.length === 0) {
         setError('No changes to sync');
@@ -400,13 +400,13 @@ export const useAttendance = () => {
         return;
       }
 
-      console.log(`Syncing ${updates.length} attendance updates...`);
+      // console.log(`Syncing ${updates.length} attendance updates...`);
 
       // Send to backend
       const response = await attendanceApi.syncAttendance(updates);
 
       if (response.success) {
-        console.log('✅ Sync successful');
+        // console.log('✅ Sync successful');
 
         // Clear dirty flags
         await clearDirtyFlags(filters.month!, filters.year!);
@@ -417,7 +417,7 @@ export const useAttendance = () => {
             key === 'attendanceFilters'
         );
         keysToDelete.forEach((key) => localStorage.removeItem(key));
-        console.log(`🧹 Cleared ${keysToDelete.length} attendance keys after sync`);
+        // console.log(`🧹 Cleared ${keysToDelete.length} attendance keys after sync`);
 
         // Refresh data from backend
         await fetchAttendance();
@@ -433,7 +433,7 @@ export const useAttendance = () => {
           key.startsWith('attendance_data_')
       );
       keysToDelete.forEach((key) => localStorage.removeItem(key));
-      console.log(`🧹 Cleared ${keysToDelete.length} attendance keys after sync`);
+      // console.log(`🧹 Cleared ${keysToDelete.length} attendance keys after sync`);
 
       // Refresh data from backend
       await fetchAttendance();

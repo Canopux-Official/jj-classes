@@ -127,8 +127,8 @@ export default function Faculty({ data, stats }: { data?: (Omit<FacultyMember, '
     { value: '4', label: 'Subjects Covered' },
   ]
 
-  console.log(stats)
-  console.log(data)
+  // console.log(stats)
+  // console.log(data)
 
   return (
     <Box id="faculty" sx={{ py: { xs: 9, md: 14 }, bgcolor: '#fff' }}>

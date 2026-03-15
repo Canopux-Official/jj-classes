@@ -360,7 +360,7 @@ const FileBrowserModal: React.FC<FileBrowserModalProps> = ({
 
       const data = await response.json();
       setDriveFiles(data.files || []);
-      console.log('✅ Fetched files from Google Drive:', data.files?.length || 0);
+      // console.log('✅ Fetched files from Google Drive:', data.files?.length || 0);
     } catch (err: any) {
       console.error('❌ Error fetching Drive files:', err);
       setError(err.message || 'Failed to fetch files from Google Drive');

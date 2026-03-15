@@ -236,7 +236,7 @@ export async function getStudents(): Promise<ApiResponse> {
       headers: getAuthHeaders()
     };
     const response = await axios(config);
-    console.log("getStudents response:", response);
+    // console.log("getStudents response:", response);
     if (response.status === 200) {
       return {
         success: true,
@@ -519,10 +519,11 @@ export async function getStudentProfile(): Promise<ApiResponse> {
   try {
     const config: AxiosRequestConfig = {
       method: "get",
-      url: `${import.meta.env.VITE_SERVER_LINK}/student/studentProfile/getStudent`,
+      url: `${import.meta.env.VITE_SERVER_LINK}/admin/landingPage/getAllStudentProfiles`,
       headers: getAuthHeaders()
     };
     const response = await axios(config);
+    // console.log(response)
     return { success: true, data: response.data, status: response.status };
   } catch (error) {
     const axiosError = error as AxiosError;

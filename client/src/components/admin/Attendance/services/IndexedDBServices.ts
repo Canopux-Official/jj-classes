@@ -306,7 +306,7 @@ class LocalStorageService {
       const data = localStorage.getItem(key);
 
       if (!data) {
-        console.log(`No data found for key: ${key}`);
+        // console.log(`No data found for key: ${key}`);
         return null;
       }
 
@@ -320,7 +320,7 @@ class LocalStorageService {
           : new Set<number>(),
       }));
 
-      console.log(`Loaded ${parsed.students.length} students from ${key}`);
+      // console.log(`Loaded ${parsed.students.length} students from ${key}`);
       return parsed;
     } catch (error) {
       console.error('Error reading from localStorage:', error);
@@ -342,7 +342,7 @@ class LocalStorageService {
       };
 
       localStorage.setItem(key, JSON.stringify(dataToStore));
-      console.log(`Saved ${dataToStore.students.length} students to ${key}`);
+      // console.log(`Saved ${dataToStore.students.length} students to ${key}`);
     } catch (error) {
       console.error('Error writing to localStorage:', error);
       throw error;
@@ -414,7 +414,7 @@ class LocalStorageService {
     month: number,
     year: number
   ): Promise<void> {
-    console.log(`Updating attendance: ${studentId}, Day ${day}, Status: ${status}, Month: ${month}, Year: ${year}`);
+    // console.log(`Updating attendance: ${studentId}, Day ${day}, Status: ${status}, Month: ${month}, Year: ${year}`);
 
     try {
       // Get current data for this month/year
@@ -480,7 +480,7 @@ class LocalStorageService {
       // Save back to localStorage
       this.setData(data);
 
-      console.log(`✅ Successfully updated attendance for student ${studentId}`);
+      // console.log(`✅ Successfully updated attendance for student ${studentId}`);
 
       return Promise.resolve();
     } catch (error) {
@@ -497,7 +497,7 @@ class LocalStorageService {
     }
 
     const dirtyStudents = data.students.filter(s => s.isDirty);
-    console.log(`Found ${dirtyStudents.length} dirty students`);
+    // console.log(`Found ${dirtyStudents.length} dirty students`);
 
     return Promise.resolve(dirtyStudents);
   }
@@ -516,7 +516,7 @@ class LocalStorageService {
     }));
 
     this.setData(data);
-    console.log(`Cleared dirty flags for ${month}/${year}`);
+    // console.log(`Cleared dirty flags for ${month}/${year}`);
 
     return Promise.resolve();
   }
@@ -524,7 +524,7 @@ class LocalStorageService {
   async clearByMonthYear(month: number, year: number): Promise<void> {
     const key = this.getStorageKey(month, year);
     localStorage.removeItem(key);
-    console.log(`Cleared data for ${key}`);
+    // console.log(`Cleared data for ${key}`);
     return Promise.resolve();
   }
 
@@ -540,7 +540,7 @@ class LocalStorageService {
     }
 
     keysToRemove.forEach(key => localStorage.removeItem(key));
-    console.log(`Cleared ${keysToRemove.length} attendance keys`);
+    // console.log(`Cleared ${keysToRemove.length} attendance keys`);
 
     return Promise.resolve();
   }

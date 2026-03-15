@@ -64,6 +64,7 @@ const StudentProfile: React.FC = () => {
       try {
         setLoading(true);
         const response = await getStudent(); 
+        // console.log(response)
         if (response.success && response.data) {
           setStudent(response.data as IStudentProfile);
         } else {

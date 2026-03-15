@@ -42,6 +42,9 @@ import FAQ from '../../components/landing_new/FAQ';
 import Footer from '../../components/landing_new/Footer';
 import { uploadImageToCloudinary } from '../../components/landing_new/service/cloudinary_service';
 import Gallery from '../../components/landing_new/Gallery';
+import CollectionsIcon from '@mui/icons-material/Collections'
+import BrowseImageModal from './BrowseImageModal';
+
 
 
 // Define Interfaces for Type Safety
@@ -170,6 +173,8 @@ const AdminLandingPage: React.FC = () => {
     const [success, setSuccess] = useState(false);
     const [activeTab, setActiveTab] = useState(0);
     const [landingData, setLandingData] = useState<LandingData | null>(null);
+
+    const [browseModal, setBrowseModal] = useState<{ open: boolean; targetIndex: number } | null>(null)
 
     // New state for Edit Mode and Resizing
     const [isEditing, setIsEditing] = useState(false);
@@ -941,7 +946,7 @@ const AdminLandingPage: React.FC = () => {
                                                             helperText="⚠️ Only 9:16 vertical videos (YouTube Shorts) are supported."
                                                             FormHelperTextProps={{ sx: { color: 'warning.main', fontWeight: 500 } }}
                                                         />
-                                                        <Box sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 1, bgcolor: '#fafafa' }}>
+                                                        {/* <Box sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 1, bgcolor: '#fafafa' }}>
                                                             <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
                                                                 Upload Image
                                                             </Typography>
@@ -974,6 +979,53 @@ const AdminLandingPage: React.FC = () => {
                                                                         sx={{ mt: 1, borderRadius: 1, height: 5 }} />
                                                                 )}
                                                             </Box>
+                                                        </Box> */}
+                                                        {/* ── Image Section with Browse + Upload ── */}
+                                                        {/* ── Image Section ── */}
+                                                        <Box sx={{ gridColumn: 'span 2' }}>
+                                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                                                                <Box
+                                                                    component="img"
+                                                                    src={student.image || 'https://via.placeholder.com/60?text=No+Img'}
+                                                                    sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd', flexShrink: 0 }}
+                                                                />
+                                                                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                                                    <Button
+                                                                        variant="outlined"
+                                                                        size="small"
+                                                                        startIcon={<CollectionsIcon />}
+                                                                        onClick={() => setBrowseModal({ open: true, targetIndex: index })}
+                                                                    >
+                                                                        Browse Existing
+                                                                    </Button>
+                                                                    <Button
+                                                                        variant="outlined"
+                                                                        size="small"
+                                                                        component="label"
+                                                                        startIcon={imageUploading ? <CircularProgress size={14} /> : <CloudUploadIcon />}
+                                                                        disabled={imageUploading}
+                                                                    >
+                                                                        {imageUploading ? `${imageUploadProgress}%` : 'Upload New'}
+                                                                        <input type="file" hidden accept="image/*" onChange={async (e) => {
+                                                                            const file = e.target.files?.[0]
+                                                                            if (!file || !file.type.startsWith('image/')) return
+                                                                            setImageUploading(true); setImageUploadProgress(0)
+                                                                            try {
+                                                                                const imageUrl = await uploadImageToCloudinary(file, (p) => setImageUploadProgress(p))
+                                                                                handleArrayItemChange('results', index, 'image', imageUrl)
+                                                                            } catch (err: any) {
+                                                                                setError(`Upload failed: ${err.message}`)
+                                                                            } finally {
+                                                                                setImageUploading(false); setImageUploadProgress(0); e.target.value = ''
+                                                                            }
+                                                                        }} />
+                                                                    </Button>
+                                                                </Box>
+                                                            </Box>
+                                                            {imageUploading && (
+                                                                <LinearProgress variant="determinate" value={imageUploadProgress}
+                                                                    sx={{ mb: 2, borderRadius: 1, height: 5 }} />
+                                                            )}
                                                         </Box>
                                                         <TextField size="small" label="Testimonial / Bio" multiline rows={3} fullWidth
                                                             value={student.bio}
@@ -982,7 +1034,16 @@ const AdminLandingPage: React.FC = () => {
                                                     </Box>
                                                 </Box>
                                             </Paper>
+
                                         ))}
+                                        <BrowseImageModal
+                                            open={browseModal?.open ?? false}
+                                            onClose={() => setBrowseModal(null)}
+                                            onSelect={(imageUrl) => {
+                                                if (browseModal?.targetIndex !== undefined)
+                                                    handleArrayItemChange('results', browseModal.targetIndex, 'image', imageUrl)
+                                            }}
+                                        />
                                     </Box>
                                 </CardContent>
                             </Card>
