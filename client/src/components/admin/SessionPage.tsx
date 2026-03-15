@@ -29,6 +29,7 @@ type PromotionStatus = 'Promote' | 'ToDropper' | 'Retain' | 'Discontinue';
 interface IStudentSessionUI {
   _id: string;
   name: string;
+  enrollmentNumber?: string;
   phoneNumber: string;
   currentClass: string;
   stream: string;
@@ -155,6 +156,7 @@ const SessionPage: React.FC = () => {
         const uiData: IStudentSessionUI[] = (studentsRes.data as any[]).map(s => ({
           _id: s._id,
           name: s.name,
+          enrollmentNumber: s.enrollmentNumber,
           phoneNumber: s.phoneNumber,
           currentClass: s.currentClass,
           academicSession: s.academicSession,
@@ -498,6 +500,7 @@ const SessionPage: React.FC = () => {
                     onChange={(e) => handleSelectAll(e.target.checked)}
                   />
                 </TableCell>
+                <TableCell>Enrollment Number</TableCell>
                 <TableCell>Student</TableCell>
                 <TableCell>Current Status</TableCell>
                 <TableCell>Next Action</TableCell>
@@ -521,6 +524,11 @@ const SessionPage: React.FC = () => {
                     <TableRow key={student._id} selected={isSelected} hover>
                       <TableCell padding="checkbox">
                         <Checkbox checked={isSelected} onChange={() => handleSelectOne(student._id)} />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" fontWeight={700} color="primary.main">
+                          {student.enrollmentNumber || 'N/A'}
+                        </Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="subtitle2" fontWeight={600}>{student.name}</Typography>

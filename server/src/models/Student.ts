@@ -1,6 +1,8 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IStudent extends Document {
+  enrollmentNumber: string;
+  profilePhoto?: string;
   name: string;
   dob: Date;
   phoneNumber: string;
@@ -18,6 +20,8 @@ export interface IStudent extends Document {
 
 const StudentSchema: Schema = new Schema({
   // Basic Identity
+  enrollmentNumber: { type: String, required: true, unique: true, index: true },
+  profilePhoto: { type: String, default: '' },
   name: { type: String, required: true },
   dob: { type: Date, required: true },
   phoneNumber: { type: String, required: true, unique: true, index: true },

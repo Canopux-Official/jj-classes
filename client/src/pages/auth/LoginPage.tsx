@@ -6,17 +6,13 @@ import {
   Button,
   InputAdornment,
   IconButton,
-  MenuItem,
   Collapse,
   ToggleButton,
   ToggleButtonGroup
 } from '@mui/material';
 import { loginStyles } from './LoginPage.styles';
-import PhoneIphoneIcon from '@mui/icons-material/PhoneIphone';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import PersonIcon from '@mui/icons-material/Person';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import SchoolIcon from '@mui/icons-material/School';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Visibility from '@mui/icons-material/Visibility';
@@ -52,6 +48,7 @@ const LoginPage = () => {
     dob: '',
     phoneNumber: '',
     currentClass: '',
+    enrollmentNumber: '',
     password: '',
     role: 'student' as 'student' | 'admin' | 'superadmin'
   });
@@ -135,48 +132,28 @@ const LoginPage = () => {
   // --- VALIDATION LOGIC ---
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
-    const { name, dob, phoneNumber, currentClass, password } = formData;
+    const { phoneNumber, password, enrollmentNumber } = formData;
 
-    // 1. Phone Number Validation
-    const phoneRegex = /^[0-9]{10}$/;
-    if (!phoneNumber) {
-      newErrors.phoneNumber = "Phone number is required";
-    } else if (!phoneRegex.test(phoneNumber)) {
-      newErrors.phoneNumber = "Enter a valid 10-digit mobile number";
+    // 1. Phone Number Validation (Admin Only)
+    if (isAdmin) {
+      const phoneRegex = /^[0-9]{10}$/;
+      if (!phoneNumber) {
+        newErrors.phoneNumber = "Phone number is required";
+      } else if (!phoneRegex.test(phoneNumber)) {
+        newErrors.phoneNumber = "Enter a valid 10-digit mobile number";
+      }
+    } else {
+      // Student Validations
+      if (!enrollmentNumber) {
+        newErrors.enrollmentNumber = "Enrollment Number is required";
+      } else if (!enrollmentNumber.startsWith("JIS")) {
+        newErrors.enrollmentNumber = "Enrollment Number must start with JIS";
+      }
     }
 
     // 2. Password Validation
     if (!password) {
       newErrors.password = "Password is required";
-    }
-
-    // 3. Student Specific Validations
-    if (!isAdmin) {
-      // Name: Only alphabets and spaces, min 3 chars
-      const nameRegex = /^[a-zA-Z\s]{3,}$/;
-      if (!name) {
-        newErrors.name = "Full Name is required";
-      } else if (!nameRegex.test(name)) {
-        newErrors.name = "Enter a valid name (min 3 chars, alphabets only)";
-      }
-
-      // Class
-      if (!currentClass) {
-        newErrors.currentClass = "Please select your class";
-      }
-
-      // Date of Birth: Cannot be in future, reasonable age check
-      if (!dob) {
-        newErrors.dob = "Date of Birth is required";
-      } else {
-        const dobDate = new Date(dob);
-        const today = new Date();
-        if (dobDate >= today) {
-          newErrors.dob = "Date of Birth cannot be in the future";
-        } else if (today.getFullYear() - dobDate.getFullYear() < 10) {
-          newErrors.dob = "You seem too young for this platform";
-        }
-      }
     }
 
     setErrors(newErrors);
@@ -207,11 +184,15 @@ const LoginPage = () => {
         return;
       }
 
-      const responseData = response.data as { email?: string | null, authToken?: string | null };
+      const responseData = response.data as { email?: string | null, authToken?: string | null, enrollmentNumber?: string | null };
       const authToken = responseData.authToken;
       const email = responseData.email;
 
       if (email && !authToken) {
+        localStorage.setItem('authEmail', email); // Use email for OTP later
+        if (responseData.enrollmentNumber) {
+            localStorage.setItem('authEnrollmentNumber', responseData.enrollmentNumber);
+        }
         const atIndex = email.indexOf("@");
         const visibleStart = email.substring(0, 2);
         const visibleEnd = email.substring(atIndex - 2);
@@ -252,10 +233,7 @@ const LoginPage = () => {
 
     try {
       const email = localStorage.getItem('authEmail') || '';
-      const name = localStorage.getItem('authName') || '';
-      const currentClass = localStorage.getItem('authCurrentClass') || '';
-      const dob = localStorage.getItem('authDob') || '';
-      const phoneNumber = localStorage.getItem('authPhoneNumber') || '';
+      const enrollmentNumber = localStorage.getItem('authEnrollmentNumber') || '';
 
       if (!email) {
         alert("Session expired. Please login again.");
@@ -263,7 +241,7 @@ const LoginPage = () => {
         return;
       }
 
-      const response = await verifyOtp({ otp, email, name, dob, currentClass, phoneNumber });
+      const response = await verifyOtp({ otp, email, enrollmentNumber });
 
       setLoading(false);
 
@@ -406,91 +384,48 @@ const LoginPage = () => {
                   </ToggleButtonGroup>
                 </Box>
 
-                {/* 1. PHONE FIELD */}
-                <TextField
-                  fullWidth
-                  label="Phone Number"
-                  placeholder="9876543210"
-                  type="tel"
-                  value={formData.phoneNumber}
-                  onChange={handleChange('phoneNumber')}
-                  error={!!errors.phoneNumber}
-                  helperText={errors.phoneNumber}
-                  sx={loginStyles.inputField}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        {isAdmin ? <AdminPanelSettingsIcon color="primary" sx={{ mr: 0.5 }} /> : <PhoneIphoneIcon color="action" sx={{ mr: 0.5 }} />}
-                        <Typography variant="body1" color="text.secondary" fontWeight="bold">+91</Typography>
-                      </InputAdornment>
-                    )
-                  }}
-                />
+                {/* 1. PHONE FIELD (ADMIN ONLY) */}
+                <Collapse in={isAdmin}>
+                  <TextField
+                    fullWidth
+                    label="Phone Number"
+                    placeholder="9876543210"
+                    type="tel"
+                    value={formData.phoneNumber}
+                    onChange={handleChange('phoneNumber')}
+                    error={!!errors.phoneNumber}
+                    helperText={errors.phoneNumber}
+                    sx={loginStyles.inputField}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <AdminPanelSettingsIcon color="primary" sx={{ mr: 0.5 }} />
+                          <Typography variant="body1" color="text.secondary" fontWeight="bold">+91</Typography>
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                </Collapse>
 
-                {/* 2. STUDENT SPECIFIC FIELDS */}
+                {/* 2. ENROLLMENT NUMBER FIELD (STUDENT ONLY) */}
                 <Collapse in={!isAdmin}>
-                  <Box>
-                    <TextField
-                      fullWidth
-                      label="Full Name"
-                      placeholder="Full Name as per Records"
-                      value={formData.name}
-                      onChange={handleChange('name')}
-                      error={!!errors.name}
-                      helperText={errors.name}
-                      sx={loginStyles.inputField}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <PersonIcon color="action" />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-
-                    <TextField
-                      fullWidth
-                      type="date"
-                      label="Date of Birth"
-                      value={formData.dob}
-                      onChange={handleChange('dob')}
-                      error={!!errors.dob}
-                      helperText={errors.dob}
-                      sx={loginStyles.inputField}
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <CalendarTodayIcon color="action" />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-
-                    <TextField
-                      select
-                      fullWidth
-                      label="Class"
-                      value={formData.currentClass}
-                      onChange={handleChange('currentClass')}
-                      error={!!errors.currentClass}
-                      helperText={errors.currentClass}
-                      sx={{ ...loginStyles.inputField, textAlign: 'left' }}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <SchoolIcon color="action" />
-                          </InputAdornment>
-                        ),
-                      }}
-                    >
-                      {['9', '10', '11', '12', 'dropper-1', 'dropper-2'].map((option) => (
-                        <MenuItem key={option} value={option}>
-                          {option}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  </Box>
+                  <TextField
+                    fullWidth
+                    label="Enrollment Number"
+                    placeholder="JISXXXXXXX"
+                    value={formData.enrollmentNumber}
+                    onChange={handleChange('enrollmentNumber')}
+                    error={!!errors.enrollmentNumber}
+                    helperText={errors.enrollmentNumber}
+                    sx={loginStyles.inputField}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PersonIcon color="action" sx={{ mr: 0.5 }} />
+                        </InputAdornment>
+                      )
+                    }}
+                  />
                 </Collapse>
 
                 {/* 3. PASSWORD FIELD */}

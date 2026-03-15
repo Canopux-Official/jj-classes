@@ -3,10 +3,11 @@ import axios, { AxiosError, type AxiosRequestConfig } from 'axios';
 // --- Type Definitions ---
 
 interface LoginPayload {
-  name: string;
-  dob: string;
-  phoneNumber: string;
-  currentClass: string;
+  name?: string;
+  dob?: string;
+  phoneNumber?: string;
+  currentClass?: string;
+  enrollmentNumber?: string;
   password: string;
   role: 'student' | 'admin' | 'superadmin';
 }
@@ -18,10 +19,11 @@ interface SendOtpPayload {
 interface VerifyOtpPayload {
   otp: string;
   email: string;
-  name: string;
-  dob: string;
-  currentClass: string;
-  phoneNumber: string;
+  name?: string;
+  dob?: string;
+  currentClass?: string;
+  phoneNumber?: string;
+  enrollmentNumber?: string;
 }
 
 interface ApiResponse<T = unknown> {
@@ -48,6 +50,31 @@ function getAuthHeaders() {
 }
 
 // --- API Functions ---
+
+export async function getAllStudentProfiles(): Promise<ApiResponse> {
+  try {
+    const config: AxiosRequestConfig = {
+      method: "get",
+      url: `${import.meta.env.VITE_SERVER_LINK}/auth/getAllStudentProfiles`
+    };
+
+    const response = await axios(config);
+    return {
+      success: true,
+      data: response.data.data,
+      status: response.status
+    };
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    // @ts-expect-error response.data is not typed in AxiosError
+    const msg = axiosError.response?.data?.message || axiosError.message;
+    return {
+      success: false,
+      status: axiosError.response ? axiosError.response.status : 500,
+      message: msg
+    };
+  }
+}
 
 export async function getLoggedInUser(formData: LoginPayload): Promise<ApiResponse> {
   try {

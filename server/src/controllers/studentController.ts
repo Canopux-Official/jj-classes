@@ -3,6 +3,7 @@ import Student from "../models/Student";
 import Subject from "../models/Subject";
 import Stream from "../models/Stream";       // Imported
 import TargetExam from "../models/TargetExam"; // Imported
+import Counter from "../models/Counter"; // Imported
 import bcrypt from 'bcryptjs';
 
 declare global {
@@ -17,6 +18,7 @@ declare global {
 const hashPassword = async (password: string) => {
     return await bcrypt.hash(password, 10);
 };
+
 
 // Helper: Map Subject Names -> ObjectIds
 const getSubjectIds = async (subjectInput: string | string[]) => {
@@ -43,6 +45,17 @@ const getTargetExamIds = async (examNames: string | string[]) => {
 
     const exams = await TargetExam.find({ name: { $in: names } });
     return exams.map(e => e._id);
+};
+
+// Helper: Get Next Enrollment Number
+const getNextEnrollmentNumber = async () => {
+    const counter = await Counter.findByIdAndUpdate(
+        'enrollmentNumber',
+        { $inc: { sequence_value: 1 } },
+        { new: true, upsert: true }
+    );
+    const seq = counter.sequence_value;
+    return `JIS${String(seq).padStart(7, '0')}`;
 };
 
 // --- READ ---
@@ -128,6 +141,9 @@ export const addStudent = async (req: Request, res: Response) => {
                 continue;
             }
 
+            // Use provided URL from frontend directly (uploaded to Cloudinary)
+            const profilePhotoUrl = student.profilePhoto || '';
+
             // --- RESOLVE IDS ---
             let subjectIds: any[] = [];
             let streamId: any = null;
@@ -171,6 +187,7 @@ export const addStudent = async (req: Request, res: Response) => {
                     const newStudent = await Student.create({
                         name,
                         phoneNumber,
+                        profilePhoto: profilePhotoUrl,
                         dob: dobDate,
                         currentClass,
                         academicSession,
@@ -184,7 +201,8 @@ export const addStudent = async (req: Request, res: Response) => {
                         email: email || undefined, // undefined prevents storing 'N/A' strings
                         parentPhoneNumber: student.parentPhoneNumber || undefined,
                         isActive: true,
-                        admissionDate: new Date()
+                        admissionDate: new Date(),
+                        enrollmentNumber: await getNextEnrollmentNumber()
                     });
 
                     addedStudents.push(newStudent);
@@ -221,6 +239,7 @@ export const updateStudent = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const updates = req.body;
+
 
         // --- RESOLVE REFERENCES IF UPDATING ---
 
@@ -409,7 +428,8 @@ export const bulkAddStudents = async (req: Request, res: Response) => {
                     email,
                     parentPhoneNumber,
                     isActive: true,
-                    admissionDate: new Date()
+                    admissionDate: new Date(),
+                    enrollmentNumber: await getNextEnrollmentNumber()
                 });
 
                 addedStudents.push(newStudent);
@@ -540,5 +560,18 @@ export const getActiveStudentCount = async () => {
             message: "Error fetching active student count",
             error
         };
+    }
+};
+
+export const getAllStudentProfiles = async (req: Request, res: Response) => {
+    try {
+        const students = await Student.find({ isActive: true })
+            .select('enrollmentNumber profilePhoto -_id')
+            .lean();
+        
+        res.status(200).json({ success: true, data: students });
+    } catch (error) {
+        console.error("Error fetching student profiles:", error);
+        res.status(500).json({ success: false, message: 'Error fetching student profiles' });
     }
 };

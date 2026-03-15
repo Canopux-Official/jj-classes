@@ -8,27 +8,27 @@ const COOLDOWN_MS = 90 * 1000; // 90 seconds
 const MAX_ATTEMPTS = 5;
 
 
-// const transporter = nodemailer.createTransport({
-//   service: "gmail",
-//   auth: {
-//     user: process.env.MAIL_USER,
-//     pass: process.env.MAIL_PASS,
-//   },
-// });
-
-// DON'T DELETE THIS BELOW COMMENTED PART
-
 const transporter = nodemailer.createTransport({
-  host: process.env.MAIL_HOST,
-  port: Number(process.env.MAIL_PORT), // 465
-  secure: true, // true for port 465, false for 587
+  service: "gmail",
   auth: {
     user: process.env.MAIL_USER,
     pass: process.env.MAIL_PASS,
   },
-  connectionTimeout: 20000,
-  greetingTimeout: 20000,
 });
+
+// DON'T DELETE THIS BELOW COMMENTED PART
+
+// const transporter = nodemailer.createTransport({
+//   host: process.env.MAIL_HOST,
+//   port: Number(process.env.MAIL_PORT), // 465
+//   secure: true, // true for port 465, false for 587
+//   auth: {
+//     user: process.env.MAIL_USER,
+//     pass: process.env.MAIL_PASS,
+//   },
+//   connectionTimeout: 20000,
+//   greetingTimeout: 20000,
+// });
 
 authenticator.options = { digits: 6, step: 300 };
 

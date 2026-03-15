@@ -4,7 +4,7 @@ import Student from '../../models/Student';
 import Admin from '../../models/Admin';
 // Added resendOtp to imports
 import { sendOtp, verifyOtp, resendOtp } from '../../controllers/otpController';
-import { changePassword } from '../../controllers/studentController';
+import { changePassword, getAllStudentProfiles } from '../../controllers/studentController';
 import verifyAuth, { AuthRequest } from '../../middlewares/verifyAuth';
 import bcrypt from 'bcryptjs';
 
@@ -12,7 +12,7 @@ const router = express.Router();
 const jwt_secret = process.env.JWT_SECRET;
 
 router.post('/getLoggedInUser', async (req, res): Promise<any> => {
-    const { name, dob, phoneNumber, currentClass, password, role } = req.body;
+    const { name, dob, phoneNumber, currentClass, password, role, enrollmentNumber } = req.body;
 
     if (!jwt_secret) {
         return res.status(500).json({ success: false, message: 'Server Config Error: JWT_SECRET missing error here' });
@@ -46,21 +46,14 @@ router.post('/getLoggedInUser', async (req, res): Promise<any> => {
         }
 
         // student login flow
-        const targetDob = dob ? new Date(dob) : null;
         const student = await Student.findOne({
-            name: name,
-            currentClass: currentClass,
-            dob: targetDob,
-            $or: [
-                { phoneNumber: phoneNumber },
-                { parentPhoneNumber: phoneNumber }
-            ]
+            enrollmentNumber: enrollmentNumber
         });
 
         if (!student) {
             return res.status(404).json({
                 success: false,
-                message: 'Student not found. Please ensure Name, DOB, Class, and Phone Number match your records exactly.'
+                message: 'Student not found. Please check your Enrollment Number.'
             });
         }
         if (!student.isActive) {
@@ -102,10 +95,7 @@ router.post('/getLoggedInUser', async (req, res): Promise<any> => {
             success: true,
             message: 'Credentials verified. OTP sent to email.',
             email: student.email,
-            name: name,
-            dob: dob,
-            currentClass: currentClass,
-            phoneNumber: phoneNumber,
+            enrollmentNumber: student.enrollmentNumber,
             authToken: null
         });
 
@@ -137,8 +127,7 @@ router.post('/resendOtp', async (req, res): Promise<any> => {
 });
 
 router.post('/verifyOtp', async (req, res): Promise<any> => {
-    const { email, otp, name, dob, currentClass, phoneNumber } = req.body;
-    const targetDob = dob ? new Date(dob) : null;
+    const { email, otp, enrollmentNumber } = req.body;
     try {
         const result = await verifyOtp(email, otp);
 
@@ -151,13 +140,7 @@ router.post('/verifyOtp', async (req, res): Promise<any> => {
                 userRole = user.role; // This will be 'admin' or 'superadmin'
             } else {
                 user = await Student.findOne({
-                    name: name,
-                    currentClass: currentClass,
-                    dob: targetDob,
-                    $or: [
-                        { phoneNumber: phoneNumber },
-                        { parentPhoneNumber: phoneNumber }
-                    ]
+                    enrollmentNumber: enrollmentNumber
                 });
             }
 
@@ -225,5 +208,8 @@ router.get('/verifyToken', verifyAuth, async (req: AuthRequest, res): Promise<an
         return res.status(500).json({ success: false, message: 'Server Error during verification' });
     }
 });
+
 router.post('/changePassword', verifyAuth, changePassword);
+router.get('/getAllStudentProfiles', getAllStudentProfiles);
+
 export default router;

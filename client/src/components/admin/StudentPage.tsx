@@ -11,7 +11,8 @@ import {
   Box,
   CircularProgress,
   Divider,
-  Select
+  Select,
+  LinearProgress
 } from '@mui/material';
 
 import type { SelectChangeEvent } from '@mui/material';
@@ -48,6 +49,8 @@ import {
   getActiveTargetExams
 } from '../../api/apiFunctions';
 
+import { uploadImageToCloudinary } from '../landing_new/service/cloudinary_service';
+
 // --- Interfaces ---
 
 interface INamedEntity {
@@ -58,6 +61,8 @@ interface INamedEntity {
 interface IStudentUI {
   _id: string;
   name: string;
+  enrollmentNumber?: string;
+  profilePhoto?: string;
   phoneNumber: string;
   parentPhoneNumber: string;
   email: string;
@@ -83,6 +88,7 @@ interface IStudentFormData {
   academicSession: string;
   isActive: boolean;
   password?: string;
+  profilePhoto?: string;
 }
 
 const CLASS_OPTIONS = ['9', '10', '11', '12', 'dropper-1', 'dropper-2'];
@@ -112,6 +118,10 @@ const StudentsPage: React.FC = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Upload state
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageUploadProgress, setImageUploadProgress] = useState(0);
 
   // Queries
   const { data: studentsResponse, isLoading: studentsLoading } = useQuery({
@@ -159,7 +169,7 @@ const StudentsPage: React.FC = () => {
   const [formData, setFormData] = useState<IStudentFormData>({
     name: '', phoneNumber: '', parentPhoneNumber: '', email: '', dob: '',
     currentClass: '', stream: '', targetExams: [], enrolledSubjects: [],
-    academicSession: '2024-2025', isActive: true, password: ''
+    academicSession: '2024-2025', isActive: true, password: '', profilePhoto: ''
   });
 
   // Check if Stream is applicable (Class 11, 12, or Droppers)
@@ -190,7 +200,8 @@ const StudentsPage: React.FC = () => {
         enrolledSubjects: student.enrolledSubjects.map(s => s.name),
         academicSession: student.academicSession,
         isActive: student.isActive,
-        password: ''
+        password: '',
+        profilePhoto: student.profilePhoto || ''
       });
     } else {
       setEditingStudentId(null);
@@ -199,11 +210,32 @@ const StudentsPage: React.FC = () => {
         email: '', dob: '',
         currentClass: '', stream: '', targetExams: [], enrolledSubjects: [],
         academicSession: '2024-2025', isActive: true,
-        password: ''
+        password: '', profilePhoto: ''
       });
     }
     setShowPassword(false);
+    setImageUploading(false);
+    setImageUploadProgress(0);
     setOpenDialog(true);
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    
+    setImageUploading(true);
+    setImageUploadProgress(0);
+    
+    try {
+      const imageUrl = await uploadImageToCloudinary(file, (p) => setImageUploadProgress(p));
+      setFormData(prev => ({ ...prev, profilePhoto: imageUrl }));
+    } catch (err: unknown) {
+      alert(`Upload failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setImageUploading(false);
+      setImageUploadProgress(0);
+      e.target.value = '';
+    }
   };
 
   const addStudentMutation = useMutation({
@@ -373,11 +405,12 @@ const StudentsPage: React.FC = () => {
   const filteredStudents = students.filter((student) => {
     const term = searchTerm.toLowerCase();
 
-    // 1. Search (Name/Phone/Email)
+    // 1. Search (Name/Phone/Email/Enrollment Number)
     const matchesSearch =
       student.name.toLowerCase().includes(term) ||
       student.phoneNumber.includes(term) ||
-      (student.email && student.email.toLowerCase().includes(term));
+      (student.email && student.email.toLowerCase().includes(term)) ||
+      (student.enrollmentNumber && student.enrollmentNumber.toLowerCase().includes(term));
 
     // 2. Class Filter
     const matchesClass = classFilter === 'All' || student.currentClass === classFilter;
@@ -528,6 +561,7 @@ const StudentsPage: React.FC = () => {
             <Table sx={{ minWidth: 800 }}>
               <TableHead sx={{ backgroundColor: '#f8fafc' }}>
                 <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>Enrollment Number</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Student Profile</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Class & Stream</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Targets</TableCell>
@@ -540,6 +574,11 @@ const StudentsPage: React.FC = () => {
               <TableBody>
                 {paginatedStudents.map((student) => (
                   <TableRow key={student._id} hover>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={700} color="primary.main">
+                        {student.enrollmentNumber || 'N/A'}
+                      </Typography>
+                    </TableCell>
                     <TableCell>
                       <Box>
                         <Typography variant="subtitle2" fontWeight={700}>{student.name}</Typography>
@@ -629,6 +668,31 @@ const StudentsPage: React.FC = () => {
               <Divider sx={{ mb: 2 }} />
 
               <Stack spacing={2}>
+                <Box display="flex" flexDirection="column" gap={1}>
+                  <Box display="flex" alignItems="center" gap={2}>
+                      {formData.profilePhoto && (
+                        <Box 
+                          component="img" 
+                          src={formData.profilePhoto} 
+                          alt="Profile Preview" 
+                          sx={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover' }} 
+                        />
+                      )}
+                      <Button 
+                        variant="outlined" 
+                        component="label"
+                        startIcon={imageUploading ? <CircularProgress size={14} /> : <CloudUploadIcon />}
+                        disabled={imageUploading}
+                      >
+                        {imageUploading ? `${imageUploadProgress}%` : 'Upload Profile Photo'}
+                        <input type="file" hidden accept="image/*" onChange={handlePhotoUpload} />
+                      </Button>
+                  </Box>
+                  {imageUploading && (
+                      <LinearProgress variant="determinate" value={imageUploadProgress} sx={{ width: 200, mt: 1, borderRadius: 1 }} />
+                  )}
+                </Box>
+                
                 <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
                   <MuiTextField
                     label="Full Name" required fullWidth
@@ -773,10 +837,17 @@ const StudentsPage: React.FC = () => {
           </Stack>
 
         </DialogContent>
-        <DialogActions sx={{ p: 2, bgcolor: '#f8fafc' }}>
-          <Button onClick={() => setOpenDialog(false)} color="inherit">Cancel</Button>
-          <Button onClick={handleSave} variant="contained" disableElevation>
-            {editingStudentId ? 'Update Student' : 'Save Student'}
+        <DialogActions sx={{ p: 3, pt: 0, bgcolor: '#f8fafc' }}>
+          <Button onClick={() => setOpenDialog(false)} color="inherit" sx={{ fontWeight: 600 }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            variant="contained"
+            sx={{ fontWeight: 600 }}
+            disabled={addStudentMutation.isPending || updateStudentMutation.isPending || imageUploading}
+          >
+            {addStudentMutation.isPending || updateStudentMutation.isPending ? 'Saving...' : 'Save Student'}
           </Button>
         </DialogActions>
       </Dialog>

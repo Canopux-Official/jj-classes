@@ -28,8 +28,10 @@ interface ISubject {
 interface IStudentProfile {
   _id: string;
   name: string;
+  profilePhoto?: string;
   dob: string;
   phoneNumber: string;
+  enrollmentNumber?: string;
   parentPhoneNumber: string;
   email: string;
   currentClass: string;
@@ -160,6 +162,7 @@ const StudentProfile: React.FC = () => {
       {/* HEADER SECTION */}
       <ProfileHeader>
         <Avatar 
+            src={student.profilePhoto || undefined}
             sx={{ width: 100, height: 100, fontSize: 40, bgcolor: 'primary.main', color: '#fff', border: '4px solid #fff', boxShadow: 2 }}
         >
           {student.name ? student.name.charAt(0).toUpperCase() : 'S'}
@@ -194,12 +197,14 @@ const StudentProfile: React.FC = () => {
             
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} mb={3}>
               <Box flex={1}>
-                <LabelText>Phone Number (Login ID)</LabelText>
-                <ValueText>{student.phoneNumber}</ValueText>
+                <LabelText>Enrollment Number (Login ID)</LabelText>
+                <ValueText sx={{ color: 'primary.main', fontWeight: 700 }}>
+                  {student.enrollmentNumber || 'N/A'}
+                </ValueText>
               </Box>
               <Box flex={1}>
-                <LabelText>Parent Phone</LabelText>
-                <ValueText>{student.parentPhoneNumber || 'N/A'}</ValueText>
+                <LabelText>Phone Number</LabelText>
+                <ValueText>{student.phoneNumber}</ValueText>
               </Box>
             </Stack>
 
@@ -208,6 +213,13 @@ const StudentProfile: React.FC = () => {
                 <LabelText>Email Address</LabelText>
                 <ValueText>{student.email || 'N/A'}</ValueText>
               </Box>
+               <Box flex={1}>
+                <LabelText>Parent Phone</LabelText>
+                <ValueText>{student.parentPhoneNumber || 'N/A'}</ValueText>
+              </Box>
+            </Stack>
+
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} mb={3}>
               <Box flex={1}>
                 <LabelText>Date of Birth</LabelText>
                 <ValueText>
