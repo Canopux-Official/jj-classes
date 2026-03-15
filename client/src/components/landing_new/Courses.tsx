@@ -119,7 +119,7 @@ function CourseCard({ course, isExpanded, onToggle }: {
             fontWeight: 700, mb: 2, fontSize: '0.9rem',
             textTransform: 'uppercase', letterSpacing: '0.06em',
           }}>
-            What You'll Learn
+            Features
           </Typography>
           <Box sx={{
             display: 'grid',

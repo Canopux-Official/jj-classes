@@ -343,12 +343,13 @@
 // }
 
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Box, Container, Typography, Dialog, IconButton } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import StarIcon from '@mui/icons-material/Star'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
+import { motion, useMotionValue } from 'framer-motion'
 
 // interface Student {
 //   id: number; name: string; score: string; scoreLabel: string
@@ -368,7 +369,6 @@ interface Student {
   course: string
   image: string
   bio: string
-  achievement: string
   currentStatus: string[]     // ✅ new
   youtubeLink?: string
 }
@@ -393,11 +393,10 @@ const formatYoutubeLink = (url?: string) => {
 
 // function StudentCard({ student, onSelect }: { student: Student; onSelect: (s: Student) => void }) {
 //   const [hovered, setHovered] = useState(false)
+//   const firstScore = student.scores?.[0]  // show first score on card
+
 //   return (
-//     <Box
-//       onClick={() => onSelect(student)}
-//       onMouseEnter={() => setHovered(true)}
-//       onMouseLeave={() => setHovered(false)}
+//     <Box onClick={() => onSelect(student)} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
 //       sx={{ cursor: 'pointer', width: 210, flexShrink: 0 }}
 //     >
 //       <Box sx={{
@@ -408,12 +407,10 @@ const formatYoutubeLink = (url?: string) => {
 //         transform: hovered ? 'translateY(-5px)' : 'translateY(0)',
 //       }}>
 //         <Box component="img" src={student.image} alt={student.name}
-//           onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { e.currentTarget.src = 'https://via.placeholder.com/220x270?text=No+Image' }}
+//           onError={(e: React.SyntheticEvent<HTMLImageElement>) => { e.currentTarget.src = 'https://via.placeholder.com/220x270?text=No+Image' }}
 //           sx={{
-//             width: '100%', height: '100%',
-//             objectFit: 'cover', objectPosition: 'top', display: 'block',
-//             transition: 'transform 0.4s ease',
-//             transform: hovered ? 'scale(1.04)' : 'scale(1)',
+//             width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block',
+//             transition: 'transform 0.4s ease', transform: hovered ? 'scale(1.04)' : 'scale(1)',
 //           }}
 //         />
 //         <Box sx={{
@@ -428,15 +425,19 @@ const formatYoutubeLink = (url?: string) => {
 //             <Typography sx={{ color: '#fff', fontFamily: '"DM Sans", sans-serif', fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>
 //               {student.name}
 //             </Typography>
+//             {/* ✅ show first exam name */}
 //             <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, fontFamily: '"DM Sans", sans-serif' }}>
-//               {student.exam}
+//               {firstScore?.exam || student.course}
 //             </Typography>
 //           </Box>
-//           <Box sx={{ bgcolor: '#c47a3a', borderRadius: '8px', px: 1.2, py: 0.4 }}>
-//             <Typography sx={{ color: '#fff', fontFamily: '"DM Sans", sans-serif', fontWeight: 800, fontSize: 13 }}>
-//               {student.scoreLabel}
-//             </Typography>
-//           </Box>
+//           {/* ✅ show first score in badge */}
+//           {firstScore && (
+//             <Box sx={{ bgcolor: '#c47a3a', borderRadius: '8px', px: 1.2, py: 0.4 }}>
+//               <Typography sx={{ color: '#fff', fontFamily: '"DM Sans", sans-serif', fontWeight: 800, fontSize: 13 }}>
+//                 {firstScore.score}
+//               </Typography>
+//             </Box>
+//           )}
 //         </Box>
 //         {student.youtubeLink && (
 //           <Box sx={{
@@ -458,65 +459,149 @@ const formatYoutubeLink = (url?: string) => {
 
 function StudentCard({ student, onSelect }: { student: Student; onSelect: (s: Student) => void }) {
   const [hovered, setHovered] = useState(false)
-  const firstScore = student.scores?.[0]  // show first score on card
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  const innerRef = useRef<HTMLDivElement>(null)
+  const x = useMotionValue(0)
+  const animFrameRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    const rafId = requestAnimationFrame(() => {
+      const tick = () => {
+        const wrapper = wrapperRef.current
+        const inner = innerRef.current
+        if (wrapper && inner) {
+          // innerRef contains ONE set of chips
+          // We always scroll exactly one set width, then reset to 0 — seamless loop
+          const singleSetWidth = inner.offsetWidth / 2  // we render chips twice inside
+          let next = x.get() - 0.5                     // 0.5px per frame → gentle pace
+          if (next <= -singleSetWidth) next = 0        // jump back silently (chips are identical)
+          x.set(next)
+        }
+        animFrameRef.current = requestAnimationFrame(tick)
+      }
+      animFrameRef.current = requestAnimationFrame(tick)
+    })
+
+    return () => {
+      cancelAnimationFrame(rafId)
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
+    }
+  }, [x])
+
+  // duplicate chips so loop is always seamless regardless of count
+  const chips = student.scores ?? []
 
   return (
-    <Box onClick={() => onSelect(student)} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
-      sx={{ cursor: 'pointer', width: 210, flexShrink: 0 }}
+    <motion.div
+      onClick={() => onSelect(student)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ cursor: 'pointer', width: 210, flexShrink: 0 }}
+      whileHover={{ y: -5 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 22 }}
     >
-      <Box sx={{
-        position: 'relative', height: 270, mb: 1.8,
-        borderRadius: '20px', overflow: 'hidden',
-        boxShadow: hovered ? '0 16px 40px rgba(10,37,64,0.14)' : '0 4px 16px rgba(10,37,64,0.06)',
-        transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-        transform: hovered ? 'translateY(-5px)' : 'translateY(0)',
-      }}>
-        <Box component="img" src={student.image} alt={student.name}
-          onError={(e: React.SyntheticEvent<HTMLImageElement>) => { e.currentTarget.src = 'https://via.placeholder.com/220x270?text=No+Image' }}
-          sx={{
-            width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block',
-            transition: 'transform 0.4s ease', transform: hovered ? 'scale(1.04)' : 'scale(1)',
+      {/* ── Image panel ── */}
+      <motion.div
+        style={{ position: 'relative', height: 270, marginBottom: 10, borderRadius: 20, overflow: 'hidden' }}
+        animate={{ boxShadow: hovered ? '0 16px 40px rgba(10,37,64,0.14)' : '0 4px 16px rgba(10,37,64,0.06)' }}
+        transition={{ duration: 0.3 }}
+      >
+        <motion.img
+          src={student.image}
+          alt={student.name}
+          onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+            e.currentTarget.src = 'https://via.placeholder.com/220x270?text=No+Image'
           }}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block' }}
+          animate={{ scale: hovered ? 1.04 : 1 }}
+          transition={{ duration: 0.4 }}
         />
         <Box sx={{
           position: 'absolute', bottom: 0, left: 0, right: 0, height: '55%',
           background: 'linear-gradient(to top, rgba(10,37,64,0.82) 0%, transparent 100%)',
+          pointerEvents: 'none',
         }} />
-        <Box sx={{
-          position: 'absolute', bottom: 12, left: 12, right: 12,
-          display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
-        }}>
-          <Box>
-            <Typography sx={{ color: '#fff', fontFamily: '"DM Sans", sans-serif', fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>
-              {student.name}
-            </Typography>
-            {/* ✅ show first exam name */}
-            <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, fontFamily: '"DM Sans", sans-serif' }}>
-              {firstScore?.exam || student.course}
-            </Typography>
-          </Box>
-          {/* ✅ show first score in badge */}
-          {firstScore && (
-            <Box sx={{ bgcolor: '#c47a3a', borderRadius: '8px', px: 1.2, py: 0.4 }}>
-              <Typography sx={{ color: '#fff', fontFamily: '"DM Sans", sans-serif', fontWeight: 800, fontSize: 13 }}>
-                {firstScore.score}
-              </Typography>
-            </Box>
-          )}
+        <Box sx={{ position: 'absolute', bottom: 12, left: 12, right: 12 }}>
+          <Typography sx={{ color: '#fff', fontFamily: '"DM Sans", sans-serif', fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>
+            {student.name}
+          </Typography>
+          <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, fontFamily: '"DM Sans", sans-serif' }}>
+            {student.scores?.[0]?.exam || student.course}
+          </Typography>
         </Box>
         {student.youtubeLink && (
-          <Box sx={{
-            position: 'absolute', top: 12, right: 12,
-            width: 32, height: 32, bgcolor: 'rgba(239,68,68,0.9)',
-            borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            opacity: hovered ? 1 : 0, transition: 'opacity 0.25s ease',
-          }}>
+          <motion.div
+            style={{
+              position: 'absolute', top: 12, right: 12, width: 32, height: 32,
+              background: 'rgba(239,68,68,0.9)', borderRadius: 8,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+            animate={{ opacity: hovered ? 1 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
             <PlayArrowIcon sx={{ color: '#fff', fontSize: 18 }} />
-          </Box>
+          </motion.div>
         )}
-      </Box>
-      <Typography sx={{ fontSize: 12, color: '#94a3b8', fontFamily: '"DM Sans", sans-serif', textAlign: 'center' }}>
+      </motion.div>
+
+      {/* ── Infinite loop score strip ── */}
+      {chips.length > 0 && (
+        <Box
+          ref={wrapperRef}
+          sx={{
+            width: '100%',
+            overflow: 'hidden',
+            WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%)',
+            maskImage: 'linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%)',
+          }}
+        >
+          <motion.div style={{ display: 'flex', x }}>
+            {/* innerRef wraps BOTH copies — offsetWidth/2 = one set width */}
+            <div ref={innerRef} style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+              {/* copy A */}
+              {chips.map((s, i) => <ScoreChip key={`a-${i}`} s={s} />)}
+              {/* copy B — seamless loop: when A scrolls out, B takes over, then x resets to 0 */}
+              {chips.map((s, i) => <ScoreChip key={`b-${i}`} s={s} />)}
+            </div>
+          </motion.div>
+        </Box>
+      )}
+
+      <Typography sx={{ fontSize: 12, color: '#94a3b8', fontFamily: '"DM Sans", sans-serif', textAlign: 'center', mt: '8px' }}>
         {student.course}
+      </Typography>
+    </motion.div>
+  )
+}
+
+// extracted to keep JSX clean
+function ScoreChip({ s }: { s: ScoreEntry }) {
+  return (
+    <Box sx={{
+      flexShrink: 0,
+      border: '0.5px solid rgba(196,122,58,0.25)',
+      borderRadius: '8px',
+      px: '10px', py: '5px',
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      minWidth: 58,
+      bgcolor: 'rgba(196,122,58,0.04)',
+      userSelect: 'none',
+      pointerEvents: 'none',
+      mr: '6px',          // gap between chips (using mr instead of gap so duplicate set butts up correctly)
+    }}>
+      <Typography sx={{
+        fontSize: 9, fontWeight: 700, color: '#b08040',
+        fontFamily: '"DM Sans", sans-serif',
+        letterSpacing: '0.6px', textTransform: 'uppercase',
+        lineHeight: 1.4, whiteSpace: 'nowrap',
+      }}>
+        {s.exam}
+      </Typography>
+      <Typography sx={{
+        fontSize: 15, fontWeight: 800, color: '#0d1117',
+        fontFamily: '"DM Sans", sans-serif', lineHeight: 1.25,
+      }}>
+        {s.score}
       </Typography>
     </Box>
   )
@@ -770,9 +855,9 @@ export default function Results({ data }: { data?: Student[] | unknown[] }) {
                   {selectedStudent.name}
                 </Typography>
 
-                <Typography sx={{ fontSize: '0.85rem', color: '#6b7280', fontFamily: '"DM Sans", sans-serif', lineHeight: 1.55 }}>
+                {/* <Typography sx={{ fontSize: '0.85rem', color: '#6b7280', fontFamily: '"DM Sans", sans-serif', lineHeight: 1.55 }}>
                   {selectedStudent.achievement}
-                </Typography>
+                </Typography> */}
               </Box>
 
               <Box sx={{ height: '1px', bgcolor: '#f0f0f0', mx: { xs: 3, sm: 3.5 } }} />

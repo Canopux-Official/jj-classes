@@ -98,7 +98,6 @@ interface Result {
     course: string;
     image: string;
     bio: string;
-    achievement: string;
     currentStatus: string[];     // ✅ multiple status lines
     youtubeLink?: string;
 }
@@ -783,7 +782,7 @@ const AdminLandingPage: React.FC = () => {
                                         <Button variant="outlined" startIcon={<AddIcon />} onClick={() =>
                                             addItem('results', {
                                                 name: '', scores: [], course: '', image: '',
-                                                bio: '', achievement: '', currentStatus: [], youtubeLink: ''
+                                                bio: '', currentStatus: [], youtubeLink: ''
                                             })
                                         }>Add Story</Button>
                                     </Box>
@@ -805,13 +804,9 @@ const AdminLandingPage: React.FC = () => {
                                                         value={student.name}
                                                         onChange={(e) => handleArrayItemChange('results', index, 'name', e.target.value)}
                                                     />
-                                                    <TextField size="small" label="Course (e.g. JEE Main)" fullWidth
+                                                    <TextField size="small" label="Enrolled For (e.g. JEE Main)" fullWidth
                                                         value={student.course}
                                                         onChange={(e) => handleArrayItemChange('results', index, 'course', e.target.value)}
-                                                    />
-                                                    <TextField size="small" label="Final Achievement" fullWidth
-                                                        value={student.achievement}
-                                                        onChange={(e) => handleArrayItemChange('results', index, 'achievement', e.target.value)}
                                                     />
 
                                                     {/* ── Scores Section ── */}

@@ -133,7 +133,7 @@ export default function Hero({ data }: { data?: { heading?: React.ReactNode; sub
             <Box sx={{ opacity: 0, animation: 'fadeUp 0.6s ease forwards', animationDelay: '0ms', mb: 3 }}>
               <Chip
                 icon={<VerifiedIcon sx={{ fontSize: '14px !important', color: '#0a2540 !important' }} />}
-                label="India's Top Coaching Institute"
+                label="Trusted by Students & Parents in Koraput"
                 size="small"
                 sx={{
                   bgcolor: 'rgba(10,37,64,0.06)', color: '#0a2540',

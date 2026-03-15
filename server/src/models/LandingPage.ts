@@ -101,7 +101,6 @@ const resultSchema = new mongoose.Schema({
     course: { type: String, required: true },
     image: { type: String, required: true },
     bio: { type: String, required: true },
-    achievement: { type: String, required: true },
 
     // Array of current status lines. Example: ['Selected at Google', 'Startup Founder']
     currentStatus: [{ type: String }],
