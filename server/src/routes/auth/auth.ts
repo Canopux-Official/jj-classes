@@ -210,6 +210,6 @@ router.get('/verifyToken', verifyAuth, async (req: AuthRequest, res): Promise<an
 });
 
 router.post('/changePassword', verifyAuth, changePassword);
-router.get('/getAllStudentProfiles', getAllStudentProfiles);
+
 
 export default router;
