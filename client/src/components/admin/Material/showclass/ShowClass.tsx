@@ -1329,7 +1329,6 @@ const ShowClass: React.FC = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        backgroundColor: '#f5f5f5',
         pb: 6,
       }}
     >
